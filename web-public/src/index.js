@@ -215,7 +215,7 @@ class WebMscore {
      */
     async title() {
         const strptr = Module.ccall('title', 'number', ['number'], [this.scoreptr])
-        const str = Module.UTF8ToString(strptr + 8)  // 8 bytes of padding
+        const str = Module.UTF8ToString(strptr)
         freePtr(strptr)
         return str
     }
@@ -268,7 +268,7 @@ class WebMscore {
         const dataptr = Module.ccall('saveXml', 'number', ['number', 'number'], [this.scoreptr, this.excerptId])
 
         // MusicXML is plain text
-        const data = Module.UTF8ToString(dataptr + 8)  // 8 bytes of padding
+        const data = Module.UTF8ToString(dataptr)
         freePtr(dataptr)
 
         return data
@@ -307,7 +307,7 @@ class WebMscore {
         )
 
         // SVG is plain text
-        const data = Module.UTF8ToString(dataptr + 8)  // 8 bytes of padding
+        const data = Module.UTF8ToString(dataptr)
         freePtr(dataptr)
 
         return data
@@ -517,7 +517,7 @@ class WebMscore {
         )
 
         // JSON is plain text
-        const data = Module.UTF8ToString(dataptr + 8)  // 8 bytes of padding
+        const data = Module.UTF8ToString(dataptr)
         freePtr(dataptr)
 
         return data
@@ -532,7 +532,7 @@ class WebMscore {
         const dataptr = Module.ccall('saveMetadata', 'number', ['number'], [this.scoreptr])
 
         // JSON is plain text
-        const data = Module.UTF8ToString(dataptr + 8)  // 8 bytes of padding
+        const data = Module.UTF8ToString(dataptr)
         freePtr(dataptr)
 
         return data

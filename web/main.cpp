@@ -15,27 +15,28 @@
  */
 
 /**
+ * realloc/copy the data block so that it can be properly referred by its ptr and then freed in c-style
+ */
+const char* reallocData(QByteArray data) {
+    auto size = data.size() + 1; // https://doc.qt.io/qt-5/qbytearray.html#data
+    auto buf = (char*)malloc(size);
+    memcpy(buf, data.constData(), size);
+    return buf;
+}
+
+/**
  * pack length-prefixed data
  */
-QByteArray packData(QByteArray data, qint64 size) {
+const char* packData(QByteArray data, qint64 size) {
     QByteArray sizeData = QByteArray((const char*)&size, 4);
 
     QBuffer result;
     result.open(QIODevice::ReadWrite);
-    result.write(QByteArray(8, '\0'));  // padding
     result.write(sizeData);
     result.write(data);
     result.close();
 
-    return result.data();
-}
-
-/**
- * It's so weird that the first 8 bytes of data would be overwritten by some random things
- * @todo PLEASE HELP - I'm not familiar with emscripten
- */
-QByteArray padData(QByteArray data) {
-    return QByteArray(8, '\0').append(data);
+    return reallocData(result.data());
 }
 
 Ms::Score* maybeUseExcerpt(Ms::Score* score, int excerptId) {
@@ -193,7 +194,7 @@ void _generateExcerpts(uintptr_t score_ptr) {
 /**
  * get the score title
  */
-QByteArray _title(uintptr_t score_ptr) {
+const char* _title(uintptr_t score_ptr) {
     Ms::MasterScore* score = reinterpret_cast<Ms::MasterScore*>(score_ptr);
 
     // code from MuseScore::saveMetadataJSON
@@ -206,7 +207,7 @@ QByteArray _title(uintptr_t score_ptr) {
     if (title.isEmpty())
         title = score->title();
 
-    return padData(
+    return reallocData(
         title.toUtf8()
     );
 }
@@ -234,7 +235,7 @@ const char* _saveXml(uintptr_t score_ptr, int excerptId) {
     qDebug("saveXml: excerpt %d, size %lld bytes", excerptId, buffer.size());
 
     // MusicXML is plain text
-    return padData(
+    return reallocData(
         QString(buffer.data()).toUtf8()
     );
 }
@@ -317,7 +318,7 @@ const char* _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackgroun
     qDebug("saveSvg: excerpt %d, page index %d, size %lld bytes", excerptId, pageNumber, buffer.size());
 
     // SVG is plain text
-    return padData(
+    return reallocData(
         QString(buffer.data()).toUtf8()
     );
 }
@@ -455,7 +456,7 @@ const char* _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) 
     qDebug("savePositions: excerpt %d, ofSegments %d, file size %d", excerptId, ofSegments, data.size());
 
     // JSON is plain text
-    return padData(data);
+    return reallocData(data);
 }
 
 /**
@@ -468,7 +469,7 @@ const char* _saveMetadata(uintptr_t score_ptr) {
     QJsonDocument saveDoc(json);
 
     // JSON is plain text
-    return padData(
+    return reallocData(
         saveDoc.toJson()  // UTF-8 encoded JSON data
     );
 }

@@ -61,16 +61,14 @@ export const getTypedArrayPtr = (data) => {
  * @returns {Uint8Array}
  */
 export const readData = (ptr) => {
-    let offset = ptr + 8  // 8 bytes padding
-
     const sizeData = new DataView(
         new Uint8Array(  // make a copy
-            Module.HEAPU8.subarray(offset, offset + 4)
+            Module.HEAPU8.subarray(ptr, ptr + 4)
         ).buffer
     )
 
     const size = sizeData.getUint32(0, true)
-    const data = new Uint8Array(Module.HEAPU8.subarray(offset + 4, offset + 4 + size))  // make a copy
+    const data = new Uint8Array(Module.HEAPU8.subarray(ptr + 4, ptr + 4 + size))  // make a copy
 
     freePtr(ptr)
 
