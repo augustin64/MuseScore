@@ -71,10 +71,7 @@ set(CMAKE_CXX_FLAGS_RELEASE "-Oz -DNDEBUG -DQT_NO_DEBUG")
 set(CMAKE_CXX_FLAGS_DEBUG   "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra -Woverloaded-virtual")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DQT_NO_DEBUG_OUTPUT")
 
-# ## Set preload/embedded files
-# ##
-# set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} --preload-file ${MU_ROOT}/README.md")
-# set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} -s LZ4=1") # compress the data package
+include(EmbedFiles)
 
 ###########################################
 # Setup external dependencies
