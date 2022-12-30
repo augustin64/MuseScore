@@ -8,7 +8,6 @@
 #include "modularity/ioc.h"
 #include "global/io/internal/filesystem.h"
 #include "global/internal/cryptographichash.h"
-#include "fonts/fontsmodule.h"
 #include "draw/drawmodule.h"
 #include "engraving/engravingmodule.h"
 
@@ -86,14 +85,11 @@ void _init(int argc, char** argv) {
     modularity::ioc()->registerExport<io::IFileSystem>("", new io::FileSystem());
     modularity::ioc()->registerExport<ICryptographicHash>("", new CryptographicHash());
 
-    auto fontsM = new fonts::FontsModule();
-    fontsM->registerResources();
     // src/framework/draw/drawmodule.cpp
     auto drawM = new draw::DrawModule();
     drawM->registerExports();
 
     auto engM = new engraving::EngravingModule();
-    engM->registerResources();
     engM->registerExports();
     engM->onInit(framework::IApplication::RunMode::Converter);
 }

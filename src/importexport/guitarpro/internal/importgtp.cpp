@@ -3007,7 +3007,7 @@ static Err importScore(MasterScore* score, mu::io::IODevice* io)
         return Err::FileOpenError;
     }
 
-    score->loadStyle(u":/engraving/styles/gp-style.mss");
+    score->loadStyle(u"/engraving/styles/gp-style.mss");
 
     io->seek(0);
     char header[5];

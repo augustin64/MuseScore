@@ -34,10 +34,10 @@ static const int LEGACY_MSC_VERSION_V3 = 301;
 static const int LEGACY_MSC_VERSION_V2 = 206;
 static const int LEGACY_MSC_VERSION_V1 = 114;
 
-static const String LEGACY_MSS_V1_PATH(u":/engraving/styles/legacy-style-defaults-v1.mss");
-static const String LEGACY_MSS_V2_PATH(u":/engraving/styles/legacy-style-defaults-v2.mss");
-static const String LEGACY_MSS_V3_PATH(u":/engraving/styles/legacy-style-defaults-v3.mss");
-static const String LEGACY_MSS_V302_PATH(u":/engraving/styles/legacy-style-defaults-v302.mss");
+static const String LEGACY_MSS_V1_PATH(u"/engraving/styles/legacy-style-defaults-v1.mss");
+static const String LEGACY_MSS_V2_PATH(u"/engraving/styles/legacy-style-defaults-v2.mss");
+static const String LEGACY_MSS_V3_PATH(u"/engraving/styles/legacy-style-defaults-v3.mss");
+static const String LEGACY_MSS_V302_PATH(u"/engraving/styles/legacy-style-defaults-v302.mss");
 
 DefaultStyle* DefaultStyle::instance()
 {

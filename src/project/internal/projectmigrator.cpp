@@ -38,8 +38,8 @@ using namespace mu::project;
 using namespace mu::engraving::compat;
 
 static const Uri MIGRATION_DIALOG_URI("musescore://project/migration");
-static const QString LELAND_STYLE_PATH(":/engraving/styles/migration-306-style-Leland.mss");
-static const QString EDWIN_STYLE_PATH(":/engraving/styles/migration-306-style-Edwin.mss");
+static const QString LELAND_STYLE_PATH("/engraving/styles/migration-306-style-Leland.mss");
+static const QString EDWIN_STYLE_PATH("/engraving/styles/migration-306-style-Edwin.mss");
 
 static MigrationType migrationTypeFromMscVersion(int mscVersion)
 {

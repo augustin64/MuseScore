@@ -57,7 +57,7 @@ static std::shared_ptr<EngravingConfiguration> s_configuration = std::make_share
 static void engraving_init_qrc()
 {
 #ifndef NO_QT_SUPPORT
-    Q_INIT_RESOURCE(engraving);
+    // Q_INIT_RESOURCE(engraving);
 #endif
 }
 
@@ -94,41 +94,41 @@ void EngravingModule::onInit(const framework::IApplication::RunMode&)
         // Symbols
         Smufl::init();
 
-        SymbolFonts::addFont(u"Leland",     u"Leland",      ":/fonts/leland/Leland.otf");
-        SymbolFonts::addFont(u"Bravura",    u"Bravura",     ":/fonts/bravura/Bravura.otf");
-        SymbolFonts::addFont(u"Emmentaler", u"MScore",      ":/fonts/mscore/mscore.ttf");
-        SymbolFonts::addFont(u"Gonville",   u"Gootville",   ":/fonts/gootville/Gootville.otf");
-        SymbolFonts::addFont(u"MuseJazz",   u"MuseJazz",    ":/fonts/musejazz/MuseJazz.otf");
-        SymbolFonts::addFont(u"Petaluma",   u"Petaluma",    ":/fonts/petaluma/Petaluma.otf");
-        SymbolFonts::addFont(u"Finale Maestro", u"Finale Maestro", ":/fonts/finalemaestro/FinaleMaestro.otf");
-        SymbolFonts::addFont(u"Finale Broadway", u"Finale Broadway", ":/fonts/finalebroadway/FinaleBroadway.otf");
+        SymbolFonts::addFont(u"Leland",     u"Leland",      "/fonts/leland/Leland.woff2");
+        SymbolFonts::addFont(u"Bravura",    u"Bravura",     "/fonts/bravura/Bravura.woff2");
+        SymbolFonts::addFont(u"Emmentaler", u"MScore",      "/fonts/mscore/mscore.woff2");
+        SymbolFonts::addFont(u"Gonville",   u"Gootville",   "/fonts/gootville/Gootville.woff2");
+        SymbolFonts::addFont(u"MuseJazz",   u"MuseJazz",    "/fonts/musejazz/MuseJazz.woff2");
+        SymbolFonts::addFont(u"Petaluma",   u"Petaluma",    "/fonts/petaluma/Petaluma.woff2");
+        SymbolFonts::addFont(u"Finale Maestro", u"Finale Maestro", "/fonts/finalemaestro/FinaleMaestro.woff2");
+        SymbolFonts::addFont(u"Finale Broadway", u"Finale Broadway", "/fonts/finalebroadway/FinaleBroadway.woff2");
 
         SymbolFonts::setFallbackFont(u"Bravura");
 
         // Text
         const std::vector<io::path_t> textFonts = {
-            ":/fonts/musejazz/MuseJazzText.otf",
-            ":/fonts/campania/Campania.otf",
-            ":/fonts/edwin/Edwin-Roman.otf",
-            ":/fonts/edwin/Edwin-Bold.otf",
-            ":/fonts/edwin/Edwin-Italic.otf",
-            ":/fonts/edwin/Edwin-BdIta.otf",
-            ":/fonts/FreeSans.ttf",
-            ":/fonts/FreeSerif.ttf",
-            ":/fonts/FreeSerifBold.ttf",
-            ":/fonts/FreeSerifItalic.ttf",
-            ":/fonts/FreeSerifBoldItalic.ttf",
-            ":/fonts/mscoreTab.ttf",
-            ":/fonts/mscore-BC.ttf",
-            ":/fonts/leland/LelandText.otf",
-            ":/fonts/leland/Leland.otf",
-            ":/fonts/bravura/BravuraText.otf",
-            ":/fonts/gootville/GootvilleText.otf",
-            ":/fonts/mscore/MScoreText.ttf",
-            ":/fonts/petaluma/PetalumaText.otf",
-            ":/fonts/petaluma/PetalumaScript.otf",
-            ":/fonts/finalemaestro/FinaleMaestroText.otf",
-            ":/fonts/finalebroadway/FinaleBroadwayText.otf",
+            "/fonts/musejazz/MuseJazzText.woff2",
+            "/fonts/campania/Campania.woff2",
+            "/fonts/edwin/Edwin-Roman.woff2",
+            "/fonts/edwin/Edwin-Bold.woff2",
+            "/fonts/edwin/Edwin-Italic.woff2",
+            "/fonts/edwin/Edwin-BdIta.woff2",
+            "/fonts/FreeSans.woff2",
+            "/fonts/FreeSerif.woff2",
+            "/fonts/FreeSerifBold.woff2",
+            "/fonts/FreeSerifItalic.woff2",
+            "/fonts/FreeSerifBoldItalic.woff2",
+            "/fonts/mscoreTab.woff2",
+            "/fonts/mscore-BC.woff2",
+            "/fonts/leland/LelandText.woff2",
+            "/fonts/leland/Leland.woff2",
+            "/fonts/bravura/BravuraText.woff2",
+            "/fonts/gootville/GootvilleText.woff2",
+            "/fonts/mscore/MScoreText.woff2",
+            "/fonts/petaluma/PetalumaText.woff2",
+            "/fonts/petaluma/PetalumaScript.woff2",
+            "/fonts/finalemaestro/FinaleMaestroText.woff2",
+            "/fonts/finalebroadway/FinaleBroadwayText.woff2",
         };
 
         std::shared_ptr<IFontProvider> fontProvider = ioc()->resolve<IFontProvider>("fonts");

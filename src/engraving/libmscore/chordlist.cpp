@@ -1827,12 +1827,12 @@ bool ChordList::read(const String& name)
     if (ftest.isAbsolute()) {
         path = name;
     } else {
-        path = configuration()->appDataPath() + "/styles/" + name;
+        path = u"/styles/" + name;
     }
 
     // default to chords_std.xml
     if (!FileInfo::exists(path)) {
-        path = configuration()->appDataPath() + "/styles/chords_std.xml";
+        path = u"/styles/chords_std.xml";
     }
 
     if (name.isEmpty()) {

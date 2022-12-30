@@ -1675,7 +1675,7 @@ bool FiguredBass::readConfigFile(const String& fileName)
     String path;
 
     if (fileName.isEmpty()) {         // defaults to built-in xml
-        path = u":/fonts/fonts_figuredbass.xml";
+        path = u"/fonts/fonts_figuredbass.xml";
         g_FBFonts.clear();
     } else {
         path = fileName;
