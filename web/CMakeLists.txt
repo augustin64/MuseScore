@@ -16,34 +16,29 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
     )
 
+set(QT_SUPPORT ON)
+
 # include(SetupBuildEnvironment)
 include(GetPlatformInfo)
 
-set(QT_MIN_VERSION    "5.15.0")
-#find_package(Qt5Core ${QT_MIN_VERSION} REQUIRED)
-#find_package(Qt5Gui ${QT_MIN_VERSION} REQUIRED)
-
-set(QT_LIBRARIES
-#    Qt5::Core
-#    Qt5::Gui
-)
-
 include_directories(
-#    ${Qt5Core_INCLUDE_DIRS}
-#    ${Qt5Gui_INCLUDE_DIRS}
     ${CMAKE_CURRENT_LIST_DIR}
     ${MU_ROOT}/thirdparty/dtl
 )
 
-set(THIRDPARTY_DIR ${MU_ROOT}/thirdparty)
 
 add_definitions(
-    -DNO_QT_SUPPORT
+    # -DNO_QT_SUPPORT
     -DGLOBAL_NO_INTERNAL
-    #-DHAW_LOGGER_QT_SUPPORT
+    -DENGRAVING_NO_QTEXTDOCUMENT
+    -DENGRAVING_NO_INTERACTIVE
+    # -DHAW_LOGGER_QT_SUPPORT
+    -DQT_SUPPORT
+    # -DHAW_PROFILER_ENABLED
+    -DNDEBUG
+    -DQT_NO_DEBUG
 )
 
-set(CMAKE_PREFIX_PATH "/usr/qt515/qtbase")
 set(CMAKE_EXECUTABLE_SUFFIX ".lib.js")
 
 set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} --bind")
@@ -81,23 +76,33 @@ set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -DQT_NO_DEBUG_OUTPUT")
 # set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} --preload-file ${MU_ROOT}/README.md")
 # set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} -s LZ4=1") # compress the data package
 
+###########################################
+# Setup external dependencies
+###########################################
+
+set(QT_MIN_VERSION    "5.15.0")
+include(FindQt5)
+
+include(SetupFreetypeBrotli)
+
+###########################################
+# Add source tree
+###########################################
+
 set(GLOBAL_NO_INTERNAL ON)
 add_subdirectory(${MU_ROOT}/src/framework/global global)
 
-set(DRAW_NO_INTERNAL ON)
+# set(DRAW_NO_INTERNAL ON)
 add_subdirectory(${MU_ROOT}/src/framework/draw draw)
 
-set(NO_QT_SUPPORT ON)
-set(ENGRAVING_NO_INTERNAL ON)
+# set(NO_QT_SUPPORT ON)
+# set(ENGRAVING_NO_INTERNAL ON)
 set(ENGRAVING_NO_ACCESSIBILITY ON)
 add_subdirectory(${MU_ROOT}/src/engraving engraving)
 
 add_subdirectory(${MU_ROOT}/src/importexport/guitarpro guitarpro)
 
-
 add_executable(webmscore
-    fontproviderstub.cpp
-    fontproviderstub.h
     main.cpp
 )
 
