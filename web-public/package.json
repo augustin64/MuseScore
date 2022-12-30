@@ -45,7 +45,8 @@
         "rollup": "^2.8.2"
     },
     "scripts": {
-        "build": "npm run clean && npm run compile && npm run bundle && npm run d-ts",
+        "build": "npm run clean && npm run build:no-clean",
+        "build:no-clean": "npm run compile && npm run build:js-only",
         "build:js-only": "npm run clean:d-ts && npm run bundle && npm run d-ts",
         "version": "npm run build:js-only",
         "bundle": "rollup -c",
