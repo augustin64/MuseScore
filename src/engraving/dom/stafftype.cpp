@@ -987,7 +987,7 @@ bool StaffType::readTabConfigFile(const String& fileName)
     muse::io::path_t path;
 
     if (fileName.isEmpty()) {         // defaults to built-in xml
-        path = ":/fonts/fonts_tablature.xml";
+        path = "/fonts/fonts_tablature.xml";
         m_durationFonts.clear();
         m_fretFonts.clear();
     } else {

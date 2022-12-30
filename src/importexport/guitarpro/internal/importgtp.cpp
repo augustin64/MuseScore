@@ -2802,6 +2802,7 @@ Err importGTP(MasterScore* score, muse::io::IODevice* io, const muse::modularity
     }
 
     score->checkChordList();
+
     io->seek(0);
     char header[5];
     io->read((uint8_t*)(header), 4);

@@ -80,7 +80,7 @@ using namespace muse::draw;
 static void engraving_init_qrc()
 {
 #ifndef NO_QT_SUPPORT
-    Q_INIT_RESOURCE(engraving);
+    // Q_INIT_RESOURCE(engraving);
 
     Q_INIT_RESOURCE(fonts_Leland);
     Q_INIT_RESOURCE(fonts_Bravura);
@@ -166,7 +166,7 @@ void EngravingModule::registerUiTypes()
 void EngravingModule::onInit(const IApplication::RunMode& mode)
 {
     if (mode == IApplication::RunMode::AudioPluginRegistration) {
-        return;
+        return; 
     }
 
 #ifndef ENGRAVING_NO_INTERNAL
@@ -177,10 +177,10 @@ void EngravingModule::onInit(const IApplication::RunMode& mode)
         std::shared_ptr<IFontsDatabase> fdb = ioc()->resolve<IFontsDatabase>(moduleName());
 
         // Text
-        fdb->addFont(FontDataKey(u"Edwin", false, false), ":/fonts/edwin/Edwin-Roman.otf");
-        fdb->addFont(FontDataKey(u"Edwin", false, true), ":/fonts/edwin/Edwin-Italic.otf");
-        fdb->addFont(FontDataKey(u"Edwin", true, false), ":/fonts/edwin/Edwin-Bold.otf");
-        fdb->addFont(FontDataKey(u"Edwin", true, true), ":/fonts/edwin/Edwin-BdIta.otf");
+        fdb->addFont(FontDataKey(u"Edwin", false, false), "/fonts/edwin/Edwin-Roman.woff2");
+        fdb->addFont(FontDataKey(u"Edwin", false, true), "/fonts/edwin/Edwin-Italic.woff2");
+        fdb->addFont(FontDataKey(u"Edwin", true, false), "/fonts/edwin/Edwin-Bold.woff2");
+        fdb->addFont(FontDataKey(u"Edwin", true, true), "/fonts/edwin/Edwin-BdIta.woff2");
 
         // MusicSymbol[Text]
         auto addMusicFont = [this, fdb](const std::string& name, const FontDataKey& fontDataKey, const muse::io::path_t& filePath){
@@ -188,36 +188,36 @@ void EngravingModule::onInit(const IApplication::RunMode& mode)
             m_engravingfonts->addInternalFont(name, fontDataKey.family().id().toStdString(), filePath);
         };
 
-        addMusicFont("Bravura", FontDataKey(u"Bravura"), ":/fonts/bravura/Bravura.otf");
-        fdb->addFont(FontDataKey(u"Bravura Text"), ":/fonts/bravura/BravuraText.otf");
-        addMusicFont("Leland", FontDataKey(u"Leland"), ":/fonts/leland/Leland.otf");
-        fdb->addFont(FontDataKey(u"Leland Text"), ":/fonts/leland/LelandText.otf");
-        addMusicFont("Emmentaler", FontDataKey(u"MScore"), ":/fonts/mscore/MScore.otf");
-        fdb->addFont(FontDataKey(u"MScore Text"), ":/fonts/mscore/MScoreText.otf");
-        addMusicFont("Gonville", FontDataKey(u"Gootville"), ":/fonts/gootville/Gootville.otf");
-        fdb->addFont(FontDataKey(u"Gootville Text"), ":/fonts/gootville/GootvilleText.otf");
-        addMusicFont("MuseJazz", FontDataKey(u"MuseJazz"), ":/fonts/musejazz/MuseJazz.otf");
-        fdb->addFont(FontDataKey(u"MuseJazz Text"), ":/fonts/musejazz/MuseJazzText.otf");
-        addMusicFont("Petaluma", FontDataKey(u"Petaluma"),    ":/fonts/petaluma/Petaluma.otf");
-        fdb->addFont(FontDataKey(u"Petaluma Text"), ":/fonts/petaluma/PetalumaText.otf");
-        addMusicFont("Finale Maestro", FontDataKey(u"Finale Maestro"), ":/fonts/finalemaestro/FinaleMaestro.otf");
-        fdb->addFont(FontDataKey(u"Finale Maestro Text"), ":/fonts/finalemaestro/FinaleMaestroText.otf");
-        addMusicFont("Finale Broadway", FontDataKey(u"Finale Broadway"), ":/fonts/finalebroadway/FinaleBroadway.otf");
-        fdb->addFont(FontDataKey(u"Finale Broadway Text"), ":/fonts/finalebroadway/FinaleBroadwayText.otf");
+        addMusicFont("Bravura", FontDataKey(u"Bravura"), "/fonts/bravura/Bravura.woff2");
+        fdb->addFont(FontDataKey(u"Bravura Text"), "/fonts/bravura/BravuraText.woff2");
+        addMusicFont("Leland", FontDataKey(u"Leland"), "/fonts/leland/Leland.woff2");
+        fdb->addFont(FontDataKey(u"Leland Text"), "/fonts/leland/LelandText.woff2");
+        addMusicFont("Emmentaler", FontDataKey(u"MScore"), "/fonts/mscore/MScore.woff2");
+        fdb->addFont(FontDataKey(u"MScore Text"), "/fonts/mscore/MScoreText.woff2");
+        addMusicFont("Gonville", FontDataKey(u"Gootville"), "/fonts/gootville/Gootville.woff2");
+        fdb->addFont(FontDataKey(u"Gootville Text"), "/fonts/gootville/GootvilleText.woff2");
+        addMusicFont("MuseJazz", FontDataKey(u"MuseJazz"), "/fonts/musejazz/MuseJazz.woff2");
+        fdb->addFont(FontDataKey(u"MuseJazz Text"), "/fonts/musejazz/MuseJazzText.woff2");
+        addMusicFont("Petaluma", FontDataKey(u"Petaluma"),    "/fonts/petaluma/Petaluma.woff2");
+        fdb->addFont(FontDataKey(u"Petaluma Text"), "/fonts/petaluma/PetalumaText.woff2");
+        addMusicFont("Finale Maestro", FontDataKey(u"Finale Maestro"), "/fonts/finalemaestro/FinaleMaestro.woff2");
+        fdb->addFont(FontDataKey(u"Finale Maestro Text"), "/fonts/finalemaestro/FinaleMaestroText.woff2");
+        addMusicFont("Finale Broadway", FontDataKey(u"Finale Broadway"), "/fonts/finalebroadway/FinaleBroadway.woff2");
+        fdb->addFont(FontDataKey(u"Finale Broadway Text"), "/fonts/finalebroadway/FinaleBroadwayText.woff2");
 
         // Tabulature
-        fdb->addFont(FontDataKey(u"FreeSerif"), ":/fonts/FreeSerif.ttf");
-        fdb->addFont(FontDataKey(u"FreeSerif", true, false), ":/fonts/FreeSerifBold.ttf");
-        fdb->addFont(FontDataKey(u"FreeSerif", false, true), ":/fonts/FreeSerifItalic.ttf");
-        fdb->addFont(FontDataKey(u"FreeSerif", true, true), ":/fonts/FreeSerifBoldItalic.ttf");
-        fdb->addFont(FontDataKey(u"FreeSans"), ":/fonts/FreeSans.ttf");
-        fdb->addFont(FontDataKey(u"MScoreTabulature"), ":/fonts/mscoreTab.ttf");
+        fdb->addFont(FontDataKey(u"FreeSerif"), "/fonts/FreeSerif.woff2");
+        fdb->addFont(FontDataKey(u"FreeSerif", true, false), "/fonts/FreeSerifBold.woff2");
+        fdb->addFont(FontDataKey(u"FreeSerif", false, true), "/fonts/FreeSerifItalic.woff2");
+        fdb->addFont(FontDataKey(u"FreeSerif", true, true), "/fonts/FreeSerifBoldItalic.woff2");
+        fdb->addFont(FontDataKey(u"FreeSans"), "/fonts/FreeSans.woff2");
+        fdb->addFont(FontDataKey(u"MScoreTabulature"), "/fonts/mscoreTab.woff2");
 
         // Figured Bass
-        fdb->addFont(FontDataKey(u"MscoreBC"), ":/fonts/mscore-BC.ttf");
+        fdb->addFont(FontDataKey(u"MscoreBC"), "/fonts/mscore-BC.woff2");
 
         // Roman Numeral Analysis
-        fdb->addFont(FontDataKey(u"Campania"), ":/fonts/campania/Campania.otf");
+        fdb->addFont(FontDataKey(u"Campania"), "/fonts/campania/Campania.woff2");
 
         // Defaults
         fdb->setDefaultFont(Font::Type::Unknown, FontDataKey(u"Edwin"));

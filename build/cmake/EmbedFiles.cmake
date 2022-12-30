@@ -52,6 +52,7 @@ set(_preload_files
     fonts/finalebroadway/metadata.json
 
     fonts/smufl/glyphnames.json
+    fonts/smufl/ranges.json
     fonts/fonts_tablature.xml
     fonts/fonts_figuredbass.xml
 
@@ -66,5 +67,8 @@ foreach(_file ${_preload_files})
 endforeach()
 
 set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} ${PRELOAD_TYPE_FLAG} ${MU_ROOT}/src/engraving/data/styles@/engraving/styles")
+
+# set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} ${PRELOAD_TYPE_FLAG} ${MU_ROOT}/share/styles@/styles")
+set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} ${PRELOAD_TYPE_FLAG} ${MU_ROOT}/share/styles/chords_std.xml@/styles/chords_std.xml")
 
 set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} -s LZ4=1") # compress the data package
