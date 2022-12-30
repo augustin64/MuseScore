@@ -24,7 +24,7 @@
 #include <cstdlib>
 
 #ifndef NO_QT_SUPPORT
-#include <QLocale>
+// #include <QLocale>
 #include <QPageSize>
 #endif
 
@@ -208,7 +208,7 @@ static bool defaultPageSizeIsLetter()
     if (papersize) {
         return strcmp(papersize, "letter") == 0;
     }
-#ifndef NO_QT_SUPPORT
+#if 0
     // try locale
     switch (QLocale::system().territory()) {
     case QLocale::UnitedStates:
