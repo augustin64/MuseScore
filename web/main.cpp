@@ -1,5 +1,6 @@
 #include <emscripten/emscripten.h>
 
+#include "log.h"
 #include <QGuiApplication>
 #include <QFontDatabase>
 #include <QTemporaryFile>
@@ -61,10 +62,11 @@ engraving::MasterScore* maybeUseExcerpt(engraving::MasterScore* score, int excer
     auto excerpts = score->excerpts();
 
     if (excerptId >= excerpts.size()) {
-        throw(QString("Not a valid excerptId."));
+        LOGE() << String(u"Not a valid excerptId. (excerptId: %1)").arg(excerptId);
+        throw;
     }
 
-    qDebug("useExcerpt: %d", excerptId);
+    LOGI() << String(u"useExcerpt: %1").arg(excerptId);
     return (engraving::MasterScore*) excerpts[excerptId]->excerptScore();
 }
 
@@ -102,7 +104,7 @@ bool _addFont(const char* fontPath) {
     auto fontProvider = modularity::ioc()->resolve<draw::IFontProvider>("");
 
     if (-1 == fontProvider->addTextFont(_fontPath)) {
-        qDebug("Cannot load font <%s>", qPrintable(_fontPath));
+        LOGE() << String(u"Cannot load font <%1>").arg(_fontPath);
         return false;
     } else {
         return true;
@@ -192,7 +194,7 @@ void _generateExcerpts(uintptr_t score_ptr) {
         scoreExcerpts.push_back(e);
     }
 
-    qDebug("Generated excerpts: size %d", excerpts.size());
+    LOGI() << String(u"Generated excerpts: size %1").arg((int)excerpts.size());
 }
 
 /**
@@ -264,7 +266,7 @@ const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
     }
 
     auto size = buffer.size();
-    qDebug("saveMsc: compressed %d, excerpt %d, size %lld", compressed, excerptId, size);
+    LOGI() << String(u"saveMsc: compressed %1, excerpt %2, size %3").arg(compressed, excerptId, (int)size);
 
     return packData(buffer.data().toQByteArrayNoCopy(), size);
 }
