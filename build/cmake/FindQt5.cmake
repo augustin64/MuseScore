@@ -10,29 +10,29 @@ set(CMAKE_AUTORCC ON)
 
 set(_components
     Core
-    Gui
-    Network
-    NetworkAuth
-    Qml
-    Quick
-    QuickControls2
-    QuickTemplates2
-    QuickWidgets
-    Xml
-    XmlPatterns
+    # Gui
+    # Network
+    # NetworkAuth
+    # Qml
+    # Quick
+    # QuickControls2
+    # QuickTemplates2
+    # QuickWidgets
+    # Xml
+    # XmlPatterns
     Svg
-    Widgets
-    PrintSupport
-    OpenGL
-    LinguistTools
+    # Widgets
+    # PrintSupport
+    # OpenGL
+    # LinguistTools
   )
 
-if (NOT OS_IS_WASM)
-    set(_components
-      ${_components}
-      Concurrent
-    )
-endif()
+# if (NOT OS_IS_WASM)
+#     set(_components
+#       ${_components}
+#       Concurrent
+#     )
+# endif()
 
 if (WIN32)
     set(_components

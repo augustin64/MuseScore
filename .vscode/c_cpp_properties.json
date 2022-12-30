@@ -5,12 +5,15 @@
             "includePath": [
                 "${workspaceFolder}/**",
                 "/usr/include/**",
-                "/usr/local/include/**"
+                "/usr/local/include/**",
+                "/usr/emsdk/upstream/emscripten/system/include/*"
             ],
-            "defines": [],
+            "defines": [
+                "IF_ASSERT_FAILED=if /**(!(x))*/"
+            ],
             "compilerPath": "/usr/bin/gcc",
             "cStandard": "c11",
-            "cppStandard": "c++11",
+            "cppStandard": "c++17",
             "intelliSenseMode": "gcc-x64",
             "compileCommands": "${workspaceFolder}/build.debug/compile_commands.json",
             "browse": {

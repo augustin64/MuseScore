@@ -1,81 +1,192 @@
-# ![MuseScore](share/icons/musescore_logo_full.png)
-Music notation and composition software
 
-[![License: GPL v3](https://img.shields.io/badge/License-GPL%20v3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+# webmscore
 
-MuseScore is an open source and free music notation software. For support, contribution, and bug reports visit MuseScore.org. Fork and make pull requests!
+> MuseScore's libmscore (the core library) in WebAssembly!  
 
 ## Features
 
-- WYSIWYG design, notes are entered on a "virtual notepaper"
-- TrueType font(s) for printing & display allows for high quality scaling to all sizes
-- Easy & fast note entry
-- Many editing functions
-- MusicXML import/export
-- MIDI (SMF) import/export
-- MuseData import
-- MIDI input for note entry
-- Integrated sequencer and software synthesizer to play the score
-- Print or create pdf files
+* Parse `mscz` file data
+* Get score metadata
+* Export part score
+* Generate music sheets in SVG/PNG/PDF format
+* Generate MIDI
+* Generate audio files in WAV, OGG, MP3, or FLAC format
+* Synthesize raw audio frames, can be used in the Web Audio API 
+* Export as MusicXML compressed/uncompressed
+* Generate position information of measures or segments on the generated sheets
+* Run inside a Web Worker thread
 
-## More info
-- [MuseScore Homepage](https://musescore.org)
-- [MuseScore Git workflow instructions](https://musescore.org/en/developers-handbook/git-workflow)
-- [How to compile MuseScore?](https://musescore.org/en/developers-handbook/compilation)
+## Installation
 
-## License
-MuseScore is licensed under GPL version 3.0. See [LICENSE.GPL](https://github.com/musescore/MuseScore/blob/master/LICENSE.GPL) in the same directory.
+The package is available on npm: https://www.npmjs.com/package/webmscore
 
-## Packages
-See [Code Structure on Wiki](https://github.com/musescore/MuseScore/wiki/CodeStructure)
+```sh
+npm i webmscore
+```
 
+## Use webmscore
 
-## Building
-**Read the developer handbook for a [complete build walkthrough](https://musescore.org/en/developers-handbook/compilation) and a list of dependencies.**
+### Load in browsers
 
-### Getting sources
-If using git to download repo of entire code history, type:
+```html
+<!-- using a CDN -->
+<script src="https://cdn.jsdelivr.net/npm/webmscore/webmscore.js"></script>
+<script>
+    WebMscore.ready.then(async () => {
+        const score = await WebMscore.load('mscz', msczdata)
+    })
+</script>
+```
 
-    git clone https://github.com/musescore/MuseScore.git
-    cd MuseScore
+For latest browsers which support ES Modules
 
-Otherwise, you can just download the latest source release tarball from the [Releases page](https://github.com/musescore/MuseScore/releases), and then from your download directory type:
+```js
+import WebMscore from 'https://cdn.jsdelivr.net/npm/webmscore/webmscore.mjs'
+```
 
-    tar xzf MuseScore-x.x.x.tar.gz
-    cd MuseScore-x.x.x
+### Run in Node.js directly
 
-### Release Build
-To compile MuseScore for release, type:
+Minimum version: v8.9.0 with ES Modules support
 
-    cmake -P build.cmake -DCMAKE_BUILD_TYPE=Release
+The `--experimental-modules` flag is required for Node.js versions under 14,  
+Also require `"type": "module"` in `package.json`
 
-If something goes wrong, append the word "clean" to the above command to delete the build subdirectory:
+```js
+import WebMscore from 'webmscore'
+WebMscore.ready.then(async () => {
+    const score = await WebMscore.load('mscz', msczdata)
+})
+```
 
-    cmake -P build.cmake -DCMAKE_BUILD_TYPE=Release clean
+### Use a JavaScript bundler
 
-Then try running the first command again.
+*(TBD)*
 
-### Running
-To start MuseScore, type:
+### Load extra fonts
 
-    cmake -P build.cmake -DCMAKE_BUILD_TYPE=Release run
+If your score sheet contains characters out of the range of the bundled [FreeFont](https://www.gnu.org/software/freefont/), those characters will be shown as tofu characters (`□` or `�`) in SVG/PNG/PDF files. Loading extra fonts is required.
 
-Or run the compiled executable directly.
+webmscore can load any font format supported by [FreeType](https://www.freetype.org/freetype2/docs/index.html).
 
-### Debug Build
-A debug version can be built and run by replacing `-DCMAKE_BUILD_TYPE=Release`
-with `-DCMAKE_BUILD_TYPE=Debug` in the above commands.
+```js
+const score = await WebMscore.load('mscz', msczdata, [...arrOfFontData])
+```
 
-If you omit the `-DCMAKE_BUILD_TYPE` option entirely then `RelWithDebInfo` is
-used by default, as it provides a useful compromise between Release and Debug.
+> CJK fonts are no longer bundled inside webmscore since v0.6.0
 
-### Testing
-See [mtest/README.md](/mtest/README.md) or [the developer handbook](https://musescore.org/handbook/developers-handbook/finding-your-way-around/automated-tests) for instructions on how to run the test suite.
+### Load soundfont files
 
-The new [script testing facility](https://musescore.org/node/278278) is also available to create your own automated tests. Please try it out!
+Loading a soudfont (sf2/sf3) file is required before generating/synthesizing audio.
 
-### Code Formatting
+```js
+await score.setSoundFont(soudfontData)
+```
 
-Run `./hooks/install.sh` to install a pre-commit hook that will format your staged files. Requires that you install `uncrustify`.
+Soudfonts can be found on [musescore.org website](https://musescore.org/en/handbook/soundfonts-and-sfz-files#list).
 
-If you have problems, please report them. To uninstall, run `./hooks/uninstall.sh`.
+Example: (`FluidR3Mono_GM.sf3`)
+
+```js
+const soudfontData = new Uint8Array(
+    await (
+        await fetch('https://cdn.jsdelivr.net/gh/musescore/MuseScore@2.1/share/sound/FluidR3Mono_GM.sf3')
+    ).arrayBuffer()
+)
+```
+
+### Boost Mode
+
+Sometimes you only want to process a bunch of score metadata, so drawing sheet images internally is a waste of time and system resource.
+
+You can enable the Boost Mode by setting the `doLayout` parameter in `WebMscore.load` to `false`.
+
+Example:
+
+```js
+const score = await WebMscore.load('mscz', msczdata, [], false)
+const metadata = await score.metadata()
+score.destroy()
+```
+
+webmscore's Boost Mode is about 3x faster than the batch converter feature (`-j`) of the musescore software, according to the [benchmark](./web-example/benchmark.js) result.
+
+WebAssembly vs native C++ program!
+
+## Compiling
+
+1. Install essential tools like `make`, `cmake`, `llvm`, etc.
+
+2. Install `emscripten` v2.0.6 using `emsdk`
+https://emscripten.org/docs/getting_started/downloads.html
+
+3. Get and compile Qt5 for WebAssembly
+
+```sh
+CPUS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN 2>/dev/null || 8)
+
+QT_PATH=/usr/qt515
+# If you want to use other directory, make sure you changed `PREFIX_PATH` to your Qt5WASM installation dir in the Makefile
+
+git clone git://code.qt.io/qt/qt5.git --depth=1 -b 5.15.0 $QT_PATH
+# or
+# download and extract qt-everywhere 5.15.0 (https://download.qt.io/official_releases/qt/5.15/5.15.0/single/)
+
+cd $QT_PATH
+./configure -xplatform wasm-emscripten -nomake examples -prefix $PWD/qtbase
+make -j$CPUS
+
+# exclude unused Qt5Gui plugins
+sed -i -E "s/\s(\S+?Qt5Gui_)\*(Plugin)?(.*)\)/ \1QWasmIntegrationPlugin\3 \1QJpegPlugin\3)/" $QT_PATH/qtbase/lib/cmake/Qt5Gui/Qt5GuiConfig.cmake
+
+# patch emcc.py to emit separate .mem files regardless of MEM_INIT_METHOD settings (MEM_INIT_METHOD won't work with wasm)
+sed -i -r "s/(shared.Settings.MEM_INIT_IN_WASM = )True/\1False/" "$(which emcc).py"
+```
+
+4. Checkout submodules
+
+```sh
+git submodule init
+git submodule update
+```
+
+5. Compile `webmscore`
+
+```sh
+make release
+```
+
+Build artifacts are in the [web-public](./web-public) directory
+
+## Browser Support 
+
+All modern browsers which support [WebAssembly](https://caniuse.com/#feat=wasm) and [Async Functions](https://caniuse.com/#feat=async-functions)
+
+| Name | Minimum Version |
+|---|---|
+| Chrome | 57 |
+| Firefox | 53, 52 (non-ESR) |
+| Edge | 16 (Fall Creators Update) |
+| Safari | 11 |
+| IE | NO! |
+| Other browsers | I don't know! |
+
+Only tested on the latest version of Chrome and Firefox.
+
+## Examples
+
+see files in the [web-example](./web-example) directory
+
+```sh
+cd ./web-example
+npm i
+npm start  # Node.js example
+npm run start:browser  # browser example
+```
+
+## Debugging
+
+See [How to look up function names in the .symbols file?](https://github.com/LibreScore/webmscore/blob/web/CHANGELOG.md#0192---2021-01-25)
+
+---
+
+webmscore is part of the [LibreScore](https://github.com/LibreScore/) project.
