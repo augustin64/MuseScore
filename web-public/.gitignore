@@ -1,6 +1,5 @@
 webmscore.*
 node_modules
-package-lock.json
 
 # copied from ../README.md
 README.md
