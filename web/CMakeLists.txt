@@ -120,4 +120,5 @@ target_link_libraries(webmscore
     draw
     engraving
     iex_guitarpro
+    freetype # important for supporting woff2 files
 )
