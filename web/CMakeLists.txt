@@ -29,7 +29,6 @@ include_directories(
 
 add_definitions(
     # -DNO_QT_SUPPORT
-    -DGLOBAL_NO_INTERNAL
     -DENGRAVING_NO_QTEXTDOCUMENT
     -DENGRAVING_NO_INTERACTIVE
     # -DHAW_LOGGER_QT_SUPPORT
@@ -86,7 +85,7 @@ include(SetupFreetypeBrotli)
 # Add source tree
 ###########################################
 
-set(GLOBAL_NO_INTERNAL ON)
+# set(GLOBAL_NO_INTERNAL ON)
 add_subdirectory(${MU_ROOT}/src/framework/global global)
 
 # set(DRAW_NO_INTERNAL ON)
