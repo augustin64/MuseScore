@@ -132,11 +132,24 @@ git clone git://code.qt.io/qt/qt5.git --depth=1 -b 5.15.0 $QT_PATH
 # download and extract qt-everywhere 5.15.0 (https://download.qt.io/official_releases/qt/5.15/5.15.0/single/)
 
 cd $QT_PATH
-./configure -xplatform wasm-emscripten -nomake examples -prefix $PWD/qtbase
+./configure -opensource -confirm-license \
+    -xplatform wasm-emscripten \
+    -nomake examples -nomake tools \
+    -skip qt3d -skip qtconnectivity -skip qtdeclarative -skip qtgamepad -skip qtlocation -skip qtmultimedia -skip qtsensors -skip qtserialbus -skip serialport -skip qtspeech -skip qttools -skip qtwayland -skip qtwebengine \
+    -no-accessibility -no-opengl \
+    -no-gif -no-ico -no-tiff -no-webp \
+    -prefix $PWD/qtbase -optimize-size -static
 make -j$CPUS
 
-# exclude unused Qt5Gui plugins
-sed -i -E "s/\s(\S+?Qt5Gui_)\*(Plugin)?(.*)\)/ \1QWasmIntegrationPlugin\3 \1QJpegPlugin\3)/" $QT_PATH/qtbase/lib/cmake/Qt5Gui/Qt5GuiConfig.cmake
+# build `offscreen` QPA platform plugin (https://doc.qt.io/qt-5/qpa.html)
+cd $QT_PATH/qtbase/src/plugins/platforms/offscreen
+$QT_PATH/qtbase/bin/qmake offscreen.pro && make
+cd -
+
+# enable the `offscreen` plugin
+sed -i -E "s/(PROPERTY QT_PLUGIN_EXTENDS \").*?(\")/\1\2/" $QT_PATH/qtbase/lib/cmake/Qt5Gui/Qt5Gui_QOffscreenIntegrationPlugin.cmake
+# exclude other Qt5Gui plugins
+sed -i -E "s/\s(\S+?Qt5Gui_)\*(Plugin)?(.*)\)/ \1QOffscreenIntegrationPlugin\3 \1QJpegPlugin\3)/" $QT_PATH/qtbase/lib/cmake/Qt5Gui/Qt5GuiConfig.cmake
 
 # patch emcc.py to emit separate .mem files regardless of MEM_INIT_METHOD settings (MEM_INIT_METHOD won't work with wasm)
 sed -i -r "s/(shared.Settings.MEM_INIT_IN_WASM = )True/\1False/" "$(which emcc).py"
