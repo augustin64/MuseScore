@@ -1,6 +1,14 @@
 
 #include <emscripten/emscripten.h>
 
+#include <QGuiApplication>
+#include <QByteArray>
+#include <QBuffer>
+#include <QTemporaryFile>
+#include <QDate>
+#include <QJsonObject>
+#include <QJsonDocument>
+
 #include "libmscore/excerpt.h"
 #include "libmscore/part.h"
 #include "libmscore/importexports.h"
@@ -66,6 +74,8 @@ int _version() {
  * init libmscore
  */
 void _init(int argc, char** argv) {
+    setenv("QT_QPA_PLATFORM", "offscreen", 1); // https://stackoverflow.com/a/70978934
+    setenv("QT_QPA_FONTDIR", "/fonts", 1);
     new QGuiApplication(argc, argv);
 
     Ms::preferences.init();
