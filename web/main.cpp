@@ -1,9 +1,9 @@
 #include <emscripten/emscripten.h>
 
-#include "log.h"
 #include <QGuiApplication>
 #include <QFontDatabase>
 #include <QTemporaryFile>
+#include "global/log.h"
 #include "global/io/buffer.h"
 
 #include "modularity/ioc.h"
@@ -81,6 +81,8 @@ int _version() {
  * init libmscore
  */
 void _init(int argc, char** argv) {
+    setenv("QT_QPA_PLATFORM", "offscreen", 1); // https://stackoverflow.com/a/70978934
+    setenv("QT_QPA_FONTDIR", "/fonts", 1);
     new QGuiApplication(argc, argv);
 
     // src/framework/global/globalmodule.cpp#67
