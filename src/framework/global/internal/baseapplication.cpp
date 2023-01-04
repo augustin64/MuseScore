@@ -26,7 +26,8 @@
 #include "muse_framework_config.h"
 
 #ifndef NO_QT_SUPPORT
-#include <QApplication>
+// #include <QApplication> // QApplication depends on QWidget
+#include <QGuiApplication>
 #include <QProcess>
 #endif
 

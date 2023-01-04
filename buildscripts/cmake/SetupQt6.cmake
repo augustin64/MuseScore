@@ -25,15 +25,15 @@ endif()
 set(qt_components
     Core
     Gui
-    Widgets
-    Network
-    Qml
-    Quick
-    QuickControls2
-    QuickWidgets
-    Xml
-    Svg
-    ShaderTools
+    # Widgets
+    # Network
+    # Qml
+    # Quick
+    # QuickControls2
+    # QuickWidgets
+    # Xml
+    # Svg
+    # ShaderTools
 
     Core5Compat
 )
@@ -41,26 +41,26 @@ set(qt_components
 set(QT_LIBRARIES
     Qt::Core
     Qt::Gui
-    Qt::Widgets
-    Qt::Network
-    Qt::Qml
-    Qt::Quick
-    Qt::QuickControls2
-    Qt::QuickWidgets
-    Qt::Xml
-    Qt::Svg
+    # Qt::Widgets
+    # Qt::Network
+    # Qt::Qml
+    # Qt::Quick
+    # Qt::QuickControls2
+    # Qt::QuickWidgets
+    # Qt::Xml
+    # Qt::Svg
 
     Qt::Core5Compat
 )
 
-if(NOT OS_IS_WASM)
-
-    list(APPEND qt_components NetworkAuth)
-    list(APPEND QT_LIBRARIES Qt::NetworkAuth)
-
-    list(APPEND qt_components PrintSupport)
-    list(APPEND QT_LIBRARIES Qt::PrintSupport)
-endif()
+# if(NOT OS_IS_WASM)
+# 
+#     list(APPEND qt_components NetworkAuth)
+#     list(APPEND QT_LIBRARIES Qt::NetworkAuth)
+# 
+#     list(APPEND qt_components PrintSupport)
+#     list(APPEND QT_LIBRARIES Qt::PrintSupport)
+# endif()
 
 if(OS_IS_LIN)
     list(APPEND qt_components DBus)
@@ -88,9 +88,9 @@ if(QT_ADD_WEBSOCKET)
     list(APPEND QT_LIBRARIES Qt::WebSockets)
 endif()
 
-if (OS_IS_WASM)
-    set(QT_WASM_EXTRA_EXPORTED_METHODS ccall)
-endif()
+# if (OS_IS_WASM)
+#     set(QT_WASM_EXTRA_EXPORTED_METHODS ccall)
+# endif()
 
 find_package(Qt6 6.2 REQUIRED COMPONENTS ${qt_components})
 

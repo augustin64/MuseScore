@@ -31,6 +31,7 @@ add_definitions(
     # -DNO_QT_SUPPORT
     -DENGRAVING_NO_QTEXTDOCUMENT
     -DENGRAVING_NO_INTERACTIVE
+    -DDRAW_NO_QSVGRENDER           # QSvgRenderer (QtSvg) depends on QWidget in Qt5, this changes in Qt6
     # -DHAW_LOGGER_QT_SUPPORT
     -DQT_SUPPORT
     # -DHAW_PROFILER_ENABLED
