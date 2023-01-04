@@ -21,7 +21,8 @@
  */
 #include "application.h"
 
-#include <QApplication>
+// #include <QApplication> // QApplication depends on QWidget
+#include <QGuiApplication>
 #include <QProcess>
 
 using namespace mu::framework;

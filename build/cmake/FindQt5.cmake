@@ -10,7 +10,7 @@ set(CMAKE_AUTORCC ON)
 
 set(_components
     Core
-    # Gui
+    Gui
     # Network
     # NetworkAuth
     # Qml
@@ -20,7 +20,7 @@ set(_components
     # QuickWidgets
     # Xml
     # XmlPatterns
-    Svg
+    # Svg
     # Widgets
     # PrintSupport
     # OpenGL

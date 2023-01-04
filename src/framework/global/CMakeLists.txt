@@ -131,12 +131,12 @@ else()
         ${CMAKE_CURRENT_LIST_DIR}/settings.cpp
         ${CMAKE_CURRENT_LIST_DIR}/settings.h
 
-        ${CMAKE_CURRENT_LIST_DIR}/internal/application.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/internal/application.h
+        # ${CMAKE_CURRENT_LIST_DIR}/internal/application.cpp
+        # ${CMAKE_CURRENT_LIST_DIR}/internal/application.h
         ${CMAKE_CURRENT_LIST_DIR}/internal/globalconfiguration.cpp
         ${CMAKE_CURRENT_LIST_DIR}/internal/globalconfiguration.h
-        ${CMAKE_CURRENT_LIST_DIR}/internal/interactive.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/internal/interactive.h
+        # ${CMAKE_CURRENT_LIST_DIR}/internal/interactive.cpp
+        # ${CMAKE_CURRENT_LIST_DIR}/internal/interactive.h
         ${CMAKE_CURRENT_LIST_DIR}/internal/cryptographichash.cpp
         ${CMAKE_CURRENT_LIST_DIR}/internal/cryptographichash.h
         ${CMAKE_CURRENT_LIST_DIR}/internal/invoker.cpp
