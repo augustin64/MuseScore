@@ -102,6 +102,9 @@ add_subdirectory(importexport)
 
 add_executable(webmscore
     main.cpp
+
+    ${MU_ROOT}/src/converter/internal/compat/notationmeta.cpp
+    ${MU_ROOT}/src/converter/internal/compat/notationmeta.h
 )
 
 set_target_properties(engraving PROPERTIES COMPILE_FLAGS "-fPIC")

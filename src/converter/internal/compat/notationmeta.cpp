@@ -27,13 +27,13 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
-#include "engraving/dom/tempotext.h"
-#include "engraving/dom/text.h"
 
 #include "project/inotationproject.h"
 
 #include "audio/common/audioutils.h"
 #include "audio/common/audiotypes.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/excerpt.h"
 
 #include "log.h"
 
@@ -165,6 +165,7 @@ RetVal<std::string> NotationMeta::metaJson(mu::engraving::Score* score)
     json["pageFormat"] = pageFormatJson(score->style());
     json["textFramesData"] =  typeDataJson(score);
     json["tracks"] = tracksJsonArray(project);
+    json["excerpts"] = excerptsJsonArray(score);
 
     RetVal<std::string> result;
     result.ret = make_ret(Ret::Code::Ok);
@@ -296,6 +297,7 @@ QJsonArray NotationMeta::partsJsonArray(const mu::engraving::Score* score)
         int midiProgram = part->midiProgram();
         jsonPart.insert("program", midiProgram);
         jsonPart.insert("instrumentId", part->instrumentId().toQString());
+        jsonPart.insert("instrumentName", part->instrumentName().toQString());
         jsonPart.insert("lyricCount", part->lyricCount());
         jsonPart.insert("harmonyCount", part->harmonyCount());
         jsonPart.insert("hasPitchedStaff", boolToString(part->hasPitchedStaff()));
@@ -414,4 +416,23 @@ QJsonArray NotationMeta::tracksJsonArray(INotationProjectPtr project)
     }
 
     return jsonTracksArray;
+}
+
+QJsonArray NotationMeta::excerptsJsonArray(const Score* score) {
+    QJsonArray jsonExcerptsArray;
+
+    auto excerpts = score->masterScore()->excerpts();
+    for (int i = 0; i < excerpts.size(); i++) {
+        Excerpt* e = excerpts[i];
+        Score* part = e->excerptScore();
+
+        QJsonObject jsonExcerpt;
+        jsonExcerpt["id"] = i;
+        jsonExcerpt["title"] = e->name().toQString();
+        jsonExcerpt["parts"] = partsJsonArray(part);
+
+        jsonExcerptsArray.append(jsonExcerpt);
+    }
+
+    return jsonExcerptsArray;
 }

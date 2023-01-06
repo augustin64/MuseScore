@@ -49,5 +49,6 @@ private:
     static QJsonArray partsJsonArray(const mu::engraving::Score* score);
     static QJsonObject pageFormatJson(const mu::engraving::MStyle& style);
     static QJsonObject typeDataJson(mu::engraving::Score* score);
+    static QJsonArray excerptsJsonArray(const mu::engraving::Score* score);
 };
 }
