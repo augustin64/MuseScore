@@ -31,7 +31,7 @@ set(qt_components
     # Quick
     # QuickControls2
     # QuickWidgets
-    # Xml
+    Xml
     # Svg
     # ShaderTools
 
@@ -47,7 +47,7 @@ set(QT_LIBRARIES
     # Qt::Quick
     # Qt::QuickControls2
     # Qt::QuickWidgets
-    # Qt::Xml
+    Qt::Xml
     # Qt::Svg
 
     Qt::Core5Compat

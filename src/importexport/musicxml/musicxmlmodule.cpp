@@ -41,7 +41,7 @@ using namespace mu::iex::musicxml;
 static void musicxml_init_qrc()
 {
 #ifndef MUSICXML_NO_INTERNAL
-    Q_INIT_RESOURCE(musicxml);
+    // Q_INIT_RESOURCE(musicxml);
 #endif
 }
 

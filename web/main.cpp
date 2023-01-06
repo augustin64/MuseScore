@@ -12,11 +12,13 @@
 #include "global/internal/cryptographichash.h"
 #include "draw/drawmodule.h"
 #include "engraving/engravingmodule.h"
+#include "importexport/musicxml/musicxmlmodule.h"
 #include "importexport/guitarpro/guitarpromodule.h"
 
 #include "draw/ifontprovider.h"
 #include "engraving/libmscore/score.h"
 #include "engraving/engravingproject.h"
+#include "engraving/infrastructure/localfileinfoprovider.h"
 #include "engraving/compat/mscxcompat.h"
 #include "project/internal/notationreadersregister.h"
 #include "project/internal/notationwritersregister.h"
@@ -106,6 +108,9 @@ void _init(int argc, char** argv) {
     // file import/export
     modularity::ioc()->registerExport<project::INotationReadersRegister>("", new project::NotationReadersRegister());
     modularity::ioc()->registerExport<project::INotationWritersRegister>("", new project::NotationWritersRegister());
+    auto mxlM = new iex::musicxml::MusicXmlModule();
+    mxlM->registerExports();
+    mxlM->resolveImports();
     auto gpM = new iex::guitarpro::GuitarProModule();
     gpM->registerExports();
     gpM->resolveImports();
@@ -235,6 +240,8 @@ uintptr_t _load(const char* format, const char* data, const uint32_t size, bool 
     auto proj = mu::engraving::EngravingProject::create();
     // save smart pointer to keep the object alive
     instances.insert(proj);
+    // `MasterScore::name()` requires a `FileInfoProvider` to get the file name, etc.
+    proj->setFileInfoProvider(std::make_shared<engraving::LocalFileInfoProvider>(filePath));
     
     // do load
     Ret ret = engraving::isMuseScoreFile(format)
