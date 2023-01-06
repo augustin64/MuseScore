@@ -22,6 +22,7 @@
 #include "importmidi_operations.h"
 
 #include <QXmlStreamReader>
+#include <QFile>
 
 #include "log.h"
 
@@ -41,7 +42,7 @@ static int readBoolFromXml(QXmlStreamReader& xml)
         } else if (xml.text() == "false") {
             value = 0;
         } else {
-            LOGD() << "Load MIDI import operations from file: unknown" << name << "value";
+            LOGD() << "Load MIDI import operations from file: unknown" << String(name) << "value";
         }
     }
     return value;

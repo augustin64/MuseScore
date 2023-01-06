@@ -25,6 +25,8 @@
 
 #include <vector>
 #include <QIODevice>
+#include <QSet>
+#include <QAbstractTableModel>
 
 #include "../midishared/midievent.h"
 
