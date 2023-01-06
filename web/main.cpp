@@ -25,6 +25,7 @@
 #include "engraving/compat/writescorehook.h"
 #include "engraving/libmscore/excerpt.h"
 #include "engraving/libmscore/undo.h"
+#include "converter/internal/compat/notationmeta.h"
 
 using namespace mu;
 
@@ -294,18 +295,8 @@ void _generateExcerpts(uintptr_t score_ptr) {
  */
 const char* _title(uintptr_t score_ptr) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-
-    // code from MuseScore::saveMetadataJSON
-    // https://github.com/LibreScore/webmscore/blob/d1259f64/mscore/file.cpp#L3232-L3241
-    QString title;
-    engraving::Text* t = score->getText(engraving::TextStyleType::TITLE);
-    if (t)
-        title = t->plainText();
-    if (title.isEmpty())
-        title = score->metaTag(u"workTitle");
-    if (title.isEmpty())
-        title = score->name();
-
+    // https://github.com/LibreScore/webmscore/blob/v4.0/src/converter/internal/compat/notationmeta.cpp#L89-L107
+    QString title = converter::NotationMeta::title(score);
     return reallocData(
         title.toUtf8()
     );
