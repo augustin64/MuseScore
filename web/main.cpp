@@ -14,6 +14,7 @@
 #include "engraving/engravingmodule.h"
 #include "importexport/musicxml/musicxmlmodule.h"
 #include "importexport/guitarpro/guitarpromodule.h"
+#include "importexport/midi/midimodule.h"
 
 #include "draw/ifontprovider.h"
 #include "engraving/libmscore/score.h"
@@ -115,6 +116,10 @@ void _init(int argc, char** argv) {
     auto gpM = new iex::guitarpro::GuitarProModule();
     gpM->registerExports();
     gpM->resolveImports();
+    auto midiM = new iex::midi::MidiModule();
+    midiM->registerExports();
+    midiM->resolveImports();
+    midiM->onInit(framework::IApplication::RunMode::Converter);
 }
 
 /**

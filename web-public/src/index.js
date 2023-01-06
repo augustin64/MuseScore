@@ -107,13 +107,13 @@ class WebMscore {
 
         const mscore = new WebMscore(scoreptr)
 
-        // temporary workaround for rendering pdf/images from a midi file
-        if (format === 'midi' || format === 'kar') {
-            // reload from a mscx file
-            const buf = await mscore.saveMsc('mscx')
-            mscore.destroy(true)
-            return this.load('mscx', buf, [], doLayout)
-        }
+        // // temporary workaround for rendering pdf/images from a midi file
+        // if (format === 'midi' || format === 'kar') {
+        //     // reload from a mscx file
+        //     const buf = await mscore.saveMsc('mscx')
+        //     mscore.destroy(true)
+        //     return this.load('mscx', buf, [], doLayout)
+        // }
 
         return mscore
     }
