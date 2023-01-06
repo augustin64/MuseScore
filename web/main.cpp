@@ -12,6 +12,7 @@
 #include "global/internal/cryptographichash.h"
 #include "draw/drawmodule.h"
 #include "engraving/engravingmodule.h"
+#include "importexport/guitarpro/guitarpromodule.h"
 
 #include "draw/ifontprovider.h"
 #include "engraving/libmscore/score.h"
@@ -102,9 +103,12 @@ void _init(int argc, char** argv) {
     engM->registerExports();
     engM->onInit(framework::IApplication::RunMode::Converter);
 
-    // import/export
+    // file import/export
     modularity::ioc()->registerExport<project::INotationReadersRegister>("", new project::NotationReadersRegister());
     modularity::ioc()->registerExport<project::INotationWritersRegister>("", new project::NotationWritersRegister());
+    auto gpM = new iex::guitarpro::GuitarProModule();
+    gpM->registerExports();
+    gpM->resolveImports();
 }
 
 /**
