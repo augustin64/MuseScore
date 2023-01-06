@@ -4,6 +4,7 @@
 #include <QFontDatabase>
 #include <QTemporaryFile>
 #include "global/log.h"
+#include "global/defer.h"
 #include "global/io/buffer.h"
 
 #include "modularity/ioc.h"
@@ -14,13 +15,17 @@
 
 #include "draw/ifontprovider.h"
 #include "engraving/libmscore/score.h"
-#include "engraving/compat/scoreaccess.h"
-#include "engraving/compat/mscxcompat.h"
+#include "engraving/engravingproject.h"
+#include "engraving/infrastructure/localfileinfoprovider.h"
+#include "project/internal/notationreadersregister.h"
+#include "project/internal/notationwritersregister.h"
 #include "engraving/compat/writescorehook.h"
 #include "engraving/libmscore/excerpt.h"
 #include "engraving/libmscore/undo.h"
 
 using namespace mu;
+
+std::set<engraving::EngravingProjectPtr> instances;
 
 /**
  * helper functions
@@ -96,6 +101,10 @@ void _init(int argc, char** argv) {
     auto engM = new engraving::EngravingModule();
     engM->registerExports();
     engM->onInit(framework::IApplication::RunMode::Converter);
+
+    // import/export
+    modularity::ioc()->registerExport<project::INotationReadersRegister>("", new project::NotationReadersRegister());
+    modularity::ioc()->registerExport<project::INotationWritersRegister>("", new project::NotationWritersRegister());
 }
 
 /**
@@ -114,12 +123,104 @@ bool _addFont(const char* fontPath) {
 }
 
 /**
- * load the score data (a MSCZ/MSCX file buffer)
+ * Load MSCX/MSCZ
+ * https://github.com/LibreScore/webmscore/blob/v4.0/src/project/internal/notationproject.cpp#L187-L223
+ */
+Ret _doLoad(engraving::EngravingProjectPtr proj, QString filePath, bool doLayout) {
+    // Setup reader
+    engraving::MscReader::Params params;
+    // FIXME: the new mscx format in MuseScore 4 ???
+    // https://github.com/LibreScore/webmscore/blob/v4.0/src/engraving/infrastructure/mscio.h#L30-L70
+    std::string suffix = io::suffix(filePath.toStdString());
+    params.mode = engraving::mscIoModeBySuffix(suffix);
+    params.filePath = filePath;
+    engraving::MscReader reader(params);
+    reader.open();
+
+    engraving::Err err = proj->loadMscz(reader, true);
+    if (err != engraving::Err::NoError) {
+        return make_ret(err);
+    }
+
+    engraving::MasterScore* score = proj->masterScore();
+    IF_ASSERT_FAILED(score) {
+        return make_ret(engraving::Err::UnknownError);
+    }
+
+    // make `score->update()` in `doSetupMasterScore` have no effect,
+    // so that we could "do layout" later
+    score->lockUpdates(true);
+    DEFER {
+        score->lockUpdates(false);
+    };
+
+    // Setup master score
+    err = proj->setupMasterScore(true);
+    if (err != engraving::Err::NoError) {
+        return make_ret(err);
+    }
+
+    // do layout ...
+    score->lockUpdates(false);
+    if (doLayout) {
+        score->setLayoutAll(); // FIXME: 
+        score->update();
+        score->switchToPageMode();  // the default _layoutMode is LayoutMode::PAGE, but the score file may be saved in continuous mode
+    }
+
+    return make_ok();
+}
+
+/**
+ * Load other file formats
+ * https://github.com/LibreScore/webmscore/blob/v4.0/src/project/internal/notationproject.cpp#L246-L291
+ */
+Ret _doImport(engraving::EngravingProjectPtr proj, QString filePath, bool doLayout) {
+    // Find import reader
+    std::string suffix = io::suffix(filePath.toStdString());
+    auto readers = modularity::ioc()->resolve<project::INotationReadersRegister>("");
+    project::INotationReaderPtr scoreReader = readers->reader(suffix);
+    if (!scoreReader) {
+        return make_ret(engraving::Err::FileUnknownType);
+    }
+
+    // Setup import reader
+    project::INotationReader::Options options;
+    options[project::INotationReader::OptionKey::ForceMode] = Val(true);
+
+    // Read(import) master score
+    engraving::MasterScore* score = proj->masterScore();
+    Ret ret = scoreReader->read(score, filePath, options);
+    if (!ret.success()) {
+        return ret;
+    }
+
+    // post-processing for non-native formats
+    score->setMetaTag(u"originalFormat", QString::fromStdString(suffix));
+    score->connectTies(); // HACK: ???
+
+    if (!doLayout) {
+        // make `score->update()` in `doSetupMasterScore` have no effect
+        score->lockUpdates(true);
+        DEFER {
+            score->lockUpdates(false);
+        };
+    }
+
+    // Setup master score
+    engraving::Err err = proj->setupMasterScore(true);
+    if (err != engraving::Err::NoError) {
+        return make_ret(err);
+    }
+
+    return make_ok();
+}
+
+/**
+ * load score
  */
 uintptr_t _load(const char* format, const char* data, const uint32_t size, bool doLayout) {
     String _format = String::fromUtf8(format);  // file format of the data
-
-    engraving::MasterScore* score = engraving::compat::ScoreAccess::createMasterScore();
 
     // create a temporary file, and write `data` into it
     QTemporaryFile tempfile("XXXXXX." + _format);  // filename template for the temporary file
@@ -129,41 +230,30 @@ uintptr_t _load(const char* format, const char* data, const uint32_t size, bool 
         tempfile.write(data, size);
         tempfile.close(); // calls QFileDevice::flush() and closes the file
     }
-    QString name = tempfile.fileName(); // temporary filename
+    QString filePath = tempfile.fileName(); // temporary filename
+    DEFER {
+        // delete the temporary file
+        tempfile.remove();
+    };
 
-    engraving::Err rv = engraving::compat::loadMsczOrMscx(score, name, true);
-
-    // delete the temporary file
-    tempfile.remove();
+    // create engraving project
+    auto proj = mu::engraving::EngravingProject::create();
+    // save smart pointer to keep the object alive
+    instances.insert(proj);
+    // `loadMscz` requires a `FileInfoProvider` to get the `docName`, see https://github.com/LibreScore/webmscore/blob/v4.0/src/engraving/rw/scorereader.cpp#L91
+    proj->setFileInfoProvider(std::make_shared<engraving::LocalFileInfoProvider>(filePath));
+    
+    // do load
+    Ret ret = engraving::isMuseScoreFile(format)
+        ? _doLoad(proj, filePath, doLayout)
+        : _doImport(proj, filePath, doLayout);
 
     // handle exceptions
-    if (rv != engraving::Err::NoError) {
-        return char(rv);
+    if (!ret.success()) {
+        return char(ret.code());
     }
 
-    // post processing for non-native formats
-    if (!(_format == "mscz" || _format == "mscx")) {
-        score->setMetaTag(u"originalFormat", _format);
-        score->connectTies();
-    }
-
-    // mscore/file.cpp#L2387 readScore
-    score->rebuildMidiMapping();
-    score->setSoloMute();
-    for (auto s : score->scoreList()) {
-        s->setPlaylistDirty();
-        s->addLayoutFlags(engraving::LayoutFlag::FIX_PITCH_VELO);
-        s->setLayoutAll();
-    }
-    score->updateChannel();
-    // score->updateExpressive(MuseScore::synthesizer("Fluid"));
-
-    if (doLayout) {
-        // do layout ...
-        score->update();
-        score->switchToPageMode();  // the default _layoutMode is LayoutMode::PAGE, but the score file may be saved in continuous mode
-    }
-
+    engraving::MasterScore* score = proj->masterScore();
     return reinterpret_cast<uintptr_t>(score);
 }
 
@@ -379,7 +469,10 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE
     void destroy(uintptr_t score_ptr) {
-        delete (engraving::MasterScore*)score_ptr;
+        // remove the only alive reference to the smart pointer
+        engraving::EngravingProjectPtr a = ((engraving::MasterScore*)score_ptr)->project().lock();
+        instances.erase(a);
+        // destroying the `EngravingProject` also destroys its `MasterScore` in its destructor
     };
 
 }
