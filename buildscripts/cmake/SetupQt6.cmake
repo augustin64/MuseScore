@@ -31,7 +31,7 @@ set(qt_components
     # Quick
     # QuickControls2
     # QuickWidgets
-    Xml
+    # Xml
     # Svg
     # ShaderTools
 
