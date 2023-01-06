@@ -29,6 +29,8 @@
 
 #include "libmscore/tempotext.h"
 #include "libmscore/text.h"
+#include "libmscore/masterscore.h"
+#include "libmscore/excerpt.h"
 
 #include "log.h"
 #include "global/deprecated/xmlwriter.h"
@@ -82,6 +84,7 @@ mu::RetVal<std::string> NotationMeta::metaJson(mu::engraving::Score* score)
     json["parts"] =  partsJsonArray(score);
     json["pageFormat"] = pageFormatJson(score);
     json["textFramesData"] =  typeDataJson(score);
+    json["excerpts"] = excerptsJsonArray(score);
 
     RetVal<std::string> result;
     result.ret = make_ret(Ret::Code::Ok);
@@ -204,6 +207,7 @@ QJsonArray NotationMeta::partsJsonArray(const mu::engraving::Score* score)
         int midiProgram = part->midiProgram();
         jsonPart.insert("program", midiProgram);
         jsonPart.insert("instrumentId", part->instrumentId().toQString());
+        jsonPart.insert("instrumentName", part->instrumentName().toQString());
         jsonPart.insert("lyricCount", part->lyricCount());
         jsonPart.insert("harmonyCount", part->harmonyCount());
         jsonPart.insert("hasPitchedStaff", boolToString(part->hasPitchedStaff()));
@@ -263,4 +267,23 @@ QJsonObject NotationMeta::typeDataJson(mu::engraving::Score* score)
     }
 
     return typesData;
+}
+
+QJsonArray NotationMeta::excerptsJsonArray(const Score* score) {
+    QJsonArray jsonExcerptsArray;
+
+    auto excerpts = score->masterScore()->excerpts();
+    for (int i = 0; i < excerpts.size(); i++) {
+        Excerpt* e = excerpts[i];
+        Score* part = e->excerptScore();
+
+        QJsonObject jsonExcerpt;
+        jsonExcerpt["id"] = i;
+        jsonExcerpt["title"] = e->name().toQString();
+        jsonExcerpt["parts"] = partsJsonArray(part);
+
+        jsonExcerptsArray.append(jsonExcerpt);
+    }
+
+    return jsonExcerptsArray;
 }

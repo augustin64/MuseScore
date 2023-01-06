@@ -107,6 +107,13 @@ export interface ScoreMetadata {
     keysig: number;
 
     /**
+     * ```
+     * metaTag("source")
+     * ```
+     */
+    previousSource: string;
+
+    /**
      * @todo explanations
      */
     timesig: string;

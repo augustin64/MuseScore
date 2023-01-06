@@ -354,6 +354,18 @@ const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
     return packData(buffer.data().toQByteArrayNoCopy(), size);
 }
 /**
+ * save score metadata as JSON
+ */
+const char* _saveMetadata(uintptr_t score_ptr) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    auto result = converter::NotationMeta::metaJson(score);
+    // JSON is plain text
+    return reallocData(
+        QByteArray::fromStdString(result.val)  // UTF-8 encoded JSON data
+    );
+}
+
+/**
  * export functions (can only be C functions)
  */
 extern "C" {
