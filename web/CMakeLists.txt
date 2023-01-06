@@ -92,12 +92,11 @@ add_subdirectory(${MU_ROOT}/src/framework/global global)
 # set(DRAW_NO_INTERNAL ON)
 add_subdirectory(${MU_ROOT}/src/framework/draw draw)
 
-# set(NO_QT_SUPPORT ON)
 # set(ENGRAVING_NO_INTERNAL ON)
 set(ENGRAVING_NO_ACCESSIBILITY ON)
 add_subdirectory(${MU_ROOT}/src/engraving engraving)
 
-add_subdirectory(${MU_ROOT}/src/importexport/guitarpro guitarpro)
+add_subdirectory(importexport)
 
 add_executable(webmscore
     main.cpp
@@ -120,6 +119,6 @@ target_link_libraries(webmscore
     global
     draw
     engraving
-    iex_guitarpro
+    importexport
     freetype # important for supporting woff2 files
 )
