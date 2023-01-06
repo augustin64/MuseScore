@@ -16,7 +16,7 @@
 #include "draw/ifontprovider.h"
 #include "engraving/libmscore/score.h"
 #include "engraving/engravingproject.h"
-#include "engraving/infrastructure/localfileinfoprovider.h"
+#include "engraving/compat/mscxcompat.h"
 #include "project/internal/notationreadersregister.h"
 #include "project/internal/notationwritersregister.h"
 #include "engraving/compat/writescorehook.h"
@@ -66,7 +66,7 @@ engraving::MasterScore* maybeUseExcerpt(engraving::MasterScore* score, int excer
     // excerptId >= 0
     auto excerpts = score->excerpts();
 
-    if (excerptId >= excerpts.size()) {
+    if (excerptId >= (int)excerpts.size()) {
         LOGE() << String(u"Not a valid excerptId. (excerptId: %1)").arg(excerptId);
         throw;
     }
@@ -127,17 +127,8 @@ bool _addFont(const char* fontPath) {
  * https://github.com/LibreScore/webmscore/blob/v4.0/src/project/internal/notationproject.cpp#L187-L223
  */
 Ret _doLoad(engraving::EngravingProjectPtr proj, QString filePath, bool doLayout) {
-    // Setup reader
-    engraving::MscReader::Params params;
-    // FIXME: the new mscx format in MuseScore 4 ???
-    // https://github.com/LibreScore/webmscore/blob/v4.0/src/engraving/infrastructure/mscio.h#L30-L70
-    std::string suffix = io::suffix(filePath.toStdString());
-    params.mode = engraving::mscIoModeBySuffix(suffix);
-    params.filePath = filePath;
-    engraving::MscReader reader(params);
-    reader.open();
-
-    engraving::Err err = proj->loadMscz(reader, true);
+    // read score using the `compat` method
+    engraving::Err err = engraving::compat::loadMsczOrMscx(proj->masterScore(), filePath, true);
     if (err != engraving::Err::NoError) {
         return make_ret(err);
     }
@@ -240,8 +231,6 @@ uintptr_t _load(const char* format, const char* data, const uint32_t size, bool 
     auto proj = mu::engraving::EngravingProject::create();
     // save smart pointer to keep the object alive
     instances.insert(proj);
-    // `loadMscz` requires a `FileInfoProvider` to get the `docName`, see https://github.com/LibreScore/webmscore/blob/v4.0/src/engraving/rw/scorereader.cpp#L91
-    proj->setFileInfoProvider(std::make_shared<engraving::LocalFileInfoProvider>(filePath));
     
     // do load
     Ret ret = engraving::isMuseScoreFile(format)
