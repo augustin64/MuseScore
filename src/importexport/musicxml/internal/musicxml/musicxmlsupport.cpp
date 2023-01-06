@@ -166,6 +166,7 @@ QString MusicXMLInstrument::toString() const
            .arg(int(stemDirection));
 }
 
+#if 0
 void ValidatorMessageHandler::handleMessage(QtMsgType type, const QString& description,
                                             const QUrl& /* identifier */, const QSourceLocation& sourceLocation)
 {
@@ -209,6 +210,7 @@ void ValidatorMessageHandler::handleMessage(QtMsgType type, const QString& descr
     }
     m_errors += errorStr;
 }
+#endif
 
 //---------------------------------------------------------
 //   printDomElementPath

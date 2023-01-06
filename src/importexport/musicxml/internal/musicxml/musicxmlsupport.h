@@ -24,8 +24,11 @@
 #define __MUSICXMLSUPPORT_H__
 
 #include <QDomElement>
-#include <QAbstractMessageHandler>
-#include <QSourceLocation>
+#include <QXmlStreamReader>
+#include <QTextStream>
+#include <QSet>
+// #include <QAbstractMessageHandler>
+// #include <QSourceLocation>
 
 #include "engraving/types/fraction.h"
 #include "libmscore/mscore.h"
@@ -210,6 +213,7 @@ public:
     static Fraction calculateFraction(QString type, int dots, int normalNotes, int actualNotes);
 };
 
+#if 0
 //---------------------------------------------------------
 //   ValidatorMessageHandler
 //---------------------------------------------------------
@@ -231,6 +235,7 @@ protected:
 private:
     QString m_errors;
 };
+#endif
 
 extern void domError(const QDomElement&);
 extern void domNotImplemented(const QDomElement&);

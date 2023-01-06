@@ -26,9 +26,9 @@
 
 #include <QBuffer>
 #include <QDomDocument>
-#include <QMessageBox>
-#include <QXmlSchema>
-#include <QXmlSchemaValidator>
+// #include <QMessageBox> // no gui
+// #include <QXmlSchema> // no validate
+// #include <QXmlSchemaValidator> // no validate
 
 #include "importmxml.h"
 #include "musicxmlsupport.h"
@@ -66,6 +66,7 @@ static_assert(int(DurationType::V_BREVE) == int(DurationType::V_LONG) + 1
               && int(DurationType::V_512TH) == int(DurationType::V_256TH) + 1
               && int(DurationType::V_1024TH) == int(DurationType::V_512TH) + 1);
 
+#if 0 // no validate
 //---------------------------------------------------------
 //   initMusicXmlSchema
 //    return false on error
@@ -74,7 +75,7 @@ static_assert(int(DurationType::V_BREVE) == int(DurationType::V_LONG) + 1
 static bool initMusicXmlSchema(QXmlSchema& schema)
 {
     // read the MusicXML schema from the application resources
-    QFile schemaFile(":/schema/musicxml.xsd");
+    QFile schemaFile("/schema/musicxml.xsd");
     if (!schemaFile.open(QIODevice::ReadOnly | QIODevice::Text)) {
         LOGE("initMusicXmlSchema() could not open resource musicxml.xsd");
         return false;
@@ -103,7 +104,9 @@ static bool initMusicXmlSchema(QXmlSchema& schema)
 
     return true;
 }
+#endif
 
+#if 0 // no gui
 //---------------------------------------------------------
 //   musicXMLValidationErrorDialog
 //---------------------------------------------------------
@@ -125,6 +128,7 @@ static int musicXMLValidationErrorDialog(QString text, QString detailedText)
     errorDialog.setDefaultButton(QMessageBox::No);
     return errorDialog.exec();
 }
+#endif
 
 //---------------------------------------------------------
 //   extractRootfile
@@ -143,7 +147,7 @@ static bool extractRootfile(QFile* qf, QByteArray& data)
     int line, column;
     QString err;
     if (!container.setContent(data, false, &err, &line, &column)) {
-        LOGE() << QString("Error reading container.xml at line %1 column %2: %3\n").arg(line).arg(column).arg(err);
+        LOGE() << String("Error reading container.xml at line %1 column %2: %3\n").arg(line).arg(column).arg(err);
         return false;
     }
 
@@ -181,6 +185,7 @@ static bool extractRootfile(QFile* qf, QByteArray& data)
     return true;
 }
 
+#if 0 // no validate
 //---------------------------------------------------------
 //   doValidate
 //---------------------------------------------------------
@@ -241,6 +246,11 @@ static Err doValidateAndImport(Score* score, const QString& name, QIODevice* dev
     //LOGD("res %d", static_cast<int>(res));
     return res;
 }
+#endif
+
+// no validate
+// const auto doValidateAndImport = importMusicXMLfromBuffer;
+#define doValidateAndImport importMusicXMLfromBuffer 
 
 //---------------------------------------------------------
 //   importMusicXml

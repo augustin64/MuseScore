@@ -20,7 +20,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#include <QMessageBox>
+// #include <QMessageBox> // no gui
 
 #include "translation.h"
 
@@ -33,6 +33,7 @@
 #include "libmscore/score.h"
 
 namespace mu::engraving {
+#if 0 // no gui
 //---------------------------------------------------------
 //   musicXMLImportErrorDialog
 //---------------------------------------------------------
@@ -52,6 +53,7 @@ static int musicXMLImportErrorDialog(QString text, QString detailedText)
     errorDialog.setDefaultButton(QMessageBox::No);
     return errorDialog.exec();
 }
+#endif
 
 //---------------------------------------------------------
 //   importMusicXMLfromBuffer
@@ -86,6 +88,7 @@ Err importMusicXMLfromBuffer(Score* score, const QString& /*name*/, QIODevice* d
         }
     }
 
+#if 0 // no gui
     // report result
     const auto pass2_errors = pass2.errors();
     if (!(pass1_errors.isEmpty() && pass2_errors.isEmpty())) {
@@ -97,6 +100,7 @@ Err importMusicXMLfromBuffer(Score* score, const QString& /*name*/, QIODevice* d
             }
         }
     }
+#endif
 
     return res;
 }

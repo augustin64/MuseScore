@@ -41,7 +41,7 @@ static std::shared_ptr<MusicXmlConfiguration> s_configuration = std::make_shared
 
 static void musicxml_init_qrc()
 {
-    Q_INIT_RESOURCE(musicxml);
+    // Q_INIT_RESOURCE(musicxml);
 }
 
 std::string MusicXmlModule::moduleName() const
