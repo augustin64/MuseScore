@@ -130,7 +130,11 @@ RetVal<std::string> NotationMeta::metaJson(INotationProjectPtr project)
     }
 
     mu::engraving::Score* score = project->masterNotation()->notation()->elements()->msScore();
+    return metaJson(score);
+}
 
+RetVal<std::string> NotationMeta::metaJson(mu::engraving::Score* score)
+{
     IF_ASSERT_FAILED(score) {
         return make_ret(Ret::Code::UnknownError);
     }
