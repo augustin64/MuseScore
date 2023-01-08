@@ -33,15 +33,15 @@
 
 #include "notationpainting.h"
 #include "notationviewstate.h"
-#include "notationinteraction.h"
-#include "notationplayback.h"
-#include "notationundostack.h"
-#include "notationstyle.h"
+// #include "notationinteraction.h"
+// #include "notationplayback.h"
+// #include "notationundostack.h"
+// #include "notationstyle.h"
 #include "notationelements.h"
-#include "notationaccessibility.h"
-#include "notationmidiinput.h"
-#include "notationparts.h"
-#include "notationtypes.h"
+// #include "notationaccessibility.h"
+// #include "notationmidiinput.h"
+// #include "notationparts.h"
+#include "../notationtypes.h"
 #include "draw/types/pen.h"
 
 using namespace mu::notation;
@@ -50,54 +50,54 @@ Notation::Notation(mu::engraving::Score* score)
 {
     m_painting = std::make_shared<NotationPainting>(this);
     m_viewState = std::make_shared<NotationViewState>(this);
-    m_undoStack = std::make_shared<NotationUndoStack>(this, m_notationChanged);
-    m_interaction = std::make_shared<NotationInteraction>(this, m_undoStack);
-    m_midiInput = std::make_shared<NotationMidiInput>(this, m_interaction, m_undoStack);
-    m_accessibility = std::make_shared<NotationAccessibility>(this);
-    m_parts = std::make_shared<NotationParts>(this, m_interaction, m_undoStack);
-    m_style = std::make_shared<NotationStyle>(this, m_undoStack);
+    // m_undoStack = std::make_shared<NotationUndoStack>(this, m_notationChanged);
+    // m_interaction = std::make_shared<NotationInteraction>(this, m_undoStack);
+    // m_midiInput = std::make_shared<NotationMidiInput>(this, m_interaction, m_undoStack);
+    // m_accessibility = std::make_shared<NotationAccessibility>(this);
+    // m_parts = std::make_shared<NotationParts>(this, m_interaction, m_undoStack);
+    // m_style = std::make_shared<NotationStyle>(this, m_undoStack);
     m_elements = std::make_shared<NotationElements>(this);
 
-    m_interaction->noteInput()->noteAdded().onNotify(this, [this]() {
-        notifyAboutNotationChanged();
-    });
+    // m_interaction->noteInput()->noteAdded().onNotify(this, [this]() {
+    //     notifyAboutNotationChanged();
+    // });
 
-    m_interaction->dragChanged().onNotify(this, [this]() {
-        notifyAboutNotationChanged();
-    });
+    // m_interaction->dragChanged().onNotify(this, [this]() {
+    //     notifyAboutNotationChanged();
+    // });
 
-    m_interaction->textEditingChanged().onNotify(this, [this]() {
-        notifyAboutNotationChanged();
-    });
+    // m_interaction->textEditingChanged().onNotify(this, [this]() {
+    //     notifyAboutNotationChanged();
+    // });
 
-    m_interaction->dropChanged().onNotify(this, [this]() {
-        notifyAboutNotationChanged();
-    });
+    // m_interaction->dropChanged().onNotify(this, [this]() {
+    //     notifyAboutNotationChanged();
+    // });
 
-    m_midiInput->notesReceived().onReceive(this, [this](const std::vector<const Note*>&){
-        notifyAboutNotationChanged();
-    });
+    // m_midiInput->notesReceived().onReceive(this, [this](const std::vector<const Note*>&){
+    //     notifyAboutNotationChanged();
+    // });
 
-    m_style->styleChanged().onNotify(this, [this]() {
-        notifyAboutNotationChanged();
-    });
+    // m_style->styleChanged().onNotify(this, [this]() {
+    //     notifyAboutNotationChanged();
+    // });
 
-    m_parts->partsChanged().onNotify(this, [this]() {
-        notifyAboutNotationChanged();
-    });
+    // m_parts->partsChanged().onNotify(this, [this]() {
+    //     notifyAboutNotationChanged();
+    // });
 
-    engravingConfiguration()->selectionColorChanged().onReceive(this, [this](int, const mu::draw::Color&) {
-        notifyAboutNotationChanged();
-    });
+    // engravingConfiguration()->selectionColorChanged().onReceive(this, [this](int, const mu::draw::Color&) {
+    //     notifyAboutNotationChanged();
+    // });
 
-    configuration()->canvasOrientation().ch.onReceive(this, [this](framework::Orientation) {
-        if (m_score) {
-            m_score->doLayout();
-            for (mu::engraving::Score* score : m_score->scoreList()) {
-                score->doLayout();
-            }
-        }
-    });
+    // configuration()->canvasOrientation().ch.onReceive(this, [this](framework::Orientation) {
+    //     if (m_score) {
+    //         m_score->doLayout();
+    //         for (mu::engraving::Score* score : m_score->scoreList()) {
+    //             score->doLayout();
+    //         }
+    //     }
+    // });
 
     setScore(score);
 }

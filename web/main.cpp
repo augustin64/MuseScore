@@ -27,6 +27,7 @@
 #include "engraving/libmscore/excerpt.h"
 #include "engraving/libmscore/undo.h"
 #include "converter/internal/compat/notationmeta.h"
+#include "notation/internal/notation.h"
 
 using namespace mu;
 
@@ -315,6 +316,71 @@ int _npages(uintptr_t score_ptr, int excerptId) {
     score = maybeUseExcerpt(score, excerptId);
     return score->npages();
 }
+
+/**
+ * Export score file using one of the `NotationWriter`s
+ * https://github.com/LibreScore/webmscore/blob/v4.0/src/converter/internal/compat/backendapi.cpp#L465-L491
+ */
+Ret processWriter(String writerName, engraving::MasterScore * score, QByteArray* buffer) {
+    // Find file writer
+    auto writers = modularity::ioc()->resolve<project::INotationWritersRegister>("");
+    auto writer = writers->writer(writerName.toStdString());
+        if (!writer) {
+        LOGE() << "Not found writer " << writerName;
+        return make_ret(Ret::Code::InternalError);
+    }
+    
+    // Setup writer
+    QBuffer device(buffer);
+    device.open(QIODevice::ReadWrite);
+    DEFER {
+        device.close();
+    };
+
+    // FIXME: persist this `Notation` object
+    auto notation = std::make_shared<notation::Notation>(score);
+
+    // Write
+    Ret writeRet = writer->write(notation, device);
+    if (!writeRet) {
+        LOGE() << writeRet.toString();
+        return writeRet;
+    }
+
+    return make_ok();
+}
+
+/**
+ * export score as MusicXML file
+ */
+const char* _saveXml(uintptr_t score_ptr, int excerptId) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    score = maybeUseExcerpt(score, excerptId);
+
+    QByteArray data;
+    processWriter(u"xml", score, &data);
+    LOGI() << String(u"excerpt %1, size %2 bytes").arg(excerptId, data.size());
+
+    // MusicXML is plain text
+    return reallocData(
+        QString(data).toUtf8()
+    );
+}
+
+/**
+ * export score as compressed MusicXML file
+ */
+const char* _saveMxl(uintptr_t score_ptr, int excerptId) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    score = maybeUseExcerpt(score, excerptId);
+
+    QByteArray data;
+    processWriter(u"mxl", score, &data);
+    LOGI() << String(u"excerpt %1, size %2 bytes").arg(excerptId, data.size());
+
+    return packData(data, data.size());
+}
+
 /**
  * save part score as MSCZ/MSCX file
  */

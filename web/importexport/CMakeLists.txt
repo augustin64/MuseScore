@@ -6,6 +6,17 @@ set(MODULE_SRC
     ${MU_ROOT}/src/project/internal/notationreadersregister.h
     ${MU_ROOT}/src/project/internal/notationwritersregister.cpp
     ${MU_ROOT}/src/project/internal/notationwritersregister.h
+
+    ${MU_ROOT}/src/notation/internal/notation.cpp
+    ${MU_ROOT}/src/notation/internal/notation.h
+    ${MU_ROOT}/src/notation/internal/notationelements.cpp
+    ${MU_ROOT}/src/notation/internal/notationelements.h
+    ${MU_ROOT}/src/notation/internal/notationpainting.cpp
+    ${MU_ROOT}/src/notation/internal/notationpainting.h
+    ${MU_ROOT}/src/notation/internal/notationviewstate.cpp
+    ${MU_ROOT}/src/notation/internal/notationviewstate.h
+    ${MU_ROOT}/src/notation/internal/searchcommandsparser.cpp
+    ${MU_ROOT}/src/notation/internal/searchcommandsparser.h
 )
 
 add_subdirectory(${MU_ROOT}/src/importexport/musicxml musicxml)

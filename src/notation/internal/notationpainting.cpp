@@ -28,7 +28,7 @@
 #include "engraving/infrastructure/debugpaint.h"
 
 #include "notation.h"
-#include "notationinteraction.h"
+// #include "notationinteraction.h"
 
 #include "log.h"
 
@@ -225,9 +225,9 @@ void NotationPainting::doPaint(draw::Painter* painter, const Options& opt)
             }
         }
 
-        if (!opt.isPrinting) {
-            static_cast<NotationInteraction*>(m_notation->interaction().get())->paint(painter);
-        }
+        // if (!opt.isPrinting) {
+        //     static_cast<NotationInteraction*>(m_notation->interaction().get())->paint(painter);
+        // }
     }
 }
 
