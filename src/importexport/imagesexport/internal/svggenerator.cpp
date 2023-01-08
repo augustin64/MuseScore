@@ -27,6 +27,7 @@
 #include <QMimeType>
 #include <QMimeDatabase>
 #include <QPaintEngine>
+#include <QFile>
 
 #include "svggenerator.h"
 #include "types/bytearray.h"

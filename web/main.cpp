@@ -15,6 +15,7 @@
 #include "importexport/musicxml/musicxmlmodule.h"
 #include "importexport/guitarpro/guitarpromodule.h"
 #include "importexport/midi/midimodule.h"
+#include "importexport/imagesexport/imagesexportmodule.h"
 
 #include "draw/ifontprovider.h"
 #include "engraving/libmscore/score.h"
@@ -30,6 +31,7 @@
 #include "notation/internal/mscnotationwriter.h"
 
 using namespace mu;
+using project::INotationWriter;
 
 std::set<engraving::EngravingProjectPtr> instances;
 
@@ -121,7 +123,11 @@ void _init(int argc, char** argv) {
     midiM->registerExports();
     midiM->resolveImports();
     midiM->onInit(framework::IApplication::RunMode::Converter);
-    
+    auto imgM = new iex::imagesexport::ImagesExportModule();
+    imgM->registerExports();
+    imgM->resolveImports();
+    imgM->onInit(framework::IApplication::RunMode::Converter);
+
     auto writers = modularity::ioc()->resolve<project::INotationWritersRegister>("");
     writers->reg({ engraving::MSCZ }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Zip));
     // writers->reg({ engraving::MSCX }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Dir));
@@ -326,7 +332,7 @@ int _npages(uintptr_t score_ptr, int excerptId) {
  * Export score file using one of the `NotationWriter`s
  * https://github.com/LibreScore/webmscore/blob/v4.0/src/converter/internal/compat/backendapi.cpp#L465-L491
  */
-Ret processWriter(String writerName, engraving::MasterScore * score, QByteArray* buffer) {
+Ret processWriter(String writerName, engraving::MasterScore * score, QByteArray* buffer, const INotationWriter::Options& options = INotationWriter::Options()) {
     // Find file writer
     auto writers = modularity::ioc()->resolve<project::INotationWritersRegister>("");
     auto writer = writers->writer(writerName.toStdString());
@@ -346,7 +352,7 @@ Ret processWriter(String writerName, engraving::MasterScore * score, QByteArray*
     auto notation = std::make_shared<notation::Notation>(score);
 
     // Write
-    Ret writeRet = writer->write(notation, device);
+    Ret writeRet = writer->write(notation, device, options);
     if (!writeRet) {
         LOGE() << writeRet.toString();
         return writeRet;
@@ -432,6 +438,68 @@ const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
     return packData(data, data.size());
 }
 
+/**
+ * export score as SVG
+ */
+const char* _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, int excerptId) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    score = maybeUseExcerpt(score, excerptId);
+
+    // config
+    score->switchToPageMode();
+    INotationWriter::Options options {
+        { INotationWriter::OptionKey::PAGE_NUMBER, Val(pageNumber) },
+        { INotationWriter::OptionKey::TRANSPARENT_BACKGROUND, Val(!drawPageBackground) },
+        // { INotationWriter::OptionKey::BEATS_COLORS, Val::fromQVariant(beatsColors) }
+    };
+
+    QByteArray data;
+    processWriter(u"svg", score, &data, options);
+    LOGI() << String(u"excerpt %1, page index %2, size %3 bytes").arg(excerptId, pageNumber, data.size());
+
+    // SVG is plain text
+    return reallocData(
+        QString(data).toUtf8()
+    );
+}
+
+/**
+ * export score as PNG
+ */
+const char* _savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, bool transparent, int excerptId) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    score = maybeUseExcerpt(score, excerptId);
+
+    // config
+    score->switchToPageMode();
+    INotationWriter::Options options {
+        { INotationWriter::OptionKey::PAGE_NUMBER, Val(pageNumber) },
+        { INotationWriter::OptionKey::TRANSPARENT_BACKGROUND, Val(!drawPageBackground) },
+    };
+
+    QByteArray data;
+    processWriter(u"png", score, &data, options);
+    LOGI() << String(u"savePng: excerpt %1, page index %2, drawPageBackground %3, transparent %4, size %5 bytes").arg(excerptId).arg(pageNumber).arg(drawPageBackground).arg(transparent).arg(data.size());
+
+    return packData(data, data.size());
+}
+
+/**
+ * export score as PDF
+ */
+const char* _savePdf(uintptr_t score_ptr, int excerptId) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    score = maybeUseExcerpt(score, excerptId);
+
+    INotationWriter::Options options;
+    // options[INotationWriter::OptionKey::UNIT_TYPE] = Val(INotationWriter::UnitType::MULTI_PART);
+
+    QByteArray data;
+    processWriter(u"pdf", score, &data, options);
+    LOGI() << String(u"excerpt %1, size %2 bytes").arg(excerptId, data.size());
+
+    return packData(data, data.size());
+}
 /**
  * save score metadata as JSON
  */
