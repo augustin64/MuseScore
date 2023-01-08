@@ -29,6 +29,7 @@
 #include "converter/internal/compat/notationmeta.h"
 #include "notation/internal/notation.h"
 #include "notation/internal/mscnotationwriter.h"
+#include "importexport/midi/internal/midiexport/exportmidi.h"
 
 using namespace mu;
 using project::INotationWriter;
@@ -500,6 +501,29 @@ const char* _savePdf(uintptr_t score_ptr, int excerptId) {
 
     return packData(data, data.size());
 }
+
+/**
+ * export score as MIDI
+ */
+const char* _saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRPNs, int excerptId) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    score = maybeUseExcerpt(score, excerptId);
+
+    QBuffer buffer;
+    buffer.open(QIODevice::ReadWrite);
+
+    // use `exportMidi.write` directly
+    // https://github.com/LibreScore/webmscore/blob/v4.0/src/importexport/midi/internal/notationmidiwriter.cpp#L57-L64
+    iex::midi::ExportMidi exportMidi(score);
+    auto synthesizerState = score->synthesizerState();
+    exportMidi.write(&buffer, midiExpandRepeats, exportRPNs, synthesizerState);
+
+    int size = buffer.size();
+    LOGI() << String(u"excerpt %1, midiExpandRepeats %2, exportRPNs %3, size %4").arg(excerptId).arg(midiExpandRepeats).arg(exportRPNs).arg(size);
+
+    return packData(buffer.data(), size);
+}
+
 /**
  * save score metadata as JSON
  */
