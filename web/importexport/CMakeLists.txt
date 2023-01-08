@@ -17,6 +17,9 @@ set(MODULE_SRC
     ${MU_ROOT}/src/notation/internal/notationviewstate.h
     ${MU_ROOT}/src/notation/internal/searchcommandsparser.cpp
     ${MU_ROOT}/src/notation/internal/searchcommandsparser.h
+
+    ${MU_ROOT}/src/notation/internal/mscnotationwriter.cpp
+    ${MU_ROOT}/src/notation/internal/mscnotationwriter.h
 )
 
 add_subdirectory(${MU_ROOT}/src/importexport/musicxml musicxml)

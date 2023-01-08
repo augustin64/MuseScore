@@ -83,6 +83,11 @@ mu::Ret MscNotationWriter::write(INotationPtr notation, QIODevice& destinationDe
     notation->elements()->msScore()->masterScore()->project().lock()->writeMscz(msczWriter, false, true);
 
     if (m_mode != MscIoMode::Dir) {
+        // fix "ASSERT FAILED!" in isOpenModeReadable()
+        // `buf` opened as `IODevice::WriteOnly`, see src/engraving/infrastructure/mscwriter.cpp#L265
+        msczWriter.close(); // do some cleanups, e.g. add the end tag
+        buf.open(IODevice::ReadWrite);
+
         ByteArray ba = buf.readAll();
         destinationDevice.write(reinterpret_cast<const char*>(ba.constData()), ba.size());
     }

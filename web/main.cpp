@@ -23,11 +23,11 @@
 #include "engraving/compat/mscxcompat.h"
 #include "project/internal/notationreadersregister.h"
 #include "project/internal/notationwritersregister.h"
-#include "engraving/compat/writescorehook.h"
 #include "engraving/libmscore/excerpt.h"
 #include "engraving/libmscore/undo.h"
 #include "converter/internal/compat/notationmeta.h"
 #include "notation/internal/notation.h"
+#include "notation/internal/mscnotationwriter.h"
 
 using namespace mu;
 
@@ -121,6 +121,10 @@ void _init(int argc, char** argv) {
     midiM->registerExports();
     midiM->resolveImports();
     midiM->onInit(framework::IApplication::RunMode::Converter);
+    
+    auto writers = modularity::ioc()->resolve<project::INotationWritersRegister>("");
+    writers->reg({ "mscz" }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Zip));
+    writers->reg({ "mscx" }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Dir));
 }
 
 /**
@@ -329,7 +333,7 @@ Ret processWriter(String writerName, engraving::MasterScore * score, QByteArray*
         LOGE() << "Not found writer " << writerName;
         return make_ret(Ret::Code::InternalError);
     }
-    
+
     // Setup writer
     QBuffer device(buffer);
     device.open(QIODevice::ReadWrite);
@@ -399,15 +403,12 @@ const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
         }
     }
 
-    io::Buffer buffer;
-    buffer.open(io::IODevice::ReadWrite);
-
-    engraving::compat::WriteScoreHook hook;
-    compressed = 0; // FIXME: 
+    QByteArray data;
+    Ret ret;
     if (compressed) {
-        // score->saveCompressedFile(&buffer, "score.mscx", false, true);
+        ret = processWriter(u"mscz", score, &data);
     } else {
-        score->writeScore(&buffer, false, false, hook);
+        ret = processWriter(u"mscx", score, &data);
     }
 
     if (!score->isMaster()) {  // remove metaTags added above
@@ -419,11 +420,10 @@ const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
         }
     }
 
-    auto size = buffer.size();
-    LOGI() << String(u"saveMsc: compressed %1, excerpt %2, size %3").arg(compressed, excerptId, (int)size);
-
-    return packData(buffer.data().toQByteArrayNoCopy(), size);
+    LOGI() << String(u"ret %1 %2, compressed %3, excerpt %4, size %5").arg(ret.code()).arg(String::fromStdString(ret.text())).arg(compressed, excerptId, data.size());
+    return packData(data, data.size());
 }
+
 /**
  * save score metadata as JSON
  */
