@@ -29,6 +29,7 @@
 #include <QTextStream>
 
 #include <QStringConverter>
+#include <QFile>
 
 #include "svggenerator.h"
 #include "types/bytearray.h"
