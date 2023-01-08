@@ -80,6 +80,13 @@ Ret MscNotationWriter::write(INotationPtr notation, io::IODevice& device, const 
     }
 
     MscWriter msczWriter(params);
+    if (m_mode != MscIoMode::Dir) {
+        // fix "ASSERT FAILED!" in isOpenModeReadable()
+        // `buf` opened as `IODevice::WriteOnly`, see src/engraving/infrastructure/mscwriter.cpp#L265
+        msczWriter.close(); // do some cleanups, e.g. add the end tag
+        buf.open(IODevice::ReadWrite);
+    }
+
     if (!msczWriter.open()) {
         LOGE() << "MscWriter is not opened";
         return Ret(Ret::Code::UnknownError);
