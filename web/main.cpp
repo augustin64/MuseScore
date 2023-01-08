@@ -123,8 +123,9 @@ void _init(int argc, char** argv) {
     midiM->onInit(framework::IApplication::RunMode::Converter);
     
     auto writers = modularity::ioc()->resolve<project::INotationWritersRegister>("");
-    writers->reg({ "mscz" }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Zip));
-    writers->reg({ "mscx" }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Dir));
+    writers->reg({ engraving::MSCZ }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Zip));
+    // writers->reg({ engraving::MSCX }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Dir));
+    writers->reg({ engraving::MSCS }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::XmlFile));
 }
 
 /**
@@ -404,11 +405,18 @@ const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
     }
 
     QByteArray data;
-    Ret ret;
-    if (compressed) {
-        ret = processWriter(u"mscz", score, &data);
-    } else {
-        ret = processWriter(u"mscx", score, &data);
+    Ret ret = processWriter(u"mscz", score, &data);
+    if (!compressed) {
+        // HACK: read the .mscx file inside mscz
+        // In MuseScore 4, the so-called "mscx" is exported as a directory
+        io::Buffer msczBuf((const uint8_t*)data.constData(), data.size());
+        engraving::MscReader::Params params;
+        params.device = &msczBuf;
+        params.mode = engraving::MscIoMode::Zip;
+
+        engraving::MscReader reader(params);
+        reader.open();
+        data = reader.readScoreFile().toQByteArray(); // can't use `NoCopy` here because `msczBuf` is destroyed as the code block ends
     }
 
     if (!score->isMaster()) {  // remove metaTags added above
