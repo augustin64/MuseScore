@@ -28,7 +28,7 @@
 #include "modularity/ioc.h"
 #include "../inotationconfiguration.h"
 #include "engraving/iengravingconfiguration.h"
-#include "ui/iuiconfiguration.h"
+// #include "ui/iuiconfiguration.h"
 
 namespace mu::engraving {
 class Score;
@@ -41,7 +41,7 @@ class NotationPainting : public INotationPainting
 {
     INJECT(notation, INotationConfiguration, configuration)
     INJECT(notation, engraving::IEngravingConfiguration, engravingConfiguration)
-    INJECT(notation, ui::IUiConfiguration, uiConfiguration)
+    // INJECT(notation, ui::IUiConfiguration, uiConfiguration)
 
 public:
     NotationPainting(Notation* notation);

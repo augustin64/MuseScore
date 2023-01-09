@@ -69,11 +69,11 @@ void EngravingConfiguration::init()
 
         settings()->setDefaultValue(key, Val(defaultVoiceColors[voice].toQColor()));
         settings()->setCanBeManuallyEdited(key, true);
-        settings()->valueChanged(key).onReceive(this, [this, voice](const Val& val) {
-            Color color = val.toQColor();
-            voiceColorKeys[voice].color = color;
-            m_voiceColorChanged.send(voice, color);
-        });
+        // settings()->valueChanged(key).onReceive(this, [this, voice](const Val& val) {
+        //     Color color = val.toQColor();
+        //     voiceColorKeys[voice].color = color;
+        //     m_voiceColorChanged.send(voice, color);
+        // });
 
         Color currentColor = settings()->value(key).toQColor();
         voiceColorKeys[voice] = VoiceColorKey { std::move(key), currentColor };
@@ -145,7 +145,7 @@ SizeF EngravingConfiguration::defaultPageSize() const
 
 mu::String EngravingConfiguration::iconsFontFamily() const
 {
-    return String::fromStdString(uiConfiguration()->iconsFontFamily());
+    // return String::fromStdString(uiConfiguration()->iconsFontFamily());
 }
 
 Color EngravingConfiguration::defaultColor() const
@@ -206,7 +206,7 @@ Color EngravingConfiguration::noteBackgroundColor() const
 
 double EngravingConfiguration::guiScaling() const
 {
-    return uiConfiguration()->guiScaling();
+    // return uiConfiguration()->guiScaling();
 }
 
 Color EngravingConfiguration::selectionColor(voice_idx_t voice, bool itemVisible) const
@@ -258,17 +258,17 @@ mu::async::Notification EngravingConfiguration::scoreInversionChanged() const
 
 const IEngravingConfiguration::DebuggingOptions& EngravingConfiguration::debuggingOptions() const
 {
-    return m_debuggingOptions.val;
+    // return m_debuggingOptions.val;
 }
 
 void EngravingConfiguration::setDebuggingOptions(const DebuggingOptions& options)
 {
-    m_debuggingOptions.set(options);
+    // m_debuggingOptions.set(options);
 }
 
 mu::async::Notification EngravingConfiguration::debuggingOptionsChanged() const
 {
-    return m_debuggingOptions.notification;
+    // return m_debuggingOptions.notification;
 }
 
 bool EngravingConfiguration::isAccessibleEnabled() const

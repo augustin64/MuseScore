@@ -112,16 +112,13 @@ set_target_properties(webmscore PROPERTIES COMPILE_FLAGS "-fPIC")
 set_target_properties (webmscore PROPERTIES LINK_FLAGS ${WASM_LINK_FLAGS})
 
 target_include_directories(webmscore PUBLIC
-    ${MU_ROOT}/src/framework
     ${MU_ROOT}/src/framework/global
-    ${MU_ROOT}/src
     ${MU_ROOT}/src/engraving
 )
 
 target_link_libraries(webmscore
     ${QT_LIBRARIES}
     global
-    draw
     engraving
     importexport
     freetype # important for supporting woff2 files

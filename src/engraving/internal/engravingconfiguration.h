@@ -26,7 +26,7 @@
 
 #include "modularity/ioc.h"
 #include "global/iglobalconfiguration.h"
-#include "ui/iuiconfiguration.h"
+// #include "ui/iuiconfiguration.h"
 #include "accessibility/iaccessibilityconfiguration.h"
 #include "importexport/guitarpro/iguitarproconfiguration.h"
 
@@ -36,7 +36,7 @@ namespace mu::engraving {
 class EngravingConfiguration : public IEngravingConfiguration, public async::Asyncable
 {
     INJECT(engraving, mu::framework::IGlobalConfiguration, globalConfiguration)
-    INJECT(engraving, mu::ui::IUiConfiguration, uiConfiguration)
+    // INJECT(engraving, mu::ui::IUiConfiguration, uiConfiguration)
     INJECT(engraving, mu::accessibility::IAccessibilityConfiguration, accessibilityConfiguration)
     INJECT(engraving, iex::guitarpro::IGuitarProConfiguration, guitarProConfiguration);
 
@@ -100,7 +100,7 @@ private:
     async::Channel<voice_idx_t, draw::Color> m_voiceColorChanged;
     async::Notification m_scoreInversionChanged;
 
-    ValNt<DebuggingOptions> m_debuggingOptions;
+    // ValNt<DebuggingOptions> m_debuggingOptions;
 
     bool m_multiVoice = false;
 };
