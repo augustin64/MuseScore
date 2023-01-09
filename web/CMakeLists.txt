@@ -37,6 +37,8 @@ add_definitions(
     # -DHAW_PROFILER_ENABLED
     -DNDEBUG
     -DQT_NO_DEBUG
+    -DCUSTOM_ALLOCATOR_DISABLED    # the custom memory allocator malfunctions ('memory access out of bounds') when destroying and re-creating a new `WebMscore` instance, so disable it
+
     -DMUSICXML_NO_VALIDATION
     -DMUSICXML_NO_INTERACTIVE
 )
