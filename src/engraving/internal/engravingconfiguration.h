@@ -26,7 +26,7 @@
 
 #include "modularity/ioc.h"
 #include "global/iglobalconfiguration.h"
-#include "ui/iuiconfiguration.h"
+// #include "ui/iuiconfiguration.h"
 #include "accessibility/iaccessibilityconfiguration.h"
 #include "importexport/guitarpro/iguitarproconfiguration.h"
 
@@ -36,7 +36,7 @@ namespace mu::engraving {
 class EngravingConfiguration : public IEngravingConfiguration, public muse::Injectable, public muse::async::Asyncable
 {
     muse::Inject<muse::IGlobalConfiguration> globalConfiguration = { this };
-    muse::Inject<muse::ui::IUiConfiguration> uiConfiguration = { this };
+    // muse::Inject<muse::ui::IUiConfiguration> uiConfiguration = { this };
     muse::Inject<muse::accessibility::IAccessibilityConfiguration> accessibilityConfiguration = { this };
     muse::Inject<iex::guitarpro::IGuitarProConfiguration> guitarProConfiguration = { this };
 
@@ -139,7 +139,7 @@ private:
     muse::async::Channel<muse::io::path_t> m_defaultStyleFilePathChanged;
     muse::async::Channel<muse::io::path_t> m_partStyleFilePathChanged;
 
-    muse::ValNt<DebuggingOptions> m_debuggingOptions;
+    // muse::ValNt<DebuggingOptions> m_debuggingOptions;
 
     bool m_multiVoice = false;
 };

@@ -97,11 +97,11 @@ void EngravingConfiguration::init()
         settings()->setDefaultValue(key, Val(DEFAULT_VOICE_COLORS[voice].toQColor()));
         settings()->setDescription(key, muse::qtrc("engraving", "Voice %1 color").arg(voice + 1).toStdString());
         settings()->setCanBeManuallyEdited(key, true);
-        settings()->valueChanged(key).onReceive(this, [this, voice](const Val& val) {
-            Color color = val.toQColor();
-            VOICE_COLORS[voice].color = color;
-            m_voiceColorChanged.send(voice, color);
-        });
+        // settings()->valueChanged(key).onReceive(this, [this, voice](const Val& val) {
+        //     Color color = val.toQColor();
+        //     VOICE_COLORS[voice].color = color;
+        //     m_voiceColorChanged.send(voice, color);
+        // });
 
         Color currentColor = settings()->value(key).toQColor();
         VOICE_COLORS[voice] = VoiceColor { std::move(key), currentColor };
@@ -241,7 +241,7 @@ SizeF EngravingConfiguration::defaultPageSize() const
 
 muse::String EngravingConfiguration::iconsFontFamily() const
 {
-    return String::fromStdString(uiConfiguration()->iconsFontFamily());
+    // return String::fromStdString(uiConfiguration()->iconsFontFamily());
 }
 
 Color EngravingConfiguration::defaultColor() const
@@ -302,7 +302,7 @@ Color EngravingConfiguration::voiceColor(voice_idx_t voiceIdx) const
 
 double EngravingConfiguration::guiScaling() const
 {
-    return uiConfiguration()->guiScaling();
+    // return uiConfiguration()->guiScaling();
 }
 
 Color EngravingConfiguration::selectionColor(voice_idx_t voice, bool itemVisible, bool itemIsUnlinkedFromScore) const
@@ -427,17 +427,17 @@ muse::async::Channel<Color> EngravingConfiguration::unlinkedColorChanged() const
 
 const IEngravingConfiguration::DebuggingOptions& EngravingConfiguration::debuggingOptions() const
 {
-    return m_debuggingOptions.val;
+    // return m_debuggingOptions.val;
 }
 
 void EngravingConfiguration::setDebuggingOptions(const DebuggingOptions& options)
 {
-    m_debuggingOptions.set(options);
+    // m_debuggingOptions.set(options);
 }
 
 muse::async::Notification EngravingConfiguration::debuggingOptionsChanged() const
 {
-    return m_debuggingOptions.notification;
+    // return m_debuggingOptions.notification;
 }
 
 bool EngravingConfiguration::isAccessibleEnabled() const
