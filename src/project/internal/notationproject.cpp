@@ -21,6 +21,7 @@
  */
 #include "notationproject.h"
 
+#include <QSet>
 #include <QBuffer>
 #include <QDir>
 #include <QFile>
@@ -625,14 +626,14 @@ Ret NotationProject::doSave(const muse::io::path_t& path, engraving::MscIoMode i
     {
         if ((fileSystem()->exists(savePath) && !fileSystem()->isWritable(savePath))
             || (fileSystem()->exists(targetContainerPath) && !fileSystem()->isWritable(targetContainerPath))) {
-            LOGE() << "failed save, not writable path: " << targetContainerPath;
+            LOGE() << "failed save, not writable path: " << String(targetContainerPath);
             return make_ret(io::Err::FSWriteError);
         }
 
         if (ioMode == engraving::MscIoMode::Dir) {
             // Dir needs to be created, otherwise we can't move to it
             if (!QDir(targetContainerPath).mkpath(".")) {
-                LOGE() << "Couldn't create container directory: " << targetContainerPath;
+                LOGE() << "Couldn't create container directory: " << String(targetContainerPath);
                 return make_ret(io::Err::FSMakingError);
             }
         }
@@ -739,7 +740,7 @@ Ret NotationProject::doSave(const muse::io::path_t& path, engraving::MscIoMode i
                               QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::ReadGroup | QFile::ReadOther);
     }
 
-    LOGI() << "success save file: " << targetContainerPath;
+    LOGI() << "success save file: " << String(targetContainerPath);
     return make_ret(Ret::Code::Ok);
 }
 
@@ -789,7 +790,7 @@ muse::Ret NotationProject::writeRange(const muse::io::path_t& path, const engrav
 
     // Check writable
     if (fileSystem()->exists(path) && !fileSystem()->isWritable(path)) {
-        LOGE() << "failed save, not writable path: " << path;
+        LOGE() << "failed save, not writable path: " << String(path);
         return make_ret(notation::Err::UnknownError);
     }
 
@@ -809,7 +810,7 @@ muse::Ret NotationProject::writeRange(const muse::io::path_t& path, const engrav
         QFile::setPermissions(path.toQString(),
                               QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::ReadGroup | QFile::ReadOther);
     }
-    LOGI() << "success save file: " << path;
+    LOGI() << "success save file: " << String(path);
     return ret;
 }
 

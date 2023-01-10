@@ -35,7 +35,7 @@
 #include "notationelements.h"
 // #include "notationaccessibility.h"
 // #include "notationmidiinput.h"
-// #include "notationparts.h"
+#include "notationparts.h"
 #include "notationtypes.h"
 #include "draw/types/pen.h"
 
@@ -55,6 +55,7 @@ Notation::Notation(const muse::modularity::ContextPtr& iocCtx, mu::engraving::Sc
     //m_midiInput = std::make_shared<NotationMidiInput>(this, m_interaction, m_undoStack, iocContext());
     //m_accessibility = std::make_shared<NotationAccessibility>(this);
     //m_parts = std::make_shared<NotationParts>(this, m_interaction, m_undoStack);
+    m_parts = std::make_shared<NotationParts>(this, nullptr, nullptr);
     //m_style = std::make_shared<NotationStyle>(this, m_undoStack);
     m_elements = std::make_shared<NotationElements>(this);
 

@@ -141,9 +141,9 @@ void NotationConfiguration::init()
         m_backgroundChanged.notify();
     });
 
-    uiConfiguration()->currentThemeChanged().onNotify(this, [this]() {
-        m_backgroundChanged.notify();
-    });
+    // uiConfiguration()->currentThemeChanged().onNotify(this, [this]() {
+    //     m_backgroundChanged.notify();
+    // });
 
     settings()->setDefaultValue(LIGHT_SCORE_BACKGROUND_COLOR, Val(QColor("#BCC1CC")));
     settings()->valueChanged(LIGHT_SCORE_BACKGROUND_COLOR).onReceive(nullptr, [this](const Val&) {
@@ -424,6 +424,8 @@ QColor NotationConfiguration::notationColor() const
 
 QColor NotationConfiguration::backgroundColor() const
 {
+    NOT_IMPLEMENTED;
+#if 0
     if (uiConfiguration()->currentTheme().codeKey == LIGHT_THEME_CODE) {
         return settings()->value(LIGHT_SCORE_BACKGROUND_COLOR).toQColor();
     } else if (uiConfiguration()->currentTheme().codeKey == DARK_THEME_CODE) {
@@ -433,10 +435,13 @@ QColor NotationConfiguration::backgroundColor() const
     } else {
         return settings()->value(HC_WHITE_SCORE_BACKGROUND_COLOR).toQColor();
     }
+#endif
 }
 
 void NotationConfiguration::setBackgroundColor(const QColor& color)
 {
+    NOT_IMPLEMENTED;
+#if 0
     if (uiConfiguration()->currentTheme().codeKey == LIGHT_THEME_CODE) {
         settings()->setSharedValue(LIGHT_SCORE_BACKGROUND_COLOR, Val(color));
     } else if (uiConfiguration()->currentTheme().codeKey == DARK_THEME_CODE) {
@@ -446,6 +451,7 @@ void NotationConfiguration::setBackgroundColor(const QColor& color)
     } else {
         settings()->setSharedValue(HC_WHITE_SCORE_BACKGROUND_COLOR, Val(color));
     }
+#endif
 }
 
 muse::io::path_t NotationConfiguration::backgroundWallpaperPath() const
@@ -576,20 +582,28 @@ muse::io::path_t NotationConfiguration::wallpapersDefaultDirPath() const
 
 QColor NotationConfiguration::borderColor() const
 {
+    NOT_IMPLEMENTED;
+#if 0
     if (uiConfiguration()->isHighContrast()) {
         return QColorConstants::White;
     } else {
         return QColor(0, 0, 0, 102);
     }
+#endif
+    return QColor(0, 0, 0, 102);
 }
 
 int NotationConfiguration::borderWidth() const
 {
+    NOT_IMPLEMENTED;
+#if 0
     if (uiConfiguration()->isHighContrast()) {
         return 10;
     } else {
         return 1;
     }
+#endif
+    return 1;
 }
 
 QColor NotationConfiguration::playbackCursorColor() const
@@ -725,12 +739,14 @@ Notification NotationConfiguration::mouseZoomPrecisionChanged() const
 
 std::string NotationConfiguration::fontFamily() const
 {
-    return uiConfiguration()->fontFamily();
+    NOT_IMPLEMENTED;
+    // return uiConfiguration()->fontFamily();
 }
 
 int NotationConfiguration::fontSize() const
 {
-    return uiConfiguration()->fontSize(FontSizeType::BODY);
+    NOT_IMPLEMENTED;
+    // return uiConfiguration()->fontSize(FontSizeType::BODY);
 }
 
 muse::io::path_t NotationConfiguration::userStylesPath() const
@@ -963,12 +979,14 @@ void NotationConfiguration::setIsCountInEnabled(bool enabled)
 
 double NotationConfiguration::guiScaling() const
 {
-    return uiConfiguration()->guiScaling();
+    NOT_IMPLEMENTED;
+    // return uiConfiguration()->guiScaling();
 }
 
 double NotationConfiguration::notationScaling() const
 {
-    return uiConfiguration()->physicalDpi() / mu::engraving::DPI;
+    NOT_IMPLEMENTED;
+    // return uiConfiguration()->physicalDpi() / mu::engraving::DPI;
 }
 
 ValCh<muse::Orientation> NotationConfiguration::canvasOrientation() const

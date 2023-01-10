@@ -1,6 +1,7 @@
 cmake_minimum_required(VERSION 3.14)
 
-project(webmscore LANGUAGES CXX)
+# project(webmscore LANGUAGES CXX C) # allowing to build C objects
+project(webmscore)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -20,6 +21,7 @@ set(QT_SUPPORT ON)
 
 # include(SetupBuildEnvironment)
 include(GetPlatformInfo)
+include(SetupCompileWarnings)
 
 include_directories(
     ${CMAKE_CURRENT_LIST_DIR}
@@ -32,6 +34,7 @@ add_definitions(
     -DENGRAVING_NO_QTEXTDOCUMENT
     -DENGRAVING_NO_INTERACTIVE
     -DDRAW_NO_QSVGRENDER           # QSvgRenderer (QtSvg) depends on QWidget in Qt5, this changes in Qt6
+    -DENABLE_AUDIO_EXPORT
     # -DHAW_LOGGER_QT_SUPPORT
     -DQT_SUPPORT
     # -DHAW_PROFILER_ENABLED
@@ -100,6 +103,11 @@ add_subdirectory(${MU_ROOT}/src/framework/draw draw)
 set(ENGRAVING_NO_ACCESSIBILITY ON)
 add_subdirectory(${MU_ROOT}/src/engraving engraving)
 
+add_subdirectory(${MU_ROOT}/src/framework/mpe mpe)
+
+set(ENABLE_AUDIO_EXPORT ON)
+add_subdirectory(${MU_ROOT}/src/framework/audio audio)
+
 add_subdirectory(importexport)
 
 add_executable(webmscore
@@ -107,6 +115,22 @@ add_executable(webmscore
 
     ${MU_ROOT}/src/converter/internal/compat/notationmeta.cpp
     ${MU_ROOT}/src/converter/internal/compat/notationmeta.h
+
+    ${MU_ROOT}/src/playback/internal/playbackcontroller.cpp
+    ${MU_ROOT}/src/playback/internal/playbackcontroller.h
+    ${MU_ROOT}/src/playback/internal/soundprofilesrepository.cpp
+    ${MU_ROOT}/src/playback/internal/soundprofilesrepository.h
+
+    ${MU_ROOT}/src/context/internal/globalcontext.cpp
+    ${MU_ROOT}/src/context/internal/globalcontext.h
+    ${MU_ROOT}/src/project/internal/notationproject.cpp
+    ${MU_ROOT}/src/project/internal/notationproject.h
+    ${MU_ROOT}/src/notation/internal/notationconfiguration.cpp
+    ${MU_ROOT}/src/notation/internal/notationconfiguration.h
+    ${MU_ROOT}/src/project/internal/projectaudiosettings.cpp
+    ${MU_ROOT}/src/project/internal/projectaudiosettings.h
+    ${MU_ROOT}/src/project/internal/projectfileinfoprovider.cpp
+    ${MU_ROOT}/src/project/internal/projectfileinfoprovider.h
 )
 
 set_target_properties(engraving PROPERTIES COMPILE_FLAGS "-fPIC")
@@ -123,6 +147,8 @@ target_link_libraries(webmscore
     ${QT_LIBRARIES}
     global
     engraving
+    mpe
+    audio
     importexport
     freetype # important for supporting woff2 files
 )

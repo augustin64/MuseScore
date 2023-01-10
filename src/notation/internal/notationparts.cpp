@@ -79,9 +79,9 @@ static String formatInstrumentTitleOnScore(const String& instrumentName, const T
 NotationParts::NotationParts(IGetScore* getScore, INotationInteractionPtr interaction, INotationUndoStackPtr undoStack)
     : m_getScore(getScore), m_undoStack(undoStack), m_interaction(interaction)
 {
-    m_getScore->scoreInited().onNotify(this, [this]() {
-        listenUndoStackChanges();
-    });
+    // m_getScore->scoreInited().onNotify(this, [this]() {
+    //     listenUndoStackChanges();
+    // });
 }
 
 NotifyList<const Part*> NotationParts::partList() const

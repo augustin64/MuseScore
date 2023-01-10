@@ -34,6 +34,14 @@
 #define UNUSED(x) (void)x;
 #endif
 
+#ifndef assert
+#   define assert(x) (void)(x);
+#endif
+
+#ifndef Q_FALLTHROUGH
+#   define Q_FALLTHROUGH() (void)0
+#endif
+
 #ifndef MU_FALLTHROUGH
 #if __has_cpp_attribute(fallthrough)
 #define MU_FALLTHROUGH() [[fallthrough]]

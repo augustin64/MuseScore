@@ -26,7 +26,7 @@
 #include "modularity/ioc.h"
 #include "global/iglobalconfiguration.h"
 #include "io/ifilesystem.h"
-#include "ui/iuiconfiguration.h"
+// #include "ui/iuiconfiguration.h"
 #include "context/iglobalcontext.h"
 #include "engraving/iengravingconfiguration.h"
 
@@ -37,7 +37,7 @@ class NotationConfiguration : public INotationConfiguration, public muse::async:
 {
     INJECT(muse::IGlobalConfiguration, globalConfiguration)
     INJECT(muse::io::IFileSystem, fileSystem)
-    INJECT(muse::ui::IUiConfiguration, uiConfiguration)
+    // INJECT(muse::ui::IUiConfiguration, uiConfiguration)
     INJECT(engraving::IEngravingConfiguration, engravingConfiguration)
     INJECT(context::IGlobalContext, context)
 

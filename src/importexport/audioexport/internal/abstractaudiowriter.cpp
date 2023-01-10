@@ -24,8 +24,9 @@
 #include <QCoreApplication>
 #include <QFile>
 #include <QFileInfo>
-#include <QThread>
+// #include <QThread>
 
+#include "async/processevents.h"
 #include "global/containers.h"
 
 #include "log.h"
@@ -130,8 +131,11 @@ Ret AbstractAudioWriter::doWriteAndWait(INotationPtr notation,
     });
 
     while (!m_isCompleted) {
-        qApp->processEvents();
-        QThread::yieldCurrentThread();
+        // process async events
+        mu::async::processEvents(); // XXX: !important, otherwise promises won't run
+
+        // qApp->processEvents();
+        // QThread::yieldCurrentThread();
     }
 
     return m_writeRet;
@@ -153,7 +157,7 @@ void AbstractAudioWriter::doWrite(const QString& path, const SoundTrackFormat& f
 
             playback()->saveSoundTrack(sequenceId, muse::io::path_t(path), std::move(format))
             .onResolve(this, [this, path](const bool /*result*/) {
-                LOGD() << "Successfully saved sound track by path: " << path;
+                LOGD() << "Successfully saved sound track by path: " << String(path);
                 m_writeRet = muse::make_ok();
                 m_isCompleted = true;
                 m_progress.finish(muse::make_ok());
