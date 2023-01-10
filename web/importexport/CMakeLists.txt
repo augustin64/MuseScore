@@ -20,6 +20,17 @@ set(MODULE_SRC
 
     ${MU_ROOT}/src/notation/internal/mscnotationwriter.cpp
     ${MU_ROOT}/src/notation/internal/mscnotationwriter.h
+
+    ${MU_ROOT}/src/notation/internal/masternotation.cpp
+    ${MU_ROOT}/src/notation/internal/masternotation.h
+    ${MU_ROOT}/src/notation/internal/excerptnotation.cpp
+    ${MU_ROOT}/src/notation/internal/excerptnotation.h
+    ${MU_ROOT}/src/notation/internal/notationplayback.cpp
+    ${MU_ROOT}/src/notation/internal/notationplayback.h
+    ${MU_ROOT}/src/notation/internal/masternotationparts.cpp
+    ${MU_ROOT}/src/notation/internal/masternotationparts.h
+    ${MU_ROOT}/src/notation/internal/notationparts.cpp
+    ${MU_ROOT}/src/notation/internal/notationparts.h
 )
 
 add_subdirectory(${MU_ROOT}/src/importexport/musicxml musicxml)
@@ -35,5 +46,8 @@ set(MODULE_LINK ${MODULE_LINK} beatroot)
 
 add_subdirectory(${MU_ROOT}/src/importexport/imagesexport imagesexport)
 set(MODULE_LINK ${MODULE_LINK} iex_imagesexport)
+
+add_subdirectory(${MU_ROOT}/src/importexport/audioexport audioexport)
+set(MODULE_LINK ${MODULE_LINK} iex_audioexport)
 
 include(SetupModule)

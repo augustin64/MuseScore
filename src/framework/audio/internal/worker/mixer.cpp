@@ -130,12 +130,13 @@ samples_t Mixer::process(float* outBuffer, samples_t samplesPerChannel)
 
     samples_t masterChannelSampleCount = 0;
 
-    std::vector<std::future<std::vector<float> > > futureList;
+    // std::vector<std::future<std::vector<float> > > futureList;
+    std::vector<std::function<std::vector<float>()>> futureList;
 
     for (const auto& pair : m_mixerChannels) {
         MixerChannelPtr channel = pair.second;
-        std::future<std::vector<float> > future = TaskScheduler::instance()->submit([this, samplesPerChannel,
-                                                                                     channel]() -> std::vector<float> {
+        // std::future<std::vector<float> > future = TaskScheduler::instance()->submit
+        auto future = [this, samplesPerChannel, channel]() -> std::vector<float> {
             thread_local std::vector<float> buffer(samplesPerChannel * audioChannelsCount(), 0.f);
             thread_local std::vector<float> silent_buffer(samplesPerChannel * audioChannelsCount(), 0.f);
 
@@ -146,13 +147,14 @@ samples_t Mixer::process(float* outBuffer, samples_t samplesPerChannel)
             }
 
             return buffer;
-        });
+        };
 
         futureList.emplace_back(std::move(future));
     }
 
     for (size_t i = 0; i < futureList.size(); ++i) {
-        mixOutputFromChannel(outBuffer, futureList[i].get().data(), samplesPerChannel);
+        // mixOutputFromChannel(outBuffer, futureList[i].get().data(), samplesPerChannel);
+        mixOutputFromChannel(outBuffer, futureList[i]().data(), samplesPerChannel);
 
         masterChannelSampleCount = std::max(samplesPerChannel, masterChannelSampleCount);
     }

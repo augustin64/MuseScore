@@ -27,7 +27,7 @@
 #include "modularity/ioc.h"
 #include "global/iglobalconfiguration.h"
 #include "io/ifilesystem.h"
-#include "ui/iuiconfiguration.h"
+// #include "ui/iuiconfiguration.h"
 #include "engraving/iengravingconfiguration.h"
 
 #include "../inotationconfiguration.h"
@@ -37,7 +37,7 @@ class NotationConfiguration : public INotationConfiguration, public async::Async
 {
     INJECT(notation, framework::IGlobalConfiguration, globalConfiguration)
     INJECT(notation, io::IFileSystem, fileSystem)
-    INJECT(notation, ui::IUiConfiguration, uiConfiguration)
+    // INJECT(notation, ui::IUiConfiguration, uiConfiguration)
     INJECT(notation, engraving::IEngravingConfiguration, engravingConfiguration)
 
 public:

@@ -30,7 +30,8 @@
 #include "audiotypes.h"
 
 //!Note Somehow clang has this define, but doesn't have symbols for std::hardware_destructive_interference_size
-#if defined(__cpp_lib_hardware_interference_size) && !defined(Q_OS_MACOS)
+#if 0
+// #if defined(__cpp_lib_hardware_interference_size) && !defined(Q_OS_MACOS)
 #include <new>
 constexpr size_t cache_line_size = std::hardware_destructive_interference_size;
 #else

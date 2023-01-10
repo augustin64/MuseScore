@@ -28,9 +28,9 @@
 
 #include "modularity/ioc.h"
 #include "io/ifilesystem.h"
-#include "iprojectconfiguration.h"
-#include "inotationreadersregister.h"
-#include "inotationwritersregister.h"
+#include "../iprojectconfiguration.h"
+#include "../inotationreadersregister.h"
+#include "../inotationwritersregister.h"
 
 #include "engraving/engravingproject.h"
 
@@ -90,9 +90,11 @@ public:
     notation::IMasterNotationPtr masterNotation() const override;
     IProjectAudioSettingsPtr audioSettings() const override;
 
-private:
     void setupProject();
+    mu::engraving::EngravingProjectPtr m_engravingProject = nullptr;
+    notation::MasterNotationPtr m_masterNotation = nullptr;
 
+private:
     Ret loadTemplate(const ProjectCreateOptions& projectOptions);
 
     Ret doLoad(engraving::MscReader& reader, const io::path_t& stylePath, bool forceMode);
@@ -105,8 +107,6 @@ private:
     Ret makeCurrentFileAsBackup();
     Ret writeProject(engraving::MscWriter& msczWriter, bool onlySelection);
 
-    mu::engraving::EngravingProjectPtr m_engravingProject = nullptr;
-    notation::MasterNotationPtr m_masterNotation = nullptr;
     ProjectAudioSettingsPtr m_projectAudioSettings = nullptr;
     mutable CloudProjectInfo m_cloudInfo;
 

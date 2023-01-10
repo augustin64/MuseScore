@@ -30,7 +30,7 @@
 #include "modularity/ioc.h"
 
 #include "isoundprofilesrepository.h"
-#include "iplaybackconfiguration.h"
+#include "../iplaybackconfiguration.h"
 
 namespace mu::playback {
 class SoundProfilesRepository : public ISoundProfilesRepository, public async::Asyncable

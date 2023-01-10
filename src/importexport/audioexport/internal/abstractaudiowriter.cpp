@@ -21,11 +21,12 @@
  */
 #include "abstractaudiowriter.h"
 
-#include <QApplication>
+// #include <QGuiApplication>
 #include <QFile>
 #include <QFileInfo>
-#include <QThread>
+// #include <QThread>
 
+#include "async/processevents.h"
 #include "audio/iaudiooutput.h"
 
 #include "log.h"
@@ -112,7 +113,8 @@ void AbstractAudioWriter::doWriteAndWait(INotationPtr notation, QIODevice& desti
     });
 
     playback()->sequenceIdList()
-    .onResolve(this, [this, path, &format](const audio::TrackSequenceIdList& sequenceIdList) {
+    // [format]: must use by-copy capture
+    .onResolve(this, [this, path, format](const audio::TrackSequenceIdList& sequenceIdList) {
         m_progress.started.notify();
 
         for (const audio::TrackSequenceId sequenceId : sequenceIdList) {
@@ -123,7 +125,7 @@ void AbstractAudioWriter::doWriteAndWait(INotationPtr notation, QIODevice& desti
 
             playback()->audioOutput()->saveSoundTrack(sequenceId, io::path_t(path), std::move(format))
             .onResolve(this, [this, path](const bool /*result*/) {
-                LOGD() << "Successfully saved sound track by path: " << path;
+                LOGD() << "Successfully saved sound track by path: " << String(path);
                 m_isCompleted = true;
                 m_progress.finished.send(make_ok());
             })
@@ -138,8 +140,11 @@ void AbstractAudioWriter::doWriteAndWait(INotationPtr notation, QIODevice& desti
     });
 
     while (!m_isCompleted) {
-        QApplication::instance()->processEvents();
-        QThread::yieldCurrentThread();
+        // process async events
+        mu::async::processEvents(); // XXX: !important, otherwise promises won't run
+
+        // QGuiApplication::instance()->processEvents();
+        // QThread::yieldCurrentThread();
     }
 }
 

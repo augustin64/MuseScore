@@ -13,6 +13,6 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/Induction.h
     )
 
-include(SetupModule)
+include(${PROJECT_SOURCE_DIR}/build/module.cmake)
 
-# target_no_warning(${MODULE} -Wno-conversion)
+target_no_warning(${MODULE} -Wno-conversion)

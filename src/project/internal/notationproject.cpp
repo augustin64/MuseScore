@@ -21,6 +21,7 @@
  */
 #include "notationproject.h"
 
+#include <QSet>
 #include <QBuffer>
 #include <QDir>
 #include <QFile>
@@ -34,7 +35,7 @@
 #include "engraving/engravingerrors.h"
 #include "engraving/style/defaultstyle.h"
 
-#include "iprojectautosaver.h"
+#include "../iprojectautosaver.h"
 #include "notation/notationerrors.h"
 #include "projectaudiosettings.h"
 #include "projectfileinfoprovider.h"
@@ -522,7 +523,7 @@ mu::Ret NotationProject::doSave(const io::path_t& path, bool generateBackup, eng
     {
         QFileInfo fi(savePath);
         if (fi.exists() && !QFileInfo(savePath).isWritable()) {
-            LOGE() << "failed save, not writable path: " << savePath;
+            LOGE() << "failed save, not writable path: " << String(savePath);
             return make_ret(notation::Err::UnknownError);
         }
 
@@ -601,7 +602,7 @@ mu::Ret NotationProject::doSave(const io::path_t& path, bool generateBackup, eng
                               QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::ReadGroup | QFile::ReadOther);
     }
 
-    LOGI() << "success save file: " << targetContainerPath;
+    LOGI() << "success save file: " << String(targetContainerPath);
     return make_ret(Ret::Code::Ok);
 }
 
@@ -689,7 +690,7 @@ mu::Ret NotationProject::saveSelectionOnScore(const mu::io::path_t& path)
     // Check writable
     QFileInfo info(path.toQString());
     if (info.exists() && !info.isWritable()) {
-        LOGE() << "failed save, not writable path: " << info.filePath();
+        LOGE() << "failed save, not writable path: " << String(info.filePath());
         return make_ret(notation::Err::UnknownError);
     }
 
@@ -709,7 +710,7 @@ mu::Ret NotationProject::saveSelectionOnScore(const mu::io::path_t& path)
         QFile::setPermissions(info.filePath(),
                               QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::ReadGroup | QFile::ReadOther);
     }
-    LOGI() << "success save file: " << info.filePath();
+    LOGI() << "success save file: " << String(info.filePath());
     return ret;
 }
 

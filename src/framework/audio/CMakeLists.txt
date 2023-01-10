@@ -49,12 +49,12 @@ elseif(OS_IS_MAC)
                                 PROPERTIES SKIP_UNITY_BUILD_INCLUSION ON)
 elseif(OS_IS_WASM)
     set(DRIVER_SRC
-        ${CMAKE_CURRENT_LIST_DIR}/internal/platform/web/webaudiodriver.cpp
-        ${CMAKE_CURRENT_LIST_DIR}/internal/platform/web/webaudiodriver.h
+        # ${CMAKE_CURRENT_LIST_DIR}/internal/platform/web/webaudiodriver.cpp
+        # ${CMAKE_CURRENT_LIST_DIR}/internal/platform/web/webaudiodriver.h
     )
 endif()
 
-add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/fluidsynth fluidsynth)
+add_subdirectory(${MU_ROOT}/thirdparty/fluidsynth fluidsynth)
 
 set(MODULE_SRC
 
@@ -178,7 +178,7 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/devtools/waveformmodel.h
     )
 
-set(FLUIDSYNTH_DIR ${PROJECT_SOURCE_DIR}/thirdparty/fluidsynth/fluidsynth-2.1.4)
+set(FLUIDSYNTH_DIR ${MU_ROOT}/thirdparty/fluidsynth/fluidsynth-2.1.4)
 set (FLUIDSYNTH_INC
     ${FLUIDSYNTH_DIR}/include
     ${FLUIDSYNTH_DIR}/src
@@ -220,9 +220,9 @@ if (ENABLE_AUDIO_EXPORT)
         ${CMAKE_CURRENT_LIST_DIR}/internal/soundtracks/soundtrackwriter.h
         )
 
-    add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/lame lame)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/opusenc opusenc)
-    add_subdirectory(${PROJECT_SOURCE_DIR}/thirdparty/flac flac)
+    add_subdirectory(${MU_ROOT}/thirdparty/lame lame)
+    add_subdirectory(${MU_ROOT}/thirdparty/opusenc opusenc)
+    add_subdirectory(${MU_ROOT}/thirdparty/flac flac)
 
     set(MODULE_LINK ${MODULE_LINK} lame opusenc flac)
 endif()

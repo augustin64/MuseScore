@@ -31,7 +31,7 @@
 
 using namespace mu::audio;
 
-std::thread::id AudioThread::ID;
+std::thread::id AudioThread::ID = std::this_thread::get_id();
 
 AudioThread::~AudioThread()
 {
@@ -51,10 +51,14 @@ void AudioThread::run(const Runnable& onStart, const Runnable& loopBody)
         main();
     });
 #else
+    #if 0
+    m_onStart();
     emscripten_set_timeout_loop([](double, void* userData) -> EM_BOOL {
-        reinterpret_cast<AudioThread*>(userData)->loopBody();
+        mu::async::processEvents();
+        reinterpret_cast<AudioThread*>(userData)->m_mainLoopBody();
         return EM_TRUE;
     }, 2, this);
+    #endif
 #endif
 }
 

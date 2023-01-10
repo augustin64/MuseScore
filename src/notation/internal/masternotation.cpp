@@ -88,14 +88,14 @@ MasterNotation::MasterNotation()
         m_hasPartsChanged.notify();
     });
 
-    undoStack()->stackChanged().onNotify(this, [this]() {
-        updateExcerpts();
-        notifyAboutNeedSaveChanged();
-    });
+    // undoStack()->stackChanged().onNotify(this, [this]() {
+    //     updateExcerpts();
+    //     notifyAboutNeedSaveChanged();
+    // });
 
-    viewState()->needSaveChanged().onNotify(this, [this]() {
-        notifyAboutNeedSaveChanged();
-    });
+    // viewState()->needSaveChanged().onNotify(this, [this]() {
+    //     notifyAboutNeedSaveChanged();
+    // });
 }
 
 MasterNotation::~MasterNotation()

@@ -47,6 +47,7 @@ ISynthesizerPtr FluidResolver::resolveSynth(const TrackId /*trackId*/, const Aud
 
     FluidSynthPtr synth = std::make_shared<FluidSynth>(params);
 
+#if 0
     auto search = m_resourcesCache.find(params.resourceMeta.id);
 
     if (search == m_resourcesCache.end()) {
@@ -55,6 +56,9 @@ ISynthesizerPtr FluidResolver::resolveSynth(const TrackId /*trackId*/, const Aud
     }
 
     synth->addSoundFonts({ search->second });
+#endif
+    // HACK: hard-coded soundfont path
+    synth->addSoundFonts({ "/MuseScore_General.sf3" });
 
     return synth;
 }

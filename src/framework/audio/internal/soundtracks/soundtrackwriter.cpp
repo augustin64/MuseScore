@@ -88,7 +88,9 @@ bool SoundTrackWriter::write()
         return false;
     }
 
-    if (m_encoderPtr->encode(m_inputBuffer.size() / sizeof(float), m_inputBuffer.data()) == 0) {
+    auto outputSize = m_encoderPtr->encode(m_inputBuffer.size() / sizeof(float), m_inputBuffer.data());
+    LOGI() << String("inputBuffer size %1, output size %2").arg(m_inputBuffer.size()).arg(outputSize);
+    if (outputSize == 0) {
         return false;
     }
 

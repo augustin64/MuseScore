@@ -27,6 +27,9 @@
 #include "io/ifilesystem.h"
 #include "async/asyncable.h"
 
+#include <QJsonArray>
+#include <QJsonObject>
+
 #include "iarticulationprofilesrepository.h"
 
 namespace mu::mpe {

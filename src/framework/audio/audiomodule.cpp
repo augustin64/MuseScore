@@ -21,9 +21,9 @@
  */
 #include "audiomodule.h"
 
-#include <QQmlEngine>
+// #include <QQmlEngine>
 
-#include "ui/iuiengine.h"
+// #include "ui/iuiengine.h"
 #include "modularity/ioc.h"
 #include "log.h"
 
@@ -60,7 +60,7 @@ using namespace mu::audio::fx;
 static std::shared_ptr<AudioConfiguration> s_audioConfiguration = std::make_shared<AudioConfiguration>();
 static std::shared_ptr<AudioThread> s_audioWorker = std::make_shared<AudioThread>();
 static std::shared_ptr<AudioBuffer> s_audioBuffer = std::make_shared<AudioBuffer>();
-static std::shared_ptr<AudioOutputDeviceController> s_audioOutputController = std::make_shared<AudioOutputDeviceController>();
+// static std::shared_ptr<AudioOutputDeviceController> s_audioOutputController = std::make_shared<AudioOutputDeviceController>();
 
 static std::shared_ptr<FxResolver> s_fxResolver = std::make_shared<FxResolver>();
 static std::shared_ptr<SynthResolver> s_synthResolver = std::make_shared<SynthResolver>();
@@ -88,14 +88,16 @@ static std::shared_ptr<IAudioDriver> s_audioDriver = std::shared_ptr<IAudioDrive
 static std::shared_ptr<IAudioDriver> s_audioDriver = std::shared_ptr<IAudioDriver>(new OSXAudioDriver());
 #endif
 
-#ifdef Q_OS_WASM
+#if 0
+// #ifdef Q_OS_WASM
 #include "internal/platform/web/webaudiodriver.h"
 static std::shared_ptr<IAudioDriver> s_audioDriver = std::shared_ptr<IAudioDriver>(new WebAudioDriver());
 #endif
+static std::shared_ptr<IAudioDriver> s_audioDriver = nullptr;
 
 static void audio_init_qrc()
 {
-    Q_INIT_RESOURCE(audio);
+    // Q_INIT_RESOURCE(audio);
 }
 
 AudioModule::AudioModule()
@@ -128,10 +130,13 @@ void AudioModule::registerResources()
 
 void AudioModule::registerUiTypes()
 {
+    NOT_SUPPORTED;
+#if 0
     qmlRegisterType<WaveFormModel>("MuseScore.Audio", 1, 0, "WaveFormModel");
     qmlRegisterType<synth::SynthsSettingsModel>("MuseScore.Audio", 1, 0, "SynthsSettingsModel");
 
     ioc()->resolve<ui::IUiEngine>(moduleName())->addSourceImportPath(audio_QML_IMPORT);
+#endif
 }
 
 void AudioModule::onInit(const framework::IApplication::RunMode& mode)
@@ -173,7 +178,7 @@ void AudioModule::onInit(const framework::IApplication::RunMode& mode)
     s_audioBuffer->init(s_audioConfiguration->audioChannelsCount(),
                         s_audioConfiguration->renderStep());
 
-    s_audioOutputController->init();
+    // s_audioOutputController->init();
 
     // Setup audio driver
     setupAudioDriver(mode);
@@ -255,5 +260,7 @@ void AudioModule::setupAudioWorker(const IAudioDriver::Spec& activeSpec)
         s_audioBuffer->forward();
     };
 
-    s_audioWorker->run(workerSetup, workerLoopBody);
+    // XXX: !important
+    workerSetup();
+    // s_audioWorker->run(workerSetup, workerLoopBody);
 }

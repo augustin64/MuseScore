@@ -1,6 +1,10 @@
 #ifndef DETO_ASYNC_PROMISE_H
 #define DETO_ASYNC_PROMISE_H
 
+#ifndef Q_REQUIRED_RESULT
+# define Q_REQUIRED_RESULT __attribute__ ((__warn_unused_result__))
+#endif
+
 #include <memory>
 #include <string>
 #include "internal/abstractinvoker.h"

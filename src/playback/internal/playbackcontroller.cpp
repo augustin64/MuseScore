@@ -21,7 +21,7 @@
  */
 #include "playbackcontroller.h"
 
-#include "playbacktypes.h"
+#include "../playbacktypes.h"
 
 #include "containers.h"
 #include "defer.h"
@@ -35,22 +35,23 @@ using namespace mu::audio;
 using namespace mu::actions;
 using namespace mu::engraving;
 
-static const ActionCode PLAY_CODE("play");
-static const ActionCode STOP_CODE("stop");
-static const ActionCode REWIND_CODE("rewind");
-static const ActionCode LOOP_CODE("loop");
-static const ActionCode LOOP_IN_CODE("loop-in");
-static const ActionCode LOOP_OUT_CODE("loop-out");
-static const ActionCode METRONOME_CODE("metronome");
-static const ActionCode MIDI_ON_CODE("midi-on");
-static const ActionCode COUNT_IN_CODE("countin");
-static const ActionCode PAN_CODE("pan");
-static const ActionCode REPEAT_CODE("repeat");
-static const ActionCode PLAY_CHORD_SYMBOLS_CODE("play-chord-symbols");
-static const ActionCode PLAYBACK_SETUP("playback-setup");
+// static const ActionCode PLAY_CODE("play");
+// static const ActionCode STOP_CODE("stop");
+// static const ActionCode REWIND_CODE("rewind");
+// static const ActionCode LOOP_CODE("loop");
+// static const ActionCode LOOP_IN_CODE("loop-in");
+// static const ActionCode LOOP_OUT_CODE("loop-out");
+// static const ActionCode METRONOME_CODE("metronome");
+// static const ActionCode MIDI_ON_CODE("midi-on");
+// static const ActionCode COUNT_IN_CODE("countin");
+// static const ActionCode PAN_CODE("pan");
+// static const ActionCode REPEAT_CODE("repeat");
+// static const ActionCode PLAY_CHORD_SYMBOLS_CODE("play-chord-symbols");
+// static const ActionCode PLAYBACK_SETUP("playback-setup");
 
 void PlaybackController::init()
 {
+#if 0
     dispatcher()->reg(this, PLAY_CODE, this, &PlaybackController::togglePlay);
     dispatcher()->reg(this, STOP_CODE, this, &PlaybackController::pause);
     dispatcher()->reg(this, REWIND_CODE, this, &PlaybackController::rewind);
@@ -64,6 +65,7 @@ void PlaybackController::init()
     dispatcher()->reg(this, MIDI_ON_CODE, this, &PlaybackController::toggleMidiInput);
     dispatcher()->reg(this, COUNT_IN_CODE, this, &PlaybackController::toggleCountIn);
     dispatcher()->reg(this, PLAYBACK_SETUP, this, &PlaybackController::openPlaybackSetupDialog);
+#endif
 
     globalContext()->currentNotationChanged().onNotify(this, [this]() {
         onNotationChanged();
@@ -212,9 +214,9 @@ void PlaybackController::playElements(const std::vector<const notation::Engravin
         return;
     }
 
-    if (!configuration()->playNotesWhenEditing()) {
-        return;
-    }
+    // if (!configuration()->playNotesWhenEditing()) {
+    //     return;
+    // }
 
     std::vector<const notation::EngravingItem*> elementsForPlaying;
 
@@ -223,13 +225,13 @@ void PlaybackController::playElements(const std::vector<const notation::Engravin
             continue;
         }
 
-        if (element->isChord() && !configuration()->playChordWhenEditing()) {
-            continue;
-        }
+        // if (element->isChord() && !configuration()->playChordWhenEditing()) {
+        //     continue;
+        // }
 
-        if (element->isHarmony() && !configuration()->playHarmonyWhenEditing()) {
-            continue;
-        }
+        // if (element->isHarmony() && !configuration()->playHarmonyWhenEditing()) {
+        //     continue;
+        // }
 
         elementsForPlaying.push_back(element);
     }
@@ -498,14 +500,14 @@ void PlaybackController::togglePlayRepeats()
 {
     bool playRepeatsEnabled = notationConfiguration()->isPlayRepeatsEnabled();
     notationConfiguration()->setIsPlayRepeatsEnabled(!playRepeatsEnabled);
-    notifyActionCheckedChanged(REPEAT_CODE);
+    // notifyActionCheckedChanged(REPEAT_CODE);
 }
 
 void PlaybackController::togglePlayChordSymbols()
 {
     bool playChordSymbolsEnabled = notationConfiguration()->isPlayChordSymbolsEnabled();
     notationConfiguration()->setIsPlayChordSymbolsEnabled(!playChordSymbolsEnabled);
-    notifyActionCheckedChanged(PLAY_CHORD_SYMBOLS_CODE);
+    // notifyActionCheckedChanged(PLAY_CHORD_SYMBOLS_CODE);
 
     for (auto it = m_trackIdMap.cbegin(); it != m_trackIdMap.cend(); ++it) {
         if (notationPlayback()->isChordSymbolsTrack(it->first)) {
@@ -518,14 +520,14 @@ void PlaybackController::toggleAutomaticallyPan()
 {
     bool panEnabled = notationConfiguration()->isAutomaticallyPanEnabled();
     notationConfiguration()->setIsAutomaticallyPanEnabled(!panEnabled);
-    notifyActionCheckedChanged(PAN_CODE);
+    // notifyActionCheckedChanged(PAN_CODE);
 }
 
 void PlaybackController::toggleMetronome()
 {
     bool metronomeEnabled = notationConfiguration()->isMetronomeEnabled();
     notationConfiguration()->setIsMetronomeEnabled(!metronomeEnabled);
-    notifyActionCheckedChanged(METRONOME_CODE);
+    // notifyActionCheckedChanged(METRONOME_CODE);
 
     setTrackActivity(notationPlayback()->metronomeTrackId(), !metronomeEnabled);
 }
@@ -534,14 +536,14 @@ void PlaybackController::toggleMidiInput()
 {
     bool midiInputEnabled = notationConfiguration()->isMidiInputEnabled();
     notationConfiguration()->setIsMidiInputEnabled(!midiInputEnabled);
-    notifyActionCheckedChanged(MIDI_ON_CODE);
+    // notifyActionCheckedChanged(MIDI_ON_CODE);
 }
 
 void PlaybackController::toggleCountIn()
 {
     bool countInEnabled = notationConfiguration()->isCountInEnabled();
     notationConfiguration()->setIsCountInEnabled(!countInEnabled);
-    notifyActionCheckedChanged(COUNT_IN_CODE);
+    // notifyActionCheckedChanged(COUNT_IN_CODE);
 }
 
 void PlaybackController::toggleLoopPlayback()
@@ -617,7 +619,7 @@ void PlaybackController::updateLoop()
 
     showLoop();
 
-    notifyActionCheckedChanged(LOOP_CODE);
+    // notifyActionCheckedChanged(LOOP_CODE);
 }
 
 void PlaybackController::showLoop()
@@ -636,7 +638,7 @@ void PlaybackController::hideLoop()
     playback()->player()->resetLoop(m_currentSequenceId);
     notationPlayback()->setLoopBoundariesVisible(false);
 
-    notifyActionCheckedChanged(LOOP_CODE);
+    // notifyActionCheckedChanged(LOOP_CODE);
 }
 
 void PlaybackController::notifyActionCheckedChanged(const ActionCode& actionCode)
@@ -728,6 +730,7 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
     }
 
     mpe::PlaybackData playbackData = notationPlayback()->trackPlaybackData(instrumentTrackId);
+    LOGI() << String("instrument id: %1 <%2>").arg(String::fromStdString(instrumentTrackId.instrumentId)).arg(playbackData.setupData.toString());
 
     AudioInputParams inParams = audioSettings()->trackInputParams(instrumentTrackId);
     AudioOutputParams outParams = trackOutputParams(instrumentTrackId);
@@ -740,10 +743,10 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
         bool isMetronome = notationPlayback()->metronomeTrackId() == instrumentTrackId;
 
         if (isMetronome) {
-            const SoundProfile& profile = profilesRepo()->profile(configuration()->basicSoundProfileName());
+            const SoundProfile& profile = profilesRepo()->profile(u"MuseScore Basic");
             inParams = { profile.findResource(playbackData.setupData), {} };
         } else {
-            const SoundProfile& profile = profilesRepo()->profile(audioSettings()->activeSoundProfile());
+            const SoundProfile& profile = profilesRepo()->profile(u"Muse Sounds");
             inParams = { profile.findResource(playbackData.setupData), {} };
         }
     }
@@ -989,7 +992,8 @@ void PlaybackController::setupSequenceTracks()
 
 void PlaybackController::setupSequencePlayer()
 {
-    PlaybackCursorType cursorType = configuration()->cursorType();
+    // PlaybackCursorType cursorType = configuration()->cursorType();
+    PlaybackCursorType cursorType = PlaybackCursorType::STEPPED;
 
     playback()->player()->playbackPositionMsecs().onReceive(this, [this, cursor = std::move(cursorType)]
                                                             (const TrackSequenceId id, const audio::msecs_t& msecs) {
@@ -1036,8 +1040,9 @@ void PlaybackController::updateMuteStates()
     }
 
     INotationPartsPtr notationParts = m_notation->parts();
-    InstrumentTrackIdSet allowedInstrumentTrackIdSet = instrumentTrackIdSetForRangePlayback();
-    bool isRangePlaybackMode = !m_isExportingAudio && selection()->isRange() && !allowedInstrumentTrackIdSet.empty();
+    // InstrumentTrackIdSet allowedInstrumentTrackIdSet = instrumentTrackIdSetForRangePlayback();
+    // bool isRangePlaybackMode = !m_isExportingAudio && selection()->isRange() && !allowedInstrumentTrackIdSet.empty();
+    bool isRangePlaybackMode = false;
 
     for (const InstrumentTrackId& instrumentTrackId : existingTrackIdSet) {
         if (!mu::contains(m_trackIdMap, instrumentTrackId)) {
@@ -1061,9 +1066,9 @@ void PlaybackController::updateMuteStates()
             shouldBeMuted = !notationConfiguration()->isPlayChordSymbolsEnabled();
         }
 
-        if (isRangePlaybackMode && !shouldBeMuted) {
-            shouldBeMuted = !mu::contains(allowedInstrumentTrackIdSet, instrumentTrackId);
-        }
+        // if (isRangePlaybackMode && !shouldBeMuted) {
+        //     shouldBeMuted = !mu::contains(allowedInstrumentTrackIdSet, instrumentTrackId);
+        // }
 
         AudioOutputParams params = trackOutputParams(instrumentTrackId);
         params.muted = shouldBeMuted;
@@ -1075,17 +1080,19 @@ void PlaybackController::updateMuteStates()
 
 bool PlaybackController::actionChecked(const ActionCode& actionCode) const
 {
-    QMap<std::string, bool> isChecked {
-        { LOOP_CODE, isLoopVisible() },
-        { MIDI_ON_CODE, notationConfiguration()->isMidiInputEnabled() },
-        { REPEAT_CODE, notationConfiguration()->isPlayRepeatsEnabled() },
-        { PLAY_CHORD_SYMBOLS_CODE, notationConfiguration()->isPlayChordSymbolsEnabled() },
-        { PAN_CODE, notationConfiguration()->isAutomaticallyPanEnabled() },
-        { METRONOME_CODE, notationConfiguration()->isMetronomeEnabled() },
-        { COUNT_IN_CODE, notationConfiguration()->isCountInEnabled() }
-    };
+    NOT_IMPLEMENTED;
+    return false;
+    // QMap<std::string, bool> isChecked {
+    //     { LOOP_CODE, isLoopVisible() },
+    //     { MIDI_ON_CODE, notationConfiguration()->isMidiInputEnabled() },
+    //     { REPEAT_CODE, notationConfiguration()->isPlayRepeatsEnabled() },
+    //     { PLAY_CHORD_SYMBOLS_CODE, notationConfiguration()->isPlayChordSymbolsEnabled() },
+    //     { PAN_CODE, notationConfiguration()->isAutomaticallyPanEnabled() },
+    //     { METRONOME_CODE, notationConfiguration()->isMetronomeEnabled() },
+    //     { COUNT_IN_CODE, notationConfiguration()->isCountInEnabled() }
+    // };
 
-    return isChecked[actionCode];
+    // return isChecked[actionCode];
 }
 
 Channel<ActionCode> PlaybackController::actionCheckedChanged() const
@@ -1212,6 +1219,7 @@ void PlaybackController::setNotation(notation::INotationPtr notation)
 
     updateMuteStates();
 
+#if 0
     INotationPartsPtr notationParts = m_notation->parts();
     NotifyList<const Part*> partList = notationParts->partList();
 
@@ -1236,6 +1244,7 @@ void PlaybackController::setNotation(notation::INotationPtr notation)
             playElements({ text });
         }
     });
+#endif
 }
 
 void PlaybackController::setIsExportingAudio(bool exporting)

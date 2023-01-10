@@ -42,7 +42,7 @@
 #include "libmscore/tempotext.h"
 #include "libmscore/tempo.h"
 
-#include "notationerrors.h"
+#include "../notationerrors.h"
 
 using namespace mu;
 using namespace mu::notation;
@@ -68,7 +68,8 @@ mu::engraving::Score* NotationPlayback::score() const
 
 void NotationPlayback::init(INotationUndoStackPtr undoStack)
 {
-    IF_ASSERT_FAILED(score() && undoStack) {
+    // IF_ASSERT_FAILED(score() && undoStack) {
+    IF_ASSERT_FAILED(score()) {
         return;
     }
 

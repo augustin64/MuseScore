@@ -190,7 +190,7 @@ bool FluidSynth::handleEvent(const midi::Event& event)
     }
     }
 
-    midiOutPort()->sendEvent(event);
+    // midiOutPort()->sendEvent(event);
 
     return ret == FLUID_OK;
 }
@@ -342,6 +342,7 @@ samples_t FluidSynth::process(float* buffer, samples_t samplesPerChannel)
     msecs_t nextMsecs = samplesToMsecs(samplesPerChannel, m_sampleRate);
 
     const FluidSequencer::EventSequence& sequence = m_sequencer.eventsToBePlayed(nextMsecs);
+    LOGD() << "sequence isEmpty " << sequence.empty() << ", size " << sequence.size();
 
     if (!sequence.empty()) {
         m_tuning.reset();
