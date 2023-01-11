@@ -31,6 +31,9 @@ set(MODULE_SRC
     ${MU_ROOT}/src/notation/internal/masternotationparts.h
     ${MU_ROOT}/src/notation/internal/notationparts.cpp
     ${MU_ROOT}/src/notation/internal/notationparts.h
+    
+    positionjsonwriter.cpp
+    positionjsonwriter.h
 )
 
 add_subdirectory(${MU_ROOT}/src/importexport/musicxml musicxml)
