@@ -34,7 +34,11 @@ jobs:
           key: ${{env.EM_VERSION}}-system-libraries-${{ runner.os }}
       - uses: actions/cache@v3
         with:
-          key: emmake_cache
+          # Allows updating the cache
+          # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
+          key: emmake_cache-${{ github.run_id }} 
+          restore-keys: |
+            emmake_cache
           path: ${{ github.workspace }}/web/build.*
 
       - name: Install Qt
