@@ -12,6 +12,10 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  EM_VERSION: 1.39.18
+  EM_CACHE_FOLDER: 'emsdk-cache'
+
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -24,6 +28,10 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
+      - uses: actions/cache@v3
+        with:
+          path: ${{env.EM_CACHE_FOLDER}}
+          key: ${{env.EM_VERSION}}-system-libraries-${{ runner.os }}
       - uses: actions/cache@v3
         with:
           key: emmake_cache
@@ -44,8 +52,8 @@ jobs:
       - name: Install emscripten
         uses: mymindstorm/setup-emsdk@v11
         with:
-          version: 2.0.6
-          actions-cache-folder: 'emsdk-cache'
+          version: ${{env.EM_VERSION}}
+          actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
       - name: Apply patches for Qt and emscripten
         run: |
           echo $Qt5_DIR
