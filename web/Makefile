@@ -8,7 +8,7 @@ PREFIX    = "/usr/local"
 # change path to include your Qt5 installation
 #
 BINPATH      = ${PATH}
-PREFIX_PATH = /usr/qt515/qtbase
+PREFIX_PATH = ../../build.qt5/5.15.2/wasm_32
 
 release:
 	if test ! -d build.release; then mkdir build.release; fi; \

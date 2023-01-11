@@ -119,39 +119,30 @@ WebAssembly vs native C++ program!
 2. Install `emscripten` v2.0.6 using `emsdk`
 https://emscripten.org/docs/getting_started/downloads.html
 
-3. Get and compile Qt5 for WebAssembly
+3. Get Qt5 for WebAssembly and apply patches
 
 ```sh
-CPUS=$(getconf _NPROCESSORS_ONLN 2>/dev/null || getconf NPROCESSORS_ONLN 2>/dev/null || 8)
+AQT_PREFIX=$PWD/build.qt5
+Qt5_VER=5.15.2
+Qt5_DIR=${AQT_PREFIX}/${Qt5_VER}/wasm_32
+# if you change the install directory or Qt version, remember to also change the `PREFIX_PATH` variable in `web/Makefile` file
 
-QT_PATH=/usr/qt515
-# If you want to use other directory, make sure you changed `PREFIX_PATH` to your Qt5WASM installation dir in the Makefile
+# Download Qt using aqtinstall (https://github.com/miurahr/aqtinstall)
+pip install aqtinstall==2.1.*
+aqt install-qt linux desktop ${Qt5_VER} wasm_32 --outputdir ${AQT_PREFIX} --archives qtbase
 
-git clone git://code.qt.io/qt/qt5.git --depth=1 -b 5.15.0 $QT_PATH
-# or
-# download and extract qt-everywhere 5.15.0 (https://download.qt.io/official_releases/qt/5.15/5.15.0/single/)
+# # Compile the `offscreen` platform plugin
+# aqt install-src linux desktop ${Qt5_VER} --outputdir ${AQT_PREFIX} --archives qtbase
+# cd ${AQT_PREFIX}/${Qt5_VER}/Src/qtbase/src/plugins/platforms/offscreen
+# ${Qt5_DIR}/bin/qmake offscreen.pro && make
+# cd - && cp -r ${AQT_PREFIX}/${Qt5_VER}/Src/qtbase/plugins build/qt/
 
-cd $QT_PATH
-./configure -opensource -confirm-license \
-    -xplatform wasm-emscripten \
-    -nomake examples -nomake tools \
-    -skip qt3d -skip qtconnectivity -skip qtdeclarative -skip qtgamepad -skip qtlocation -skip qtmultimedia -skip qtsensors -skip qtserialbus -skip serialport -skip qtspeech -skip qttools -skip qtwayland -skip qtwebengine \
-    -no-accessibility -no-opengl \
-    -no-gif -no-ico -no-tiff -no-webp \
-    -prefix $PWD/qtbase -optimize-size -static
-make -j$CPUS
+# Apply patches, which 
+#   enable the prebuilt `offscreen` QPA platform plugin (https://doc.qt.io/qt-5/qpa.html), and
+#   exclude other Qt5Gui plugins
+cp -r build/qt/* ${Qt5_DIR}
 
-# build `offscreen` QPA platform plugin (https://doc.qt.io/qt-5/qpa.html)
-cd $QT_PATH/qtbase/src/plugins/platforms/offscreen
-$QT_PATH/qtbase/bin/qmake offscreen.pro && make
-cd -
-
-# enable the `offscreen` plugin
-sed -i -E "s/(PROPERTY QT_PLUGIN_EXTENDS \").*?(\")/\1\2/" $QT_PATH/qtbase/lib/cmake/Qt5Gui/Qt5Gui_QOffscreenIntegrationPlugin.cmake
-# exclude other Qt5Gui plugins
-sed -i -E "s/\s(\S+?Qt5Gui_)\*(Plugin)?(.*)\)/ \1QOffscreenIntegrationPlugin\3 \1QJpegPlugin\3)/" $QT_PATH/qtbase/lib/cmake/Qt5Gui/Qt5GuiConfig.cmake
-
-# patch emcc.py to emit separate .mem files regardless of MEM_INIT_METHOD settings (MEM_INIT_METHOD won't work with wasm)
+# Patch emcc.py to emit separate .mem files regardless of MEM_INIT_METHOD settings (MEM_INIT_METHOD won't work with wasm)
 sed -i -r "s/(shared.Settings.MEM_INIT_IN_WASM = )True/\1False/" "$(which emcc).py"
 ```
 
@@ -165,7 +156,9 @@ git submodule update
 5. Compile `webmscore`
 
 ```sh
-make release
+cd web-public
+npm i
+npm run build
 ```
 
 Build artifacts are in the [web-public](./web-public) directory
