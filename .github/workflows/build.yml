@@ -5,11 +5,11 @@ on:
     inputs: {}
   push:
     branches:
-      - 'Xmader/chore/ci-build'
+      - 'webmscore'
+      - 'Xmader/**'
 
 concurrency:
-  group: ${{ github.workflow }}
-  # group: ${{ github.workflow }}-${{ github.ref }}
+  group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -24,6 +24,10 @@ jobs:
       - uses: actions/setup-node@v1
         with:
           node-version: 12
+      - uses: actions/cache@v3
+        with:
+          key: emmake_cache
+          path: ${{ github.workspace }}/web/build.*
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
@@ -34,20 +38,40 @@ jobs:
           target: 'desktop'
           arch: 'wasm_32'
           archives: 'qtbase'
-          setup-python: false
-          dir: '/usr/qt515'
-          # cache: true
-      - name: Setup Qt5
+          dir: ${{ github.workspace }}/build.qt5
+          setup-python: true
+          cache: true
+      - name: Install emscripten
+        uses: mymindstorm/setup-emsdk@v11
+        with:
+          version: 2.0.6
+          actions-cache-folder: 'emsdk-cache'
+      - name: Apply patches for Qt and emscripten
         run: |
           echo $Qt5_DIR
-          ls -al $Qt5_DIR
+          cp --verbose -r build/qt/* ${Qt5_DIR}
+          echo $(which emcc).py
+          sed -i -r "s/(shared.Settings.MEM_INIT_IN_WASM = )True/\1False/" "$(which emcc).py"
 
-      - name: Pack build artifacts
+      - name: Build
         run: |
           cd web-public
+          npm i
+          npm run build:no-clean
           npm pack
+
+      - name: Test
+        run: |
+          cd web-example
+          npm i
+          npm start
+
       - name: Save build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: npm-pack
           path: web-public/webmscore-*.tgz
+      - uses: actions/upload-artifact@v3
+        with:
+          name: example-exports
+          path: web-example/exported*

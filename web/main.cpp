@@ -704,6 +704,7 @@ extern "C" {
         return _saveAudio(score_ptr, format, excerptId);
     };
 
+#if 0
     EMSCRIPTEN_KEEPALIVE
     uintptr_t synthAudio(uintptr_t score_ptr, float starttime, int excerptId = -1) {
         return _synthAudio(score_ptr, starttime, excerptId);
@@ -719,6 +720,7 @@ extern "C" {
         return _processSynthBatch(fn_ptr, batchSize, cancel);
     }
 
+#endif
     EMSCRIPTEN_KEEPALIVE
     const char* savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId = -1) {
         return _savePositions(score_ptr, ofSegments, excerptId);
