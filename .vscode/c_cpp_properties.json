@@ -9,6 +9,9 @@
                 "/usr/emsdk/upstream/emscripten/system/include/*"
             ],
             "defines": [
+                "Q_OS_WASM",
+                "ENABLE_AUDIO_EXPORT",
+                "HAVE_EXTERNAL_XIPH_LIBS",
                 "IF_ASSERT_FAILED=if /**(!(x))*/"
             ],
             "compilerPath": "/usr/bin/gcc",
