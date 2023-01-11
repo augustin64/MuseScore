@@ -1,0 +1,53 @@
+name: Build webmscore
+
+on:
+  workflow_dispatch:
+    inputs: {}
+  push:
+    branches:
+      - 'Xmader/chore/ci-build'
+
+concurrency:
+  group: ${{ github.workflow }}
+  # group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: true
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Install Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          aqtversion: '==2.1.*'
+          version: '5.15.2'
+          host: 'linux'
+          target: 'desktop'
+          arch: 'wasm_32'
+          archives: 'qtbase'
+          setup-python: false
+          dir: '/usr/qt515'
+          # cache: true
+      - name: Setup Qt5
+        run: |
+          echo $Qt5_DIR
+          ls -al $Qt5_DIR
+
+      - name: Pack build artifacts
+        run: |
+          cd web-public
+          npm pack
+      - name: Save build artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: npm-pack
+          path: web-public/webmscore-*.tgz
