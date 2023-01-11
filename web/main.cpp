@@ -38,6 +38,7 @@
 #include "notation/internal/notation.h"
 #include "notation/internal/mscnotationwriter.h"
 #include "importexport/midi/internal/midiexport/exportmidi.h"
+#include "./importexport/positionjsonwriter.h"
 
 using namespace mu;
 using project::INotationWriter;
@@ -590,6 +591,25 @@ const char* _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
     
     LOGI() << String(u"excerpt %1, size %2").arg(excerptId).arg(size);
     return packData(data, size);
+}
+
+
+/**
+ * save positions of measures or segments (if the `ofSegments` param == true) as JSON
+ */
+const char* _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    score = maybeUseExcerpt(score, excerptId);
+    score->switchToPageMode();
+
+    using W = notation::PositionJsonWriter;
+    W writer(ofSegments ? W::ElementType::SEGMENT : W::ElementType::MEASURE);
+    
+    QByteArray data = writer.jsonData(score);
+    LOGI() << String(u"excerpt %1, ofSegments %2, file size %3").arg(excerptId).arg(ofSegments).arg(data.size());
+
+    // JSON is plain text
+    return reallocData(data);
 }
 
 /**
