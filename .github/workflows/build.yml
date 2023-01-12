@@ -31,7 +31,7 @@ jobs:
       - uses: actions/cache@v3
         with:
           path: ${{env.EM_CACHE_FOLDER}}
-          key: ${{env.EM_VERSION}}-system-libraries-${{ runner.os }}
+          key: emsdk-${{env.EM_VERSION}}-${{ runner.os }}
       - uses: actions/cache@v3
         with:
           # Allows updating the cache
@@ -72,17 +72,35 @@ jobs:
           npm run build:no-clean
           npm pack
 
-      - name: Test
-        run: |
-          cd web-example
-          npm i
-          npm start
-
       - name: Save build artifacts
         uses: actions/upload-artifact@v3
         with:
           name: npm-pack
           path: web-public/webmscore-*.tgz
+
+  test:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: false
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+
+      - name: Download webmscore package tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: npm-pack
+      - name: Test
+        run: |
+          cd web-example
+          npm i ../web-public/webmscore-*.tgz
+          npm start
+
       - uses: actions/upload-artifact@v3
         with:
           name: example-exports
