@@ -6,6 +6,7 @@
 #include "global/log.h"
 #include "global/defer.h"
 #include "global/io/buffer.h"
+#include "async/processevents.h"
 
 #include "modularity/ioc.h"
 #include "context/internal/globalcontext.h"
@@ -626,14 +627,23 @@ uintptr_t _synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
     score = maybeUseExcerpt(score, excerptId);
     LOGI() << String(u"excerpt %1, starttime %2").arg(excerptId).arg(starttime);
 
-    auto playback = modularity::ioc()->resolve<audio::Playback>("");
-    audio::ITrackSequencePtr sequence = playback->getSequences().at(0);
-    auto source = audio::AudioEngine::instance()->mixer();
-
     // use buffer size of 512 frames
     static const size_t renderStep = 512;
     static const size_t channels = 2;
     static const size_t sampleRate = 44100;
+
+    // Wait async ticks, otherwise `sequenceIdList` is empty
+    //  previous `Playback::addSequence()` is a `Promise`
+    mu::async::processEvents();
+    //  resolve `totalDuration`
+    mu::async::processEvents();
+
+    auto playback = modularity::ioc()->resolve<audio::Playback>("");
+    IF_ASSERT_FAILED (playback->getSequences().size() > 0) {
+        LOGE() << "no playback sequence found!";
+        return 0;
+    }
+    audio::ITrackSequencePtr sequence = playback->getSequences().at(0); // use only the first `sequence`
 
     // Seek
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/worker/audiooutputhandler.cpp#L200-L201
@@ -643,12 +653,14 @@ uintptr_t _synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
     // Setup audio source
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/soundtracks/soundtrackwriter.cpp#L73-L76
     audio::AudioEngine::instance()->setMode(audio::RenderMode::OfflineMode);
+    auto source = audio::AudioEngine::instance()->mixer();
     source->setSampleRate(sampleRate);
     source->setIsActive(true);
 
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/soundtracks/soundtrackwriter.cpp#L49
     const auto totalDuration = sequence->player()->duration();
     const audio::samples_t totalSamples = (totalDuration / 1000000.f) * sampleRate;
+    LOGI() << String(u"totalDuration %1, totalSamples %2").arg(totalDuration).arg((int64_t)totalSamples);
 
     bool done = false;
     audio::samples_t playedSamples = starttime * sampleRate;
