@@ -147,6 +147,7 @@ set_target_properties (webmscore PROPERTIES LINK_FLAGS ${WASM_LINK_FLAGS})
 target_include_directories(webmscore PUBLIC
     ${MU_ROOT}/src/framework/global
     ${MU_ROOT}/src/engraving
+    ${MU_ROOT}/src/framework/audio
 )
 
 target_link_libraries(webmscore

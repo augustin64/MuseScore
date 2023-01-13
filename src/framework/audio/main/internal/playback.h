@@ -106,6 +106,8 @@ public:
 
     void clearAllFx() override;
 
+    inline std::map<TrackSequenceId, ITrackSequencePtr> getSequences() { return m_sequences; };
+
 private:
     async::Channel<TrackSequenceId> m_sequenceAdded;
     async::Channel<TrackSequenceId> m_sequenceRemoved;

@@ -40,6 +40,9 @@
 #include "importexport/midi/internal/midiexport/exportmidi.h"
 #include "./importexport/positionjsonwriter.h"
 
+#include "audio/internal/worker/playback.h"
+#include "audio/internal/worker/audioengine.h"
+
 using namespace mu;
 using project::INotationWriter;
 
@@ -594,6 +597,108 @@ const char* _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
 }
 
 
+struct SynthRes {
+    int done;  // bool
+    float startTime; // the chunk's start time in seconds
+    float endTime;   // the chunk's end time in seconds (playtime)
+    unsigned chunkSize;
+    char chunk[0 /* to be chunkSize */];
+};
+
+/**
+ * De-interleave audio channels
+ * @param dest: [ channelA #len frames, channelB #len frames ]
+ * @param src:  [ channelA frame0, channelB frame0, channelA frame1, channelB frame1, ... ]
+ */
+void deInterleave(float* dest, const float* src, size_t framesLen) {
+    for (size_t i = 0, j = 0; i < framesLen; i++, j+=2) {
+        dest[i] = src[j];
+        dest[framesLen + i] = src[j+1];
+    }
+}
+
+/**
+ * synthesize audio frames
+ * @param starttime The start time offset in seconds
+ */
+uintptr_t _synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
+    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    score = maybeUseExcerpt(score, excerptId);
+    LOGI() << String(u"excerpt %1, starttime %2").arg(excerptId).arg(starttime);
+
+    auto playback = modularity::ioc()->resolve<audio::Playback>("");
+    audio::ITrackSequencePtr sequence = playback->getSequences().at(0);
+    auto source = audio::AudioEngine::instance()->mixer();
+
+    // use buffer size of 512 frames
+    static const size_t renderStep = 512;
+    static const size_t channels = 2;
+    static const size_t sampleRate = 44100;
+
+    // Seek
+    // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/worker/audiooutputhandler.cpp#L200-L201
+    sequence->player()->stop();
+    sequence->player()->seek(starttime * 1000); // get ms
+
+    // Setup audio source
+    // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/soundtracks/soundtrackwriter.cpp#L73-L76
+    audio::AudioEngine::instance()->setMode(audio::RenderMode::OfflineMode);
+    source->setSampleRate(sampleRate);
+    source->setIsActive(true);
+
+    // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/soundtracks/soundtrackwriter.cpp#L49
+    const auto totalDuration = sequence->player()->duration();
+    // FIXME: why `* sizeof(float)` ?
+    const audio::samples_t totalSamples = (totalDuration / 1000000.f) * sizeof(float) * sampleRate;
+
+    bool done = false;
+    audio::samples_t playedSamples = starttime * sampleRate;
+    static auto synthIterator = [done, playedSamples, totalSamples, &source](bool cancel = false) mutable -> SynthRes* { 
+        if (done) {
+            return new SynthRes{done, -1, -1, 0};
+        }
+
+        float buffer[renderStep * channels] = {};
+        auto res = (SynthRes*)calloc(1, sizeof(SynthRes) + sizeof(buffer)); 
+        res->chunkSize = sizeof(buffer);
+
+        // render audio buffer
+        source->process(buffer, renderStep);
+        deInterleave((float*)res->chunk, buffer, renderStep);
+
+        auto prevPlayed = playedSamples;
+        playedSamples += renderStep;
+        if (playedSamples >= totalSamples || cancel) {
+            // finished, do cleanup
+            source->setIsActive(false);
+            done = true;
+        }
+
+        res->done = done;
+        res->startTime = float(prevPlayed) / sampleRate;
+        res->endTime = float(playedSamples) / sampleRate;
+
+        return res;
+    };
+
+    return reinterpret_cast<uintptr_t>(&synthIterator);
+}
+
+const char* _processSynth(uintptr_t fn_ptr, bool cancel) {
+    auto fn = reinterpret_cast<std::function<SynthRes*(bool)>*>(fn_ptr);
+    const auto res = (*fn)(cancel);
+    return reinterpret_cast<const char*>(res);
+}
+
+const char* _processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel) {
+    auto fn = reinterpret_cast<std::function<SynthRes*(bool)>*>(fn_ptr);
+    auto resArr = (SynthRes**)calloc(batchSize, sizeof(SynthRes*)); // array of pointers to SynthRes data 
+    for (size_t i = 0; i < batchSize; i++) {
+        resArr[i] = (*fn)(cancel);
+    }
+    return reinterpret_cast<const char*>(resArr);
+}
+
 /**
  * save positions of measures or segments (if the `ofSegments` param == true) as JSON
  */
@@ -704,7 +809,6 @@ extern "C" {
         return _saveAudio(score_ptr, format, excerptId);
     };
 
-#if 0
     EMSCRIPTEN_KEEPALIVE
     uintptr_t synthAudio(uintptr_t score_ptr, float starttime, int excerptId = -1) {
         return _synthAudio(score_ptr, starttime, excerptId);
@@ -720,7 +824,6 @@ extern "C" {
         return _processSynthBatch(fn_ptr, batchSize, cancel);
     }
 
-#endif
     EMSCRIPTEN_KEEPALIVE
     const char* savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId = -1) {
         return _savePositions(score_ptr, ofSegments, excerptId);
