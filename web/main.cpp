@@ -597,7 +597,6 @@ const char* _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
     return packData(data, size);
 }
 
-
 struct SynthRes {
     int done;  // bool
     float startTime; // the chunk's start time in seconds
@@ -617,6 +616,10 @@ void deInterleave(float* dest, const float* src, size_t framesLen) {
         dest[framesLen + i] = src[j+1];
     }
 }
+
+// can't use std::set<std::function<>>
+// https://stackoverflow.com/questions/53459693
+std::vector<std::function<SynthRes*(bool)>> synthIterators;
 
 /**
  * synthesize audio frames
@@ -664,7 +667,7 @@ uintptr_t _synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
 
     bool done = false;
     audio::samples_t playedSamples = starttime * sampleRate;
-    static auto synthIterator = [done, playedSamples, totalSamples, &source](bool cancel = false) mutable -> SynthRes* { 
+    auto synthIterator = [done, playedSamples, totalSamples, source](bool cancel = false) mutable -> SynthRes* { // must use by-copy capture because variables are destroyed as the `_synthAudio` function ends
         if (done) {
             return new SynthRes{done, -1, -1, 0, {}};
         }
@@ -692,7 +695,10 @@ uintptr_t _synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
         return res;
     };
 
-    return reinterpret_cast<uintptr_t>(&synthIterator);
+    // persist this `synthIterator` function
+    synthIterators.push_back(synthIterator);
+
+    return reinterpret_cast<uintptr_t>(&synthIterators.back());
 }
 
 const char* _processSynth(uintptr_t fn_ptr, bool cancel) {
