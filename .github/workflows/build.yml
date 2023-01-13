@@ -68,6 +68,7 @@ jobs:
       - name: Build
         run: |
           cd web-public
+          du -ch -d 3 build.release
           npm i
           npm run build:no-clean
           npm pack
@@ -95,10 +96,12 @@ jobs:
         uses: actions/download-artifact@v3
         with:
           name: npm-pack
+          path: web-example
       - name: Test
         run: |
           cd web-example
-          npm i ../web-public/webmscore-*.tgz
+          npm i
+          npm i ./webmscore-*.tgz
           npm start
 
       - uses: actions/upload-artifact@v3
