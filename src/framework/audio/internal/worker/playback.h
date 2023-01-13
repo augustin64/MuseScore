@@ -51,6 +51,8 @@ public:
     ITracksPtr tracks() const override;
     IAudioOutputPtr audioOutput() const override;
 
+    inline std::map<TrackSequenceId, ITrackSequencePtr> getSequences() { return m_sequences; };
+
 protected:
     // IGetTrackSequence
     ITrackSequencePtr sequence(const TrackSequenceId id) const override;
