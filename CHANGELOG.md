@@ -9,6 +9,26 @@ All notable changes to this project will be documented in this file.
 * Stream audio file exporting
 * Python API
 
+## 1.0.0 - 2023-01-13
+
+### BREAKING CHANGE
+
+webmscore is now built based on MuseScore 4.0!
+
+### Changed
+
+Although there's no public API change comparing to `v0.22.0`, there might be some unintended internal changes or incompatibilities.
+
+## 0.22.0 - 2022-12-31
+
+### Changed
+
+* Build over the `offscreen` [Qt Platform Plugin](https://doc.qt.io/qt-5/qpa.html) so that the wasm binary size has been significantly reduced
+    * `webmscore.lib.wasm`:<br>
+       10.47 MB -> 7.42 MB
+    * `webmscore.lib.mem.wasm`:<br>
+       4.97 MB -> 3.92 MB
+
 ## 0.21.0 - 2020-03-02
 
 ### BREAKING CHANGE
