@@ -648,14 +648,13 @@ uintptr_t _synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
 
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/soundtracks/soundtrackwriter.cpp#L49
     const auto totalDuration = sequence->player()->duration();
-    // FIXME: why `* sizeof(float)` ?
-    const audio::samples_t totalSamples = (totalDuration / 1000000.f) * sizeof(float) * sampleRate;
+    const audio::samples_t totalSamples = (totalDuration / 1000000.f) * sampleRate;
 
     bool done = false;
     audio::samples_t playedSamples = starttime * sampleRate;
     static auto synthIterator = [done, playedSamples, totalSamples, &source](bool cancel = false) mutable -> SynthRes* { 
         if (done) {
-            return new SynthRes{done, -1, -1, 0};
+            return new SynthRes{done, -1, -1, 0, {}};
         }
 
         float buffer[renderStep * channels] = {};
@@ -693,7 +692,7 @@ const char* _processSynth(uintptr_t fn_ptr, bool cancel) {
 const char* _processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel) {
     auto fn = reinterpret_cast<std::function<SynthRes*(bool)>*>(fn_ptr);
     auto resArr = (SynthRes**)calloc(batchSize, sizeof(SynthRes*)); // array of pointers to SynthRes data 
-    for (size_t i = 0; i < batchSize; i++) {
+    for (int i = 0; i < batchSize; i++) {
         resArr[i] = (*fn)(cancel);
     }
     return reinterpret_cast<const char*>(resArr);
