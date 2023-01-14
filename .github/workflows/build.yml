@@ -68,7 +68,7 @@ jobs:
       - name: Build
         run: |
           cd web-public
-          du -ch -d 3 build.release
+          du -ch -d 4 ../web/
           npm i
           npm run build:no-clean
           npm pack
