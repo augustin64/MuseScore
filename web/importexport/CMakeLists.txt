@@ -15,6 +15,8 @@ set(MODULE_SRC
     ${MU_ROOT}/src/notation/internal/notationpainting.h
     ${MU_ROOT}/src/notation/internal/notationviewstate.cpp
     ${MU_ROOT}/src/notation/internal/notationviewstate.h
+    ${MU_ROOT}/src/notation/internal/notationundostack.cpp
+    ${MU_ROOT}/src/notation/internal/notationundostack.h
     ${MU_ROOT}/src/notation/internal/searchcommandsparser.cpp
     ${MU_ROOT}/src/notation/internal/searchcommandsparser.h
 
