@@ -1,7 +1,6 @@
 
 import { createRequire } from 'module'
 import { dirname } from 'path'
-import { performance } from 'perf_hooks'
 import { fileURLToPath } from 'url'
 import { IS_NODE, shimDom } from './utils.js'
 
@@ -17,7 +16,8 @@ if (IS_NODE) {
         global.__dirname = dirname(fileURLToPath(import.meta.url))
     }
 
-    global.performance = performance
+    // silence `Assertion failed: IDBStore used, but indexedDB not supported` on Node.js
+    global.indexedDB = function () { };
 
     shimDom()
 }
