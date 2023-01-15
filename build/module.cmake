@@ -61,7 +61,8 @@ endif()
 # endif()
 
 if (CC_IS_EMSCRIPTEN)
-    add_library(${MODULE} OBJECT)
+    # add_library(${MODULE} OBJECT) # will cause modules not been properly linked when using ccache
+    add_library(${MODULE})
 else()
     add_library(${MODULE}) # STATIC/SHARED set global in the SetupBuildEnvironment.cmake
 endif()
