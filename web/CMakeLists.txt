@@ -22,6 +22,7 @@ set(QT_SUPPORT ON)
 # include(SetupBuildEnvironment)
 include(GetPlatformInfo)
 include(SetupCompileWarnings)
+include(SetupCompilerCache)
 
 include_directories(
     ${CMAKE_CURRENT_LIST_DIR}
