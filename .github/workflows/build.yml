@@ -39,7 +39,7 @@ jobs:
           key: emmake_cache-${{ github.run_id }} 
           restore-keys: |
             emmake_cache
-          path: ${{ github.workspace }}/web/build.*
+          path: ${{ github.workspace }}/.ccache
 
       - name: Install Qt
         uses: jurplel/install-qt-action@v3
@@ -64,11 +64,14 @@ jobs:
           cp --verbose -r build/qt/* ${Qt5_DIR}
           echo $(which emcc).py
           sed -i -r "s/(shared.Settings.MEM_INIT_IN_WASM = )True/\1False/" "$(which emcc).py"
+      - name: Install ccache
+        run: |
+          sudo apt install -y ccache
+          ccache --version
 
       - name: Build
         run: |
           cd web-public
-          du -ch -d 4 ../web/
           npm i
           npm run build:no-clean
           npm pack

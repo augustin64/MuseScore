@@ -43,7 +43,7 @@ if(CCACHE_PROGRAM)
            message(STATUS "Using ccache")
        endif()
 
-    elseif(CC_IS_GCC)
+    elseif(CC_IS_GCC OR CC_IS_EMSCRIPTEN)
 
         # Support Unix Makefiles and Ninja
         set(ENV{CCACHE_CPP2} true)

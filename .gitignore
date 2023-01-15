@@ -64,3 +64,4 @@ VERSION
 
 # Backup Files created by Merging Softwares (Example: Meld)
 *.orig
+.ccache
