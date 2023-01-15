@@ -8,16 +8,34 @@ All notable changes to this project will be documented in this file.
 
 * Stream audio file exporting
 * Python API
+* Pure WebAssembly API
+
+## 1.1.0 - 2023-01-15
+
+### Added
+
+* Allowing to set log level
+
+```js
+const score = await WebMscore.load(...) // set log level to `Off` by default
+await WebMscore.setLogLevel(2)          // set log level to `Debug`
+```
+
+### Changed
+
+* Logs are turned off by default
+
+* Incorporate [ccache](https://ccache.dev/) in the build script, could significantly speed up recompilation if `ccache` is installed
 
 ## 1.0.0 - 2023-01-13
 
 ### BREAKING CHANGE
 
-webmscore is now built based on MuseScore 4.0!
+* webmscore is now built based on MuseScore 4.0!
 
 ### Changed
 
-Although there's no public API change comparing to `v0.22.0`, there might be some unintended internal changes or incompatibilities.
+* Although there's no public API change comparing to `v0.22.0`, there might be some unintended internal changes or incompatibilities.
 
 ## 0.22.0 - 2022-12-31
 
