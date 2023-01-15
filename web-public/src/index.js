@@ -35,6 +35,18 @@ class WebMscore {
     }
 
     /**
+     * Set log level
+     * @param {0 | 1 | 2} level - See https://github.com/LibreScore/webmscore/blob/v1.0.0/src/framework/global/thirdparty/haw_logger/logger/log_base.h#L30-L33
+     *  - 0: Off
+     *  - 1: Normal (`ERRR` or `WARN` or `INFO`)
+     *  - 2: Debug  (`DEBG`)
+     */
+    static async setLogLevel(level) {
+        await WebMscore.ready
+        return Module.ccall('setLogLevel', null, ['number'], [level])
+    }
+
+    /**
      * Set custom stdout instead of `console.log`  
      * Available before `WebMscore.ready`
      * @private Node.js exclusive
@@ -104,6 +116,9 @@ class WebMscore {
             // `scoreptr` is the error code
             throw new FileError(scoreptr)
         }
+
+        // turn off logs by default
+        await WebMscore.setLogLevel(0);
 
         const mscore = new WebMscore(scoreptr)
         return mscore

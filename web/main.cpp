@@ -757,6 +757,11 @@ extern "C" {
     };
 
     EMSCRIPTEN_KEEPALIVE
+    void setLogLevel(const haw::logger::Level level) {
+        haw::logger::Logger::instance()->setLevel(level);
+    };
+
+    EMSCRIPTEN_KEEPALIVE
     void init(int argc, char** argv) {
         return _init(argc, argv);
     };
