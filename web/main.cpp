@@ -56,21 +56,12 @@ static auto s_globalContext = std::make_shared<context::GlobalContext>();
  */
 
 /**
- * realloc/copy the data block so that it can be properly referred by its ptr and then freed in c-style
- */
-const char* reallocData(ByteArray data) {
-    auto size = data.size() + 1; // https://doc.qt.io/qt-5/qbytearray.html#data
-    auto buf = (char*)malloc(size);
-    memcpy(buf, data.constData(), size);
-    return buf;
-}
-
-/**
  * Pack wasm responses
  */
 struct WasmRes {
 public:
-    WasmRes(ByteArray data, uint32_t size) {
+    WasmRes(ByteArray data) {
+        uint32_t size = data.size();
         ByteArray sizeData = ByteArray((const char*)&size, 4);
         m_buffer.open(io::Buffer::ReadWrite);
         m_buffer.write(sizeData);
@@ -79,7 +70,7 @@ public:
     }
 
     WasmRes(QByteArray data)
-        : WasmRes(ByteArray::fromQByteArrayNoCopy(data), data.size()) {}
+        : WasmRes(ByteArray::fromQByteArrayNoCopy(data)) {}
 
     inline operator const char*() {
         return reallocData(m_buffer.data());
@@ -87,6 +78,16 @@ public:
 
 private:
     io::Buffer m_buffer;
+
+    /**
+     * realloc/copy the data block so that it can be properly referred by its ptr and then freed in c-style
+     */
+    static const char* reallocData(ByteArray data) {
+        auto size = data.size() + 1; // https://doc.qt.io/qt-5/qbytearray.html#data
+        auto buf = (char*)malloc(size);
+        memcpy(buf, data.constData(), size);
+        return buf;
+    }
 };
 
 engraving::MasterScore* maybeUseExcerpt(engraving::MasterScore* score, int excerptId) {
@@ -364,7 +365,7 @@ const char* _title(uintptr_t score_ptr) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/converter/internal/compat/notationmeta.cpp#L89-L107
     String title = converter::NotationMeta::title(score);
-    return reallocData(
+    return WasmRes(
         title.toUtf8()
     );
 }
@@ -426,10 +427,7 @@ const char* _saveXml(uintptr_t score_ptr, int excerptId) {
     processWriter(u"xml", score, &data);
     LOGI() << String(u"excerpt %1, size %2 bytes").arg(excerptId, data.size());
 
-    // MusicXML is plain text
-    return reallocData(
-        ByteArray::fromQByteArrayNoCopy(data)
-    );
+    return WasmRes(data);
 }
 
 /**
@@ -511,10 +509,7 @@ const char* _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackgroun
     processWriter(u"svg", score, &data, options);
     LOGI() << String(u"excerpt %1, page index %2, size %3 bytes").arg(excerptId, pageNumber, data.size());
 
-    // SVG is plain text
-    return reallocData(
-        ByteArray::fromQByteArrayNoCopy(data)
-    );
+    return WasmRes(data);
 }
 
 /**
@@ -739,8 +734,7 @@ const char* _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) 
     QByteArray data = writer.jsonData(score);
     LOGI() << String(u"excerpt %1, ofSegments %2, file size %3").arg(excerptId).arg(ofSegments).arg(data.size());
 
-    // JSON is plain text
-    return reallocData(ByteArray::fromQByteArrayNoCopy(data));
+    return WasmRes(data);
 }
 
 /**
@@ -750,8 +744,7 @@ const char* _saveMetadata(uintptr_t score_ptr) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     auto result = converter::NotationMeta::metaJson(score);
     auto data = result.val;
-    // JSON is plain text
-    return reallocData(
+    return WasmRes(
         ByteArray(data.data(), data.size()) // UTF-8 encoded JSON data
     );
 }

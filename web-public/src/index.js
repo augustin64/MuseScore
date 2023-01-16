@@ -220,10 +220,8 @@ class WebMscore {
      * @returns {Promise<string>}
      */
     async title() {
-        const strptr = Module.ccall('title', 'number', ['number'], [this.scoreptr])
-        const str = Module.UTF8ToString(strptr)
-        freePtr(strptr)
-        return str
+        const dataptr = Module.ccall('title', 'number', ['number'], [this.scoreptr])
+        return WasmRes.readText(dataptr)
     }
 
     /**
@@ -272,12 +270,7 @@ class WebMscore {
      */
     async saveXml() {
         const dataptr = Module.ccall('saveXml', 'number', ['number', 'number'], [this.scoreptr, this.excerptId])
-
-        // MusicXML is plain text
-        const data = Module.UTF8ToString(dataptr)
-        freePtr(dataptr)
-
-        return data
+        return WasmRes.readText(dataptr)
     }
 
     /**
@@ -311,12 +304,7 @@ class WebMscore {
             ['number', 'number', 'boolean', 'number'],
             [this.scoreptr, pageNumber, drawPageBackground, this.excerptId]
         )
-
-        // SVG is plain text
-        const data = Module.UTF8ToString(dataptr)
-        freePtr(dataptr)
-
-        return data
+        return WasmRes.readText(dataptr)
     }
 
     /**
@@ -521,27 +509,17 @@ class WebMscore {
             ['number', 'boolean', 'number'],
             [this.scoreptr, ofSegments, this.excerptId]
         )
-
-        // JSON is plain text
-        const data = Module.UTF8ToString(dataptr)
-        freePtr(dataptr)
-
-        return data
+        return WasmRes.readText(dataptr)
     }
 
     /**
-     * Export score metadata as JSON
+     * Export score metadata as JSON text
      * @also `score.metadata()`
      * @returns {Promise<string>} contents of the JSON file
      */
     async saveMetadata() {
         const dataptr = Module.ccall('saveMetadata', 'number', ['number'], [this.scoreptr])
-
-        // JSON is plain text
-        const data = Module.UTF8ToString(dataptr)
-        freePtr(dataptr)
-
-        return data
+        return WasmRes.readText(dataptr)
     }
 
     /**
