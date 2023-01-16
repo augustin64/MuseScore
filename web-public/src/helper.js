@@ -55,24 +55,68 @@ export const getTypedArrayPtr = (data) => {
     return buf
 }
 
-/**
- * read length-prefixed data (char*) as Uint8Array
- * @param {number} ptr 
- * @returns {Uint8Array}
- */
-export const readData = (ptr) => {
-    const sizeData = new DataView(
-        new Uint8Array(  // make a copy
-            Module.HEAPU8.subarray(ptr, ptr + 4)
-        ).buffer
-    )
+export class WasmRes {
+    /** @type {number} */
+    _ptr
+    /** @type {number} */
+    _size
 
-    const size = sizeData.getUint32(0, true)
-    const data = new Uint8Array(Module.HEAPU8.subarray(ptr + 4, ptr + 4 + size))  // make a copy
+    /**
+     * Read responses from the wasm module
+     * @param {number} ptr char* pointer to the responses data
+     */
+    constructor(ptr) {
+        this._ptr = ptr
 
-    freePtr(ptr)
+        const sizeData = new DataView(
+            new Uint8Array(  // make a copy
+                Module.HEAPU8.subarray(ptr, ptr + 4)
+            ).buffer
+        )
+        this._size = sizeData.getUint32(0, true)
+    }
 
-    return data
+    /**
+     * pointer to the data contents 
+     * @private
+     */
+    get _dataPtr() {
+        return this._ptr + 4
+    }
+
+    /**
+     * Read the data contents as Uint8Array
+     * @returns {Uint8Array}
+     */
+    data() {
+        return new Uint8Array( // make a copy
+            Module.HEAPU8.subarray(this._dataPtr, this._dataPtr + this._size)
+        )
+    }
+
+    /**
+     * Read the data contents as utf-8 string
+     * @returns {string}
+     */
+    text() {
+        return Module.UTF8ToString(this._dataPtr)
+    }
+
+    free() {
+        return freePtr(this._ptr)
+    }
+
+    /**
+     * read wasm responses as Uint8Array  
+     * @param {number} ptr 
+     * @returns {Uint8Array}
+     */
+    static readData(ptr) {
+        const res = new WasmRes(ptr)
+        const data = res.data()
+        res.free()
+        return data
+    }
 }
 
 /**
@@ -90,7 +134,7 @@ export const RuntimeInitialized = new Promise((resolve) => {
     ModulePromise.then((_Module) => {
         Module = _Module
         Module.ccall('init')  // init libmscore
-        resolve()
+        resolve(undefined)
     })
 })
 

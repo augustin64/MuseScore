@@ -6,7 +6,7 @@ import {
     RuntimeInitialized,
     getStrPtr,
     getTypedArrayPtr,
-    readData,
+    WasmRes,
     freePtr,
     FileError,
 } from './helper.js'
@@ -286,7 +286,7 @@ class WebMscore {
      */
     async saveMxl() {
         const dataptr = Module.ccall('saveMxl', 'number', ['number', 'number'], [this.scoreptr, this.excerptId])
-        return readData(dataptr)
+        return WasmRes.readData(dataptr)
     }
 
     /**
@@ -296,7 +296,7 @@ class WebMscore {
      */
     async saveMsc(format = 'mscz') {
         const dataptr = Module.ccall('saveMsc', 'number', ['number', 'boolean', 'number'], [this.scoreptr, format == 'mscz', this.excerptId])
-        return readData(dataptr)
+        return WasmRes.readData(dataptr)
     }
 
     /**
@@ -332,7 +332,7 @@ class WebMscore {
             ['number', 'number', 'boolean', 'boolean', 'number'],
             [this.scoreptr, pageNumber, drawPageBackground, transparent, this.excerptId]
         )
-        return readData(dataptr)
+        return WasmRes.readData(dataptr)
     }
 
     /**
@@ -341,7 +341,7 @@ class WebMscore {
      */
     async savePdf() {
         const dataptr = Module.ccall('savePdf', 'number', ['number', 'number'], [this.scoreptr, this.excerptId])
-        return readData(dataptr)
+        return WasmRes.readData(dataptr)
     }
 
     /**
@@ -356,7 +356,7 @@ class WebMscore {
             ['number', 'boolean', 'boolean', 'number'],
             [this.scoreptr, midiExpandRepeats, exportRPNs, this.excerptId]
         )
-        return readData(dataptr)
+        return WasmRes.readData(dataptr)
     }
 
     /**
@@ -383,7 +383,7 @@ class WebMscore {
             [this.scoreptr, fileformatptr, this.excerptId]
         )
         freePtr(fileformatptr)
-        return readData(dataptr)
+        return WasmRes.readData(dataptr)
     }
 
     /**
