@@ -100,7 +100,7 @@ void _init(int argc, char** argv) {
     // writers->reg({ engraving::MSCX }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Dir));
     writers->reg({ engraving::MSCS }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::XmlFile));
 
-    MainAudio::init();
+    MainAudio::initModule();
 }
 
 /**
@@ -649,17 +649,17 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     uintptr_t synthAudio(uintptr_t score_ptr, float starttime, int excerptId = -1) {
         MainScore score(score_ptr, excerptId);
-        return MainAudio::synthAudio(score, starttime);
+        return MainAudio::Synth::start(score, starttime);
     };
 
     EMSCRIPTEN_KEEPALIVE
     const char* processSynth(uintptr_t fn_ptr, bool cancel = false) {
-        return MainAudio::processSynth(fn_ptr, cancel);
+        return MainAudio::Synth(fn_ptr).process(cancel);
     }
 
     EMSCRIPTEN_KEEPALIVE
     const char* processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel = false) {
-        return MainAudio::processSynthBatch(fn_ptr, batchSize, cancel);
+        return MainAudio::Synth(fn_ptr).processBatch(batchSize, cancel);
     }
 
     EMSCRIPTEN_KEEPALIVE

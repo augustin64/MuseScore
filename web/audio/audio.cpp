@@ -9,7 +9,7 @@
 namespace MainAudio {
 using namespace mu;
 
-void init() {
+void initModule() {
     // Setup audio engine
     auto aeM = new audio::AudioModule();
     aeM->registerExports();
