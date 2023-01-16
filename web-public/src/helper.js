@@ -67,13 +67,7 @@ export class WasmRes {
      */
     constructor(ptr) {
         this._ptr = ptr
-
-        const sizeData = new DataView(
-            new Uint8Array(  // make a copy
-                Module.HEAPU8.subarray(ptr, ptr + 4)
-            ).buffer
-        )
-        this._size = sizeData.getUint32(0, true)
+        this._size = WasmRes._getUint32(ptr)
     }
 
     /**
@@ -107,11 +101,25 @@ export class WasmRes {
      * @returns {number}
      */
     number() {
-        return +this.text()
+        return WasmRes._getUint32(this._dataPtr)
     }
 
     free() {
         return freePtr(this._ptr)
+    }
+
+    /**
+     * @private 
+     * @param {number} ptr 
+     * @returns {number}
+     */
+    static _getUint32(ptr) {
+        const sizeData = new DataView(
+            new Uint8Array(  // make a copy
+                Module.HEAPU8.subarray(ptr, ptr + 4)
+            ).buffer
+        )
+        return sizeData.getUint32(0, true)
     }
 
     /**
