@@ -5,8 +5,7 @@
 #include "audio/internal/worker/playback.h"
 #include "audio/internal/worker/audioengine.h"
 
-#include "../score.h"
-#include "./audio.h"
+#include "./audiosynth.h"
 
 namespace MainAudio {
 
@@ -31,7 +30,7 @@ const char* Synth::processBatch(int batchSize, bool cancel) {
 }
 
 Synth Synth::start(MainScore score, float starttime) {
-    LOGI() << String(u"starttime %2").arg(starttime);
+    LOGI() << String(u"starttime %1").arg(starttime);
 
     // use buffer size of 512 frames
     static const size_t renderStep = 512;

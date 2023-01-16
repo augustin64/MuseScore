@@ -7,6 +7,7 @@ set(MODULE_SRC
     audio.cpp
     audio.h
     audiosynth.cpp
+    audiosynth.h
 
     ${MU_ROOT}/src/playback/internal/playbackcontroller.cpp
     ${MU_ROOT}/src/playback/internal/playbackcontroller.h
