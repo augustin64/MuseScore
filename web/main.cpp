@@ -72,6 +72,9 @@ public:
     WasmRes(QByteArray data)
         : WasmRes(ByteArray::fromQByteArrayNoCopy(data)) {}
 
+    WasmRes(String str)
+        : WasmRes(str.toUtf8()) {}
+
     inline operator const char*() {
         return reallocData(m_buffer.data());
     }
@@ -365,18 +368,18 @@ const char* _title(uintptr_t score_ptr) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/converter/internal/compat/notationmeta.cpp#L89-L107
     String title = converter::NotationMeta::title(score);
-    return WasmRes(
-        title.toUtf8()
-    );
+    return WasmRes(title);
 }
 
 /**
  * get the number of pages
  */
-int _npages(uintptr_t score_ptr, int excerptId) {
+const char* _npages(uintptr_t score_ptr, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
-    return score->npages();
+    return WasmRes(
+        String::number(score->npages())
+    );
 }
 
 /**
@@ -790,7 +793,7 @@ extern "C" {
     };
 
     EMSCRIPTEN_KEEPALIVE
-    int npages(uintptr_t score_ptr, int excerptId) {
+    const char* npages(uintptr_t score_ptr, int excerptId) {
         return _npages(score_ptr, excerptId);
     };
 
