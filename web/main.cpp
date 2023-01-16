@@ -62,9 +62,8 @@ struct WasmRes {
 public:
     WasmRes(ByteArray data) {
         uint32_t size = data.size();
-        ByteArray sizeData = ByteArray((const char*)&size, 4);
         m_buffer.open(io::Buffer::ReadWrite);
-        m_buffer.write(sizeData);
+        m_buffer.write(sizeData(size));
         m_buffer.write(data);
         m_buffer.close();
     }
@@ -75,8 +74,8 @@ public:
     WasmRes(String str)
         : WasmRes(str.toUtf8()) {}
 
-    WasmRes(unsigned long num)
-        : WasmRes(String::number((size_t)num)) {}
+    WasmRes(uint32_t num)
+        : WasmRes(sizeData(num)) {}
 
     inline operator const char*() {
         return reallocData(m_buffer.data());
@@ -93,6 +92,10 @@ private:
         auto buf = (char*)malloc(size);
         memcpy(buf, data.constData(), size);
         return buf;
+    }
+
+    static inline ByteArray sizeData(uint32_t num) {
+        return ByteArray((const char*)&num, sizeof(num));
     }
 };
 
