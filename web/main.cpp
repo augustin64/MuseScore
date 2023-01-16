@@ -6,6 +6,7 @@
 #include "global/log.h"
 #include "global/defer.h"
 #include "global/io/buffer.h"
+#include "global/types/bytearray.h"
 #include "async/processevents.h"
 
 #include "modularity/ioc.h"
@@ -57,7 +58,7 @@ static auto s_globalContext = std::make_shared<context::GlobalContext>();
 /**
  * realloc/copy the data block so that it can be properly referred by its ptr and then freed in c-style
  */
-const char* reallocData(QByteArray data) {
+const char* reallocData(ByteArray data) {
     auto size = data.size() + 1; // https://doc.qt.io/qt-5/qbytearray.html#data
     auto buf = (char*)malloc(size);
     memcpy(buf, data.constData(), size);
@@ -67,12 +68,12 @@ const char* reallocData(QByteArray data) {
 /**
  * pack length-prefixed data
  */
-const char* packData(QByteArray data, qint64 size) {
+const char* packData(QByteArray data, uint32_t size) {
     // TODO: refactor to `io::ByteArray` and `io::Buffer`
-    QByteArray sizeData = QByteArray((const char*)&size, 4);
+    ByteArray sizeData = ByteArray((const char*)&size, 4);
 
-    QBuffer result;
-    result.open(QIODevice::ReadWrite);
+    io::Buffer result;
+    result.open(io::Buffer::ReadWrite);
     result.write(sizeData);
     result.write(data);
     result.close();
@@ -354,7 +355,7 @@ void _generateExcerpts(uintptr_t score_ptr) {
 const char* _title(uintptr_t score_ptr) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/converter/internal/compat/notationmeta.cpp#L89-L107
-    QString title = converter::NotationMeta::title(score);
+    String title = converter::NotationMeta::title(score);
     return reallocData(
         title.toUtf8()
     );
@@ -419,7 +420,7 @@ const char* _saveXml(uintptr_t score_ptr, int excerptId) {
 
     // MusicXML is plain text
     return reallocData(
-        QString(data).toUtf8()
+        ByteArray::fromQByteArrayNoCopy(data)
     );
 }
 
@@ -504,7 +505,7 @@ const char* _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackgroun
 
     // SVG is plain text
     return reallocData(
-        QString(data).toUtf8()
+        ByteArray::fromQByteArrayNoCopy(data)
     );
 }
 
@@ -731,7 +732,7 @@ const char* _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) 
     LOGI() << String(u"excerpt %1, ofSegments %2, file size %3").arg(excerptId).arg(ofSegments).arg(data.size());
 
     // JSON is plain text
-    return reallocData(data);
+    return reallocData(ByteArray::fromQByteArrayNoCopy(data));
 }
 
 /**
@@ -740,9 +741,10 @@ const char* _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) 
 const char* _saveMetadata(uintptr_t score_ptr) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     auto result = converter::NotationMeta::metaJson(score);
+    auto data = result.val;
     // JSON is plain text
     return reallocData(
-        QByteArray::fromStdString(result.val)  // UTF-8 encoded JSON data
+        ByteArray(data.data(), data.size()) // UTF-8 encoded JSON data
     );
 }
 
