@@ -112,10 +112,8 @@ add_subdirectory(${MU_ROOT}/src/engraving engraving)
 
 add_subdirectory(${MU_ROOT}/src/framework/mpe mpe)
 
-set(ENABLE_AUDIO_EXPORT ON)
-add_subdirectory(${MU_ROOT}/src/framework/audio audio)
-
 add_subdirectory(importexport)
+add_subdirectory(audio)
 
 add_executable(webmscore
     main.cpp
@@ -126,11 +124,6 @@ add_executable(webmscore
 
     ${MU_ROOT}/src/converter/internal/compat/notationmeta.cpp
     ${MU_ROOT}/src/converter/internal/compat/notationmeta.h
-
-    ${MU_ROOT}/src/playback/internal/playbackcontroller.cpp
-    ${MU_ROOT}/src/playback/internal/playbackcontroller.h
-    ${MU_ROOT}/src/playback/internal/soundprofilesrepository.cpp
-    ${MU_ROOT}/src/playback/internal/soundprofilesrepository.h
 
     ${MU_ROOT}/src/context/internal/globalcontext.cpp
     ${MU_ROOT}/src/context/internal/globalcontext.h
@@ -144,15 +137,11 @@ add_executable(webmscore
     ${MU_ROOT}/src/project/internal/projectfileinfoprovider.h
 )
 
-set_target_properties(engraving PROPERTIES COMPILE_FLAGS "-fPIC")
-set_target_properties(global PROPERTIES COMPILE_FLAGS "-fPIC")
-set_target_properties(webmscore PROPERTIES COMPILE_FLAGS "-fPIC")
 set_target_properties (webmscore PROPERTIES LINK_FLAGS ${WASM_LINK_FLAGS})
 
 target_include_directories(webmscore PUBLIC
     ${MU_ROOT}/src/framework/global
     ${MU_ROOT}/src/engraving
-    ${MU_ROOT}/src/framework/audio
 )
 
 target_link_libraries(webmscore
@@ -160,7 +149,7 @@ target_link_libraries(webmscore
     global
     engraving
     mpe
-    audio
     importexport
+    MainAudio
     freetype # important for supporting woff2 files
 )
