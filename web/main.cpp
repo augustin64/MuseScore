@@ -66,20 +66,28 @@ const char* reallocData(ByteArray data) {
 }
 
 /**
- * pack length-prefixed data
+ * Pack wasm responses
  */
-const char* packData(QByteArray data, uint32_t size) {
-    // TODO: refactor to `io::ByteArray` and `io::Buffer`
-    ByteArray sizeData = ByteArray((const char*)&size, 4);
+struct WasmRes {
+public:
+    WasmRes(ByteArray data, uint32_t size) {
+        ByteArray sizeData = ByteArray((const char*)&size, 4);
+        m_buffer.open(io::Buffer::ReadWrite);
+        m_buffer.write(sizeData);
+        m_buffer.write(data);
+        m_buffer.close();
+    }
 
-    io::Buffer result;
-    result.open(io::Buffer::ReadWrite);
-    result.write(sizeData);
-    result.write(data);
-    result.close();
+    WasmRes(QByteArray data)
+        : WasmRes(ByteArray::fromQByteArrayNoCopy(data), data.size()) {}
 
-    return reallocData(result.data());
-}
+    inline operator const char*() {
+        return reallocData(m_buffer.data());
+    }
+
+private:
+    io::Buffer m_buffer;
+};
 
 engraving::MasterScore* maybeUseExcerpt(engraving::MasterScore* score, int excerptId) {
     // -1 means the full score
@@ -435,7 +443,7 @@ const char* _saveMxl(uintptr_t score_ptr, int excerptId) {
     processWriter(u"mxl", score, &data);
     LOGI() << String(u"excerpt %1, size %2 bytes").arg(excerptId, data.size());
 
-    return packData(data, data.size());
+    return WasmRes(data);
 }
 
 /**
@@ -481,7 +489,7 @@ const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
     }
 
     LOGI() << String(u"ret %1 %2, compressed %3, excerpt %4, size %5").arg(ret.code()).arg(String::fromStdString(ret.text())).arg(compressed, excerptId, data.size());
-    return packData(data, data.size());
+    return WasmRes(data);
 }
 
 /**
@@ -527,7 +535,7 @@ const char* _savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackgroun
     processWriter(u"png", score, &data, options);
     LOGI() << String(u"savePng: excerpt %1, page index %2, drawPageBackground %3, transparent %4, size %5 bytes").arg(excerptId).arg(pageNumber).arg(drawPageBackground).arg(transparent).arg(data.size());
 
-    return packData(data, data.size());
+    return WasmRes(data);
 }
 
 /**
@@ -544,7 +552,7 @@ const char* _savePdf(uintptr_t score_ptr, int excerptId) {
     processWriter(u"pdf", score, &data, options);
     LOGI() << String(u"excerpt %1, size %2 bytes").arg(excerptId, data.size());
 
-    return packData(data, data.size());
+    return WasmRes(data);
 }
 
 /**
@@ -567,7 +575,7 @@ const char* _saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRP
     int size = buffer.size();
     LOGI() << String(u"excerpt %1, midiExpandRepeats %2, exportRPNs %3, size %4").arg(excerptId).arg(midiExpandRepeats).arg(exportRPNs).arg(size);
 
-    return packData(buffer.data(), size);
+    return WasmRes(buffer.data());
 }
 
 /**
@@ -595,7 +603,7 @@ const char* _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
     QByteArray data = tempfile.readAll();
     
     LOGI() << String(u"excerpt %1, size %2").arg(excerptId).arg(size);
-    return packData(data, size);
+    return WasmRes(data);
 }
 
 struct SynthRes {
