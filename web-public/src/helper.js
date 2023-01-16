@@ -95,7 +95,7 @@ export class WasmRes {
     }
 
     /**
-     * Read the data contents as utf-8 string
+     * Read the data contents as UTF-8 string
      * @returns {string}
      */
     text() {
@@ -107,15 +107,33 @@ export class WasmRes {
     }
 
     /**
+     * @private 
+     * @param {number} ptr 
+     * @param {keyof WasmRes} method
+     */
+    static _readAndFree(ptr, method) {
+        const res = new WasmRes(ptr)
+        const s = res[method]()
+        res.free()
+        return s
+    }
+
+    /**
      * read wasm responses as Uint8Array  
      * @param {number} ptr 
      * @returns {Uint8Array}
      */
     static readData(ptr) {
-        const res = new WasmRes(ptr)
-        const data = res.data()
-        res.free()
-        return data
+        return WasmRes._readAndFree(ptr, 'data')
+    }
+
+    /**
+     * read wasm responses as UTF-8 string 
+     * @param {number} ptr 
+     * @returns {string}
+     */
+    static readText(ptr) {
+        return WasmRes._readAndFree(ptr, 'text')
     }
 }
 
