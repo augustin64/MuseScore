@@ -6,7 +6,6 @@
 #include "global/log.h"
 #include "global/defer.h"
 #include "global/io/buffer.h"
-#include "async/processevents.h"
 
 #include "modularity/ioc.h"
 #include "context/internal/globalcontext.h"
@@ -16,15 +15,10 @@
 #include "draw/drawmodule.h"
 #include "engraving/engravingmodule.h"
 #include "mpe/mpemodule.h"
-#include "audio/audiomodule.h"
 #include "importexport/musicxml/musicxmlmodule.h"
 #include "importexport/guitarpro/guitarpromodule.h"
 #include "importexport/midi/midimodule.h"
 #include "importexport/imagesexport/imagesexportmodule.h"
-#include "playback/internal/playbackcontroller.h"
-#include "playback/internal/playbackconfiguration.h"
-#include "playback/internal/soundprofilesrepository.h"
-#include "importexport/audioexport/audioexportmodule.h"
 
 #include "draw/ifontprovider.h"
 #include "engraving/libmscore/score.h"
@@ -41,11 +35,9 @@
 #include "importexport/midi/internal/midiexport/exportmidi.h"
 #include "./importexport/positionjsonwriter.h"
 
-#include "audio/internal/worker/playback.h"
-#include "audio/internal/worker/audioengine.h"
-
 #include "./score.h"
 #include "./wasmres.h"
+#include "./audio/audio.h"
 
 using namespace mu;
 using project::INotationWriter;
@@ -85,16 +77,6 @@ void _init(int argc, char** argv) {
     auto mpeM = new mpe::MpeModule();
     mpeM->registerExports();
 
-    // Setup audio engine
-    auto aeM = new audio::AudioModule();
-    aeM->registerExports();
-    aeM->resolveImports();
-    auto playbackController = new playback::PlaybackController();
-    modularity::ioc()->registerExport<playback::IPlaybackController>("", playbackController);
-    modularity::ioc()->registerExport<playback::ISoundProfilesRepository>("", new playback::SoundProfilesRepository());
-    playbackController->init();
-    aeM->onInit(framework::IApplication::RunMode::Converter);
-
     // file import/export
     modularity::ioc()->registerExport<project::INotationReadersRegister>("", new project::NotationReadersRegister());
     modularity::ioc()->registerExport<project::INotationWritersRegister>("", new project::NotationWritersRegister());
@@ -112,15 +94,13 @@ void _init(int argc, char** argv) {
     imgM->registerExports();
     imgM->resolveImports();
     imgM->onInit(framework::IApplication::RunMode::Converter);
-    auto audioM = new iex::audioexport::AudioExportModule();
-    audioM->registerExports();
-    audioM->resolveImports();
-    audioM->onInit(framework::IApplication::RunMode::Converter);
 
     auto writers = modularity::ioc()->resolve<project::INotationWritersRegister>("");
     writers->reg({ engraving::MSCZ }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Zip));
     // writers->reg({ engraving::MSCX }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Dir));
     writers->reg({ engraving::MSCS }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::XmlFile));
+
+    MainAudio::init();
 }
 
 /**
@@ -553,124 +533,6 @@ WasmRes _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
     return WasmRes(data);
 }
 
-struct SynthRes {
-    int done;  // bool
-    float startTime; // the chunk's start time in seconds
-    float endTime;   // the chunk's end time in seconds (playtime)
-    unsigned chunkSize;
-    char chunk[0 /* to be chunkSize */];
-};
-
-/**
- * De-interleave audio channels
- * @param dest: [ channelA #len frames, channelB #len frames ]
- * @param src:  [ channelA frame0, channelB frame0, channelA frame1, channelB frame1, ... ]
- */
-void deInterleave(float* dest, const float* src, size_t framesLen) {
-    for (size_t i = 0, j = 0; i < framesLen; i++, j+=2) {
-        dest[i] = src[j];
-        dest[framesLen + i] = src[j+1];
-    }
-}
-
-// can't use std::set<std::function<>>
-// https://stackoverflow.com/questions/53459693
-std::vector<std::function<SynthRes*(bool)>> synthIterators;
-
-/**
- * synthesize audio frames
- * @param starttime The start time offset in seconds
- */
-uintptr_t _synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
-    MainScore score(score_ptr, excerptId);
-    LOGI() << String(u"excerpt %1, starttime %2").arg(excerptId).arg(starttime);
-
-    // use buffer size of 512 frames
-    static const size_t renderStep = 512;
-    static const size_t channels = 2;
-    static const size_t sampleRate = 44100;
-
-    // Wait async ticks, otherwise `sequenceIdList` is empty
-    //  previous `Playback::addSequence()` is a `Promise`
-    mu::async::processEvents();
-    //  resolve `totalDuration`
-    mu::async::processEvents();
-
-    auto playback = modularity::ioc()->resolve<audio::Playback>("");
-    IF_ASSERT_FAILED (playback->getSequences().size() > 0) {
-        LOGE() << "no playback sequence found!";
-        return 0;
-    }
-    audio::ITrackSequencePtr sequence = playback->getSequences().at(0); // use only the first `sequence`
-
-    // Seek
-    // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/worker/audiooutputhandler.cpp#L200-L201
-    sequence->player()->stop();
-    sequence->player()->seek(starttime * 1000); // get ms
-
-    // Setup audio source
-    // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/soundtracks/soundtrackwriter.cpp#L73-L76
-    audio::AudioEngine::instance()->setMode(audio::RenderMode::OfflineMode);
-    auto source = audio::AudioEngine::instance()->mixer();
-    source->setSampleRate(sampleRate);
-    source->setIsActive(true);
-
-    // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/soundtracks/soundtrackwriter.cpp#L49
-    const auto totalDuration = sequence->player()->duration();
-    const audio::samples_t totalSamples = (totalDuration / 1000000.f) * sampleRate;
-    LOGI() << String(u"totalDuration %1, totalSamples %2").arg(totalDuration).arg((int64_t)totalSamples);
-
-    bool done = false;
-    audio::samples_t playedSamples = starttime * sampleRate;
-    auto synthIterator = [done, playedSamples, totalSamples, source](bool cancel = false) mutable -> SynthRes* { // must use by-copy capture because variables are destroyed as the `_synthAudio` function ends
-        if (done) {
-            return new SynthRes{done, -1, -1, 0, {}};
-        }
-
-        float buffer[renderStep * channels] = {};
-        auto res = (SynthRes*)calloc(1, sizeof(SynthRes) + sizeof(buffer)); 
-        res->chunkSize = sizeof(buffer);
-
-        // render audio buffer
-        source->process(buffer, renderStep);
-        deInterleave((float*)res->chunk, buffer, renderStep);
-
-        auto prevPlayed = playedSamples;
-        playedSamples += renderStep;
-        if (playedSamples >= totalSamples || cancel) {
-            // finished, do cleanup
-            source->setIsActive(false);
-            done = true;
-        }
-
-        res->done = done;
-        res->startTime = float(prevPlayed) / sampleRate;
-        res->endTime = float(playedSamples) / sampleRate;
-
-        return res;
-    };
-
-    // persist this `synthIterator` function
-    synthIterators.push_back(synthIterator);
-
-    return reinterpret_cast<uintptr_t>(&synthIterators.back());
-}
-
-const char* _processSynth(uintptr_t fn_ptr, bool cancel) {
-    auto fn = reinterpret_cast<std::function<SynthRes*(bool)>*>(fn_ptr);
-    const auto res = (*fn)(cancel);
-    return reinterpret_cast<const char*>(res);
-}
-
-const char* _processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel) {
-    auto fn = reinterpret_cast<std::function<SynthRes*(bool)>*>(fn_ptr);
-    auto resArr = (SynthRes**)calloc(batchSize, sizeof(SynthRes*)); // array of pointers to SynthRes data 
-    for (int i = 0; i < batchSize; i++) {
-        resArr[i] = (*fn)(cancel);
-    }
-    return reinterpret_cast<const char*>(resArr);
-}
-
 /**
  * save positions of measures or segments (if the `ofSegments` param == true) as JSON
  */
@@ -786,17 +648,17 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE
     uintptr_t synthAudio(uintptr_t score_ptr, float starttime, int excerptId = -1) {
-        return _synthAudio(score_ptr, starttime, excerptId);
+        return MainAudio::synthAudio(score_ptr, starttime, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
     const char* processSynth(uintptr_t fn_ptr, bool cancel = false) {
-        return _processSynth(fn_ptr, cancel);
+        return MainAudio::processSynth(fn_ptr, cancel);
     }
 
     EMSCRIPTEN_KEEPALIVE
     const char* processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel = false) {
-        return _processSynthBatch(fn_ptr, batchSize, cancel);
+        return MainAudio::processSynthBatch(fn_ptr, batchSize, cancel);
     }
 
     EMSCRIPTEN_KEEPALIVE

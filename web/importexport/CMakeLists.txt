@@ -52,7 +52,4 @@ set(MODULE_LINK ${MODULE_LINK} beatroot)
 add_subdirectory(${MU_ROOT}/src/importexport/imagesexport imagesexport)
 set(MODULE_LINK ${MODULE_LINK} iex_imagesexport)
 
-add_subdirectory(${MU_ROOT}/src/importexport/audioexport audioexport)
-set(MODULE_LINK ${MODULE_LINK} iex_audioexport)
-
 include(SetupModule)
