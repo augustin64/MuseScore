@@ -102,6 +102,14 @@ export class WasmRes {
         return Module.UTF8ToString(this._dataPtr)
     }
 
+    /**
+     * Read the data contents as number
+     * @returns {number}
+     */
+    number() {
+        return +this.text()
+    }
+
     free() {
         return freePtr(this._ptr)
     }
@@ -134,6 +142,15 @@ export class WasmRes {
      */
     static readText(ptr) {
         return WasmRes._readAndFree(ptr, 'text')
+    }
+
+    /**
+     * read wasm responses as number
+     * @param {number} ptr 
+     * @returns {number}
+     */
+    static readNum(ptr) {
+        return WasmRes._readAndFree(ptr, 'number')
     }
 }
 
