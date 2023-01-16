@@ -40,6 +40,8 @@ debug:
 #
 clean:
 	-rm -rf build.debug build.release
-	-rm -rf ../.ccache
 	-rm -rf ../web-public/.cache
 	-rm ../web-public/webmscore.*
+
+clean-ccache:
+	-rm -rf ../.ccache
