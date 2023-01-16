@@ -116,6 +116,8 @@ add_subdirectory(importexport)
 
 add_executable(webmscore
     main.cpp
+    score.cpp
+    score.h
     wasmres.cpp
     wasmres.h
 
