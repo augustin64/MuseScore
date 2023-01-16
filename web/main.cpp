@@ -44,6 +44,7 @@
 #include "audio/internal/worker/playback.h"
 #include "audio/internal/worker/audioengine.h"
 
+#include "./score.h"
 #include "./wasmres.h"
 
 using namespace mu;
@@ -51,28 +52,6 @@ using project::INotationWriter;
 
 std::set<engraving::EngravingProjectPtr> instances;
 static auto s_globalContext = std::make_shared<context::GlobalContext>();
-
-/**
- * helper functions
- */
-
-engraving::MasterScore* maybeUseExcerpt(engraving::MasterScore* score, int excerptId) {
-    // -1 means the full score
-    if (excerptId < 0) {
-        return score;
-    }
-
-    // excerptId >= 0
-    auto excerpts = score->excerpts();
-
-    if (excerptId >= (int)excerpts.size()) {
-        LOGE() << String(u"Not a valid excerptId. (excerptId: %1)").arg(excerptId);
-        throw;
-    }
-
-    LOGI() << String(u"useExcerpt: %1").arg(excerptId);
-    return (engraving::MasterScore*) excerpts[excerptId]->excerptScore();
-}
 
 /**
  * MSCZ/MSCX file format version
@@ -297,7 +276,7 @@ WasmRes _load(const char* format, const char* data, const uint32_t size, bool do
  * Generate excerpts from Parts (only parts that are visible) if no existing excerpts
  */
 void _generateExcerpts(uintptr_t score_ptr) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    MainScore score(score_ptr);
 
     auto scoreExcerpts = score->excerpts();
     if (scoreExcerpts.size() > 0) {
@@ -329,7 +308,7 @@ void _generateExcerpts(uintptr_t score_ptr) {
  * get the score title
  */
 WasmRes _title(uintptr_t score_ptr) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    MainScore score(score_ptr);
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/converter/internal/compat/notationmeta.cpp#L89-L107
     String title = converter::NotationMeta::title(score);
     return WasmRes(title);
@@ -339,8 +318,7 @@ WasmRes _title(uintptr_t score_ptr) {
  * get the number of pages
  */
 WasmRes _npages(uintptr_t score_ptr, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
     return WasmRes(score->npages());
 }
 
@@ -385,8 +363,7 @@ Ret processWriter(String writerName, engraving::MasterScore * score, QByteArray*
  * export score as MusicXML file
  */
 WasmRes _saveXml(uintptr_t score_ptr, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
 
     QByteArray data;
     processWriter(u"xml", score, &data);
@@ -399,8 +376,7 @@ WasmRes _saveXml(uintptr_t score_ptr, int excerptId) {
  * export score as compressed MusicXML file
  */
 WasmRes _saveMxl(uintptr_t score_ptr, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
 
     QByteArray data;
     processWriter(u"mxl", score, &data);
@@ -413,8 +389,7 @@ WasmRes _saveMxl(uintptr_t score_ptr, int excerptId) {
  * save part score as MSCZ/MSCX file
  */
 WasmRes _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
 
     if (!score->isMaster()) {  // clone metaTags from masterScore
         auto j(score->masterScore()->metaTags());
@@ -463,8 +438,7 @@ WasmRes _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
  * export score as SVG
  */
 WasmRes _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
 
     // config
     score->switchToPageMode();
@@ -488,8 +462,7 @@ WasmRes _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, i
  * export score as PNG
  */
 WasmRes _savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, bool transparent, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
 
     // config
     score->switchToPageMode();
@@ -512,8 +485,7 @@ WasmRes _savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, b
  * export score as PDF
  */
 WasmRes _savePdf(uintptr_t score_ptr, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
 
     INotationWriter::Options options;
     // options[INotationWriter::OptionKey::UNIT_TYPE] = Val(INotationWriter::UnitType::MULTI_PART);
@@ -532,8 +504,7 @@ WasmRes _savePdf(uintptr_t score_ptr, int excerptId) {
  * export score as MIDI
  */
 WasmRes _saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRPNs, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
 
     QBuffer buffer;
     buffer.open(QIODevice::ReadWrite);
@@ -555,8 +526,7 @@ WasmRes _saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRPNs, 
  * export score as AudioFile (wav/ogg)
  */
 WasmRes _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
 
     // file format of the output file
     // "wav", "ogg", "flac", or "mp3"
@@ -612,8 +582,7 @@ std::vector<std::function<SynthRes*(bool)>> synthIterators;
  * @param starttime The start time offset in seconds
  */
 uintptr_t _synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
     LOGI() << String(u"excerpt %1, starttime %2").arg(excerptId).arg(starttime);
 
     // use buffer size of 512 frames
@@ -706,8 +675,7 @@ const char* _processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel) {
  * save positions of measures or segments (if the `ofSegments` param == true) as JSON
  */
 WasmRes _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
-    score = maybeUseExcerpt(score, excerptId);
+    MainScore score(score_ptr, excerptId);
     score->switchToPageMode();
 
     using W = notation::PositionJsonWriter;
@@ -723,7 +691,7 @@ WasmRes _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) {
  * save score metadata as JSON
  */
 WasmRes _saveMetadata(uintptr_t score_ptr) {
-    auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
+    MainScore score(score_ptr);
     auto result = converter::NotationMeta::metaJson(score);
     auto data = result.val;
     return WasmRes(
