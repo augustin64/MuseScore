@@ -75,6 +75,9 @@ public:
     WasmRes(String str)
         : WasmRes(str.toUtf8()) {}
 
+    WasmRes(unsigned long num)
+        : WasmRes(String::number((size_t)num)) {}
+
     inline operator const char*() {
         return reallocData(m_buffer.data());
     }
@@ -377,9 +380,7 @@ const char* _title(uintptr_t score_ptr) {
 const char* _npages(uintptr_t score_ptr, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
-    return WasmRes(
-        String::number(score->npages())
-    );
+    return WasmRes(score->npages());
 }
 
 /**

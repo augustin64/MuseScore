@@ -238,7 +238,7 @@ class WebMscore {
      */
     async npages() {
         const dataptr = Module.ccall('npages', 'number', ['number', 'number'], [this.scoreptr, this.excerptId])
-        return +WasmRes.readText(dataptr)
+        return WasmRes.readNum(dataptr)
     }
 
     /**
