@@ -55,6 +55,8 @@ static auto s_globalContext = std::make_shared<context::GlobalContext>();
  * helper functions
  */
 
+typedef const uint8_t* WasmResBytes;
+
 /**
  * Pack wasm responses
  */
@@ -77,8 +79,11 @@ public:
     WasmRes(uint32_t num)
         : WasmRes(sizeData(num)) {}
 
-    inline operator const char*() {
-        return reallocData(m_buffer.data());
+    WasmRes()
+        : WasmRes(ByteArray()) {}
+
+    inline operator WasmResBytes() {
+        return (WasmResBytes)reallocData(m_buffer.data());
     }
 
 private:
@@ -370,7 +375,7 @@ void _generateExcerpts(uintptr_t score_ptr) {
 /**
  * get the score title
  */
-const char* _title(uintptr_t score_ptr) {
+WasmRes _title(uintptr_t score_ptr) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/converter/internal/compat/notationmeta.cpp#L89-L107
     String title = converter::NotationMeta::title(score);
@@ -380,7 +385,7 @@ const char* _title(uintptr_t score_ptr) {
 /**
  * get the number of pages
  */
-const char* _npages(uintptr_t score_ptr, int excerptId) {
+WasmRes _npages(uintptr_t score_ptr, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
     return WasmRes(score->npages());
@@ -426,7 +431,7 @@ Ret processWriter(String writerName, engraving::MasterScore * score, QByteArray*
 /**
  * export score as MusicXML file
  */
-const char* _saveXml(uintptr_t score_ptr, int excerptId) {
+WasmRes _saveXml(uintptr_t score_ptr, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
 
@@ -440,7 +445,7 @@ const char* _saveXml(uintptr_t score_ptr, int excerptId) {
 /**
  * export score as compressed MusicXML file
  */
-const char* _saveMxl(uintptr_t score_ptr, int excerptId) {
+WasmRes _saveMxl(uintptr_t score_ptr, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
 
@@ -454,7 +459,7 @@ const char* _saveMxl(uintptr_t score_ptr, int excerptId) {
 /**
  * save part score as MSCZ/MSCX file
  */
-const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
+WasmRes _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
 
@@ -500,7 +505,7 @@ const char* _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
 /**
  * export score as SVG
  */
-const char* _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, int excerptId) {
+WasmRes _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
 
@@ -522,7 +527,7 @@ const char* _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackgroun
 /**
  * export score as PNG
  */
-const char* _savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, bool transparent, int excerptId) {
+WasmRes _savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, bool transparent, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
 
@@ -543,7 +548,7 @@ const char* _savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackgroun
 /**
  * export score as PDF
  */
-const char* _savePdf(uintptr_t score_ptr, int excerptId) {
+WasmRes _savePdf(uintptr_t score_ptr, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
 
@@ -560,7 +565,7 @@ const char* _savePdf(uintptr_t score_ptr, int excerptId) {
 /**
  * export score as MIDI
  */
-const char* _saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRPNs, int excerptId) {
+WasmRes _saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRPNs, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
 
@@ -583,7 +588,7 @@ const char* _saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRP
 /**
  * export score as AudioFile (wav/ogg)
  */
-const char* _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
+WasmRes _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
 
@@ -730,7 +735,7 @@ const char* _processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel) {
 /**
  * save positions of measures or segments (if the `ofSegments` param == true) as JSON
  */
-const char* _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) {
+WasmRes _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     score = maybeUseExcerpt(score, excerptId);
     score->switchToPageMode();
@@ -747,7 +752,7 @@ const char* _savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId) 
 /**
  * save score metadata as JSON
  */
-const char* _saveMetadata(uintptr_t score_ptr) {
+WasmRes _saveMetadata(uintptr_t score_ptr) {
     auto score = reinterpret_cast<engraving::MasterScore*>(score_ptr);
     auto result = converter::NotationMeta::metaJson(score);
     auto data = result.val;
@@ -792,52 +797,52 @@ extern "C" {
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* title(uintptr_t score_ptr) {
+    WasmResBytes title(uintptr_t score_ptr) {
         return _title(score_ptr);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* npages(uintptr_t score_ptr, int excerptId) {
+    WasmResBytes npages(uintptr_t score_ptr, int excerptId) {
         return _npages(score_ptr, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* saveXml(uintptr_t score_ptr, int excerptId = -1) {
+    WasmResBytes saveXml(uintptr_t score_ptr, int excerptId = -1) {
         return _saveXml(score_ptr, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* saveMxl(uintptr_t score_ptr, int excerptId = -1) {
+    WasmResBytes saveMxl(uintptr_t score_ptr, int excerptId = -1) {
         return _saveMxl(score_ptr, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* saveMsc(uintptr_t score_ptr, bool compressed, int excerptId = -1) {
+    WasmResBytes saveMsc(uintptr_t score_ptr, bool compressed, int excerptId = -1) {
         return _saveMsc(score_ptr, compressed, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, int excerptId = -1) {
+    WasmResBytes saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, int excerptId = -1) {
         return _saveSvg(score_ptr, pageNumber, drawPageBackground, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, bool transparent, int excerptId = -1) {
+    WasmResBytes savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, bool transparent, int excerptId = -1) {
         return _savePng(score_ptr, pageNumber, drawPageBackground, transparent, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* savePdf(uintptr_t score_ptr, int excerptId = -1) {
+    WasmResBytes savePdf(uintptr_t score_ptr, int excerptId = -1) {
         return _savePdf(score_ptr, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRPNs, int excerptId = -1) {
+    WasmResBytes saveMidi(uintptr_t score_ptr, bool midiExpandRepeats, bool exportRPNs, int excerptId = -1) {
         return _saveMidi(score_ptr, midiExpandRepeats, exportRPNs, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* saveAudio(uintptr_t score_ptr, const char* format, int excerptId = -1) {
+    WasmResBytes saveAudio(uintptr_t score_ptr, const char* format, int excerptId = -1) {
         return _saveAudio(score_ptr, format, excerptId);
     };
 
@@ -857,12 +862,12 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
-    const char* savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId = -1) {
+    WasmResBytes savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId = -1) {
         return _savePositions(score_ptr, ofSegments, excerptId);
     };
 
     EMSCRIPTEN_KEEPALIVE
-    const char* saveMetadata(uintptr_t score_ptr) {
+    WasmResBytes saveMetadata(uintptr_t score_ptr) {
         return _saveMetadata(score_ptr);
     };
 
