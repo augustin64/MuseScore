@@ -14,7 +14,7 @@ namespace MainAudio {
         char chunk[0 /* to be chunkSize */];
     };
 
-    uintptr_t synthAudio(uintptr_t score_ptr, float starttime, int excerptId);
+    uintptr_t synthAudio(MainScore score, float starttime);
     const char* processSynth(uintptr_t fn_ptr, bool cancel);
     const char* processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel);
 
