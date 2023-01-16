@@ -295,7 +295,7 @@ Ret _doImport(engraving::EngravingProjectPtr proj, QString filePath, bool doLayo
 /**
  * load score
  */
-uintptr_t _load(const char* format, const char* data, const uint32_t size, bool doLayout) {
+WasmRes _load(const char* format, const char* data, const uint32_t size, bool doLayout) {
     String _format = String::fromUtf8(format);  // file format of the data
 
     // create a temporary file, and write `data` into it
@@ -337,7 +337,8 @@ uintptr_t _load(const char* format, const char* data, const uint32_t size, bool 
     engraving::MasterScore* score = proj->masterScore();
     notationProj->m_masterNotation->setMasterScore(score);
 
-    return reinterpret_cast<uintptr_t>(score);
+    auto score_ptr = reinterpret_cast<uintptr_t>(score);
+    return WasmRes(score_ptr);
 }
 
 /**
@@ -787,7 +788,7 @@ extern "C" {
     };
 
     EMSCRIPTEN_KEEPALIVE
-    uintptr_t load(const char* format, const char* data, const uint32_t size, bool doLayout = true) {
+    WasmResBytes load(const char* format, const char* data, const uint32_t size, bool doLayout = true) {
         return _load(format, data, size, doLayout);
     };
 

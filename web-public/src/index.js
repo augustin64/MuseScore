@@ -103,19 +103,21 @@ class WebMscore {
         const dataptr = getTypedArrayPtr(data)
 
         // get the pointer to the MasterScore class instance in C
-        const scoreptr = Module.ccall('load',  // name of C function
+        const resptr = Module.ccall('load',  // name of C function
             'number',  // return type
             ['number', 'number', 'number', 'boolean'],  // argument types
             [fileformatptr, dataptr, data.byteLength, doLayout]  // arguments
         )
-
         freePtr(fileformatptr)
         freePtr(dataptr)
 
+        const res = new WasmRes(resptr)
+        const scoreptr = res.number()
         if (scoreptr < 16) {  // contains error
             // `scoreptr` is the error code
             throw new FileError(scoreptr)
         }
+        res.free()
 
         // turn off logs by default
         await WebMscore.setLogLevel(0);
