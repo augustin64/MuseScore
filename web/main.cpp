@@ -648,7 +648,8 @@ extern "C" {
 
     EMSCRIPTEN_KEEPALIVE
     uintptr_t synthAudio(uintptr_t score_ptr, float starttime, int excerptId = -1) {
-        return MainAudio::synthAudio(score_ptr, starttime, excerptId);
+        MainScore score(score_ptr, excerptId);
+        return MainAudio::synthAudio(score, starttime);
     };
 
     EMSCRIPTEN_KEEPALIVE

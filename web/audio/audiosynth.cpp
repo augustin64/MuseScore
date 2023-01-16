@@ -30,9 +30,8 @@ std::vector<std::function<SynthRes*(bool)>> synthIterators;
  * synthesize audio frames
  * @param starttime The start time offset in seconds
  */
-uintptr_t synthAudio(uintptr_t score_ptr, float starttime, int excerptId) {
-    MainScore score(score_ptr, excerptId);
-    LOGI() << String(u"excerpt %1, starttime %2").arg(excerptId).arg(starttime);
+uintptr_t synthAudio(MainScore score, float starttime) {
+    LOGI() << String(u"starttime %2").arg(starttime);
 
     // use buffer size of 512 frames
     static const size_t renderStep = 512;
