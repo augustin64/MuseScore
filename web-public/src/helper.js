@@ -67,7 +67,24 @@ export class WasmRes {
      */
     constructor(ptr) {
         this._ptr = ptr
-        this._size = WasmRes._getUint32(ptr)
+        this._size = WasmRes._getUint32(this._sizePtr)
+        this._checkRet()
+    }
+
+    /**
+     * pointer to the error code
+     * @private
+     */
+    get _retCodePtr() {
+        return this._ptr
+    }
+
+    /**
+     * pointer to the data size 
+     * @private
+     */
+    get _sizePtr() {
+        return this._retCodePtr + 4
     }
 
     /**
@@ -75,7 +92,21 @@ export class WasmRes {
      * @private
      */
     get _dataPtr() {
-        return this._ptr + 4
+        return this._sizePtr + 4
+    }
+
+    /**
+     * @private 
+     * throw error if not ok
+     */
+    _checkRet() {
+        const retCode = WasmRes._getUint32(this._retCodePtr)
+        if (retCode !== WasmError.OK) {
+            // read the error message from data
+            const retMsg = this.text()
+            this.free()
+            throw new WasmError(retCode, retMsg)
+        }
     }
 
     /**
@@ -181,52 +212,19 @@ export const RuntimeInitialized = new Promise((resolve) => {
     })
 })
 
-/**
- * @enum {number}
- * @see libmscore/score.h#L396-L410
- */
-export const FileErrorEnum = Object.assign([
-    // error code -> error name
-    'FILE_NO_ERROR',
-    'FILE_ERROR',
-    'FILE_NOT_FOUND',
-    'FILE_OPEN_ERROR',
-    'FILE_BAD_FORMAT',
-    'FILE_UNKNOWN_TYPE',
-    'FILE_NO_ROOTFILE',
-    'FILE_TOO_OLD',
-    'FILE_TOO_NEW',
-    'FILE_OLD_300_FORMAT',
-    'FILE_CORRUPTED',
-    'FILE_USER_ABORT',
-    'FILE_IGNORE_ERROR',
-], {
-    // error name -> error code
-    // make up TypeScript-like enum manually
-    'FILE_NO_ERROR': 0,
-    'FILE_ERROR': 1,
-    'FILE_NOT_FOUND': 2,
-    'FILE_OPEN_ERROR': 3,
-    'FILE_BAD_FORMAT': 4,
-    'FILE_UNKNOWN_TYPE': 5,
-    'FILE_NO_ROOTFILE': 6,
-    'FILE_TOO_OLD': 7,
-    'FILE_TOO_NEW': 8,
-    'FILE_OLD_300_FORMAT': 9,
-    'FILE_CORRUPTED': 10,
-    'FILE_USER_ABORT': 11,
-    'FILE_IGNORE_ERROR': 12,
-})
-
-export class FileError extends Error {
+export class WasmError extends Error {
     /**
-     * @param {FileErrorEnum} errorCode 
+     * @param {number} errorCode 
+     * @param {string} msg
      */
-    constructor(errorCode) {
+    constructor(errorCode, msg) {
         super()
-        this.name = 'FileError'
+        this.name = 'WasmError'
         this.errorCode = errorCode
-        this.errorName = FileErrorEnum[errorCode] || FileErrorEnum[1]
-        this.message = `WebMscore: ${this.errorName}`
+        this.errorName = msg
+        this.message = `WebMscore Err${this.errorName}`
     }
+
+    /** @type {0} */
+    static OK = 0
 }

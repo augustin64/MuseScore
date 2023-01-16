@@ -62,11 +62,17 @@ typedef const uint8_t* WasmResBytes;
  */
 struct WasmRes {
 public:
-    WasmRes(ByteArray data) {
-        uint32_t size = data.size();
+    WasmRes(ByteArray data, Ret ret = make_ok()) {
         m_buffer.open(io::Buffer::ReadWrite);
-        m_buffer.write(sizeData(size));
+
+        // write error code
+        m_buffer.write(numberToByteArray(ret.code()));
+
+        // write data
+        uint32_t size = data.size();
+        m_buffer.write(numberToByteArray(size));
         m_buffer.write(data);
+
         m_buffer.close();
     }
 
@@ -77,13 +83,19 @@ public:
         : WasmRes(str.toUtf8()) {}
 
     WasmRes(uint32_t num)
-        : WasmRes(sizeData(num)) {}
+        : WasmRes(numberToByteArray(num)) {}
 
     WasmRes()
         : WasmRes(ByteArray()) {}
 
     inline operator WasmResBytes() {
         return (WasmResBytes)reallocData(m_buffer.data());
+    }
+
+    static WasmRes fromRet(Ret ret) {
+        // set data to the error message
+        ByteArray data = String::fromStdString(ret.toString()).toUtf8();
+        return WasmRes(data, ret);
     }
 
 private:
@@ -99,7 +111,7 @@ private:
         return buf;
     }
 
-    static inline ByteArray sizeData(uint32_t num) {
+    static inline ByteArray numberToByteArray(uint32_t num) {
         return ByteArray((const char*)&num, sizeof(num));
     }
 };
@@ -331,7 +343,7 @@ WasmRes _load(const char* format, const char* data, const uint32_t size, bool do
 
     // handle exceptions
     if (!ret.success()) {
-        return char(ret.code());
+        return WasmRes::fromRet(ret);
     }
 
     engraving::MasterScore* score = proj->masterScore();
@@ -477,6 +489,10 @@ WasmRes _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
 
     QByteArray data;
     Ret ret = processWriter(u"mscz", score, &data);
+    if (!ret.success()) {
+        return WasmRes::fromRet(ret);
+    }
+
     if (!compressed) {
         // HACK: read the .mscx file inside mscz
         // In MuseScore 4, the so-called "mscx" is exported as a directory
@@ -499,7 +515,7 @@ WasmRes _saveMsc(uintptr_t score_ptr, bool compressed, int excerptId) {
         }
     }
 
-    LOGI() << String(u"ret %1 %2, compressed %3, excerpt %4, size %5").arg(ret.code()).arg(String::fromStdString(ret.text())).arg(compressed, excerptId, data.size());
+    LOGI() << String(u"compressed %1, excerpt %2, size %3").arg(compressed, excerptId, data.size());
     return WasmRes(data);
 }
 
@@ -519,8 +535,11 @@ WasmRes _saveSvg(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, i
     };
 
     QByteArray data;
-    processWriter(u"svg", score, &data, options);
+    Ret ret = processWriter(u"svg", score, &data, options);
     LOGI() << String(u"excerpt %1, page index %2, size %3 bytes").arg(excerptId, pageNumber, data.size());
+    if (!ret.success()) {
+        return WasmRes::fromRet(ret);
+    }
 
     return WasmRes(data);
 }
@@ -540,8 +559,11 @@ WasmRes _savePng(uintptr_t score_ptr, int pageNumber, bool drawPageBackground, b
     };
 
     QByteArray data;
-    processWriter(u"png", score, &data, options);
-    LOGI() << String(u"savePng: excerpt %1, page index %2, drawPageBackground %3, transparent %4, size %5 bytes").arg(excerptId).arg(pageNumber).arg(drawPageBackground).arg(transparent).arg(data.size());
+    Ret ret = processWriter(u"png", score, &data, options);
+    LOGI() << String(u"excerpt %1, page index %2, drawPageBackground %3, transparent %4, size %5 bytes").arg(excerptId).arg(pageNumber).arg(drawPageBackground).arg(transparent).arg(data.size());
+    if (!ret.success()) {
+        return WasmRes::fromRet(ret);
+    }
 
     return WasmRes(data);
 }
@@ -557,8 +579,11 @@ WasmRes _savePdf(uintptr_t score_ptr, int excerptId) {
     // options[INotationWriter::OptionKey::UNIT_TYPE] = Val(INotationWriter::UnitType::MULTI_PART);
 
     QByteArray data;
-    processWriter(u"pdf", score, &data, options);
+    Ret ret = processWriter(u"pdf", score, &data, options);
     LOGI() << String(u"excerpt %1, size %2 bytes").arg(excerptId, data.size());
+    if (!ret.success()) {
+        return WasmRes::fromRet(ret);
+    }
 
     return WasmRes(data);
 }
@@ -606,11 +631,15 @@ WasmRes _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
         throw QString("Cannot create a temporary file");
     }
 
-    processWriter(_format, score, tempfile);
+    Ret ret = processWriter(_format, score, tempfile);
     int size = tempfile.size();
     QByteArray data = tempfile.readAll();
     
     LOGI() << String(u"excerpt %1, size %2").arg(excerptId).arg(size);
+    if (!ret.success()) {
+        return WasmRes::fromRet(ret);
+    }
+
     return WasmRes(data);
 }
 

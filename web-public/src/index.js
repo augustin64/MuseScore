@@ -8,7 +8,6 @@ import {
     getTypedArrayPtr,
     WasmRes,
     freePtr,
-    FileError,
 } from './helper.js'
 
 
@@ -110,14 +109,7 @@ class WebMscore {
         )
         freePtr(fileformatptr)
         freePtr(dataptr)
-
-        const res = new WasmRes(resptr)
-        const scoreptr = res.number()
-        if (scoreptr < 16) {  // contains error
-            // `scoreptr` is the error code
-            throw new FileError(scoreptr)
-        }
-        res.free()
+        const scoreptr = WasmRes.readNum(resptr)
 
         // turn off logs by default
         await WebMscore.setLogLevel(0);
