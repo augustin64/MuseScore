@@ -6,7 +6,6 @@
 #include "global/log.h"
 #include "global/defer.h"
 #include "global/io/buffer.h"
-#include "global/types/bytearray.h"
 #include "async/processevents.h"
 
 #include "modularity/ioc.h"
@@ -45,6 +44,8 @@
 #include "audio/internal/worker/playback.h"
 #include "audio/internal/worker/audioengine.h"
 
+#include "./wasmres.h"
+
 using namespace mu;
 using project::INotationWriter;
 
@@ -54,67 +55,6 @@ static auto s_globalContext = std::make_shared<context::GlobalContext>();
 /**
  * helper functions
  */
-
-typedef const uint8_t* WasmResBytes;
-
-/**
- * Pack wasm responses
- */
-struct WasmRes {
-public:
-    WasmRes(ByteArray data, Ret ret = make_ok()) {
-        m_buffer.open(io::Buffer::ReadWrite);
-
-        // write error code
-        m_buffer.write(numberToByteArray(ret.code()));
-
-        // write data
-        uint32_t size = data.size();
-        m_buffer.write(numberToByteArray(size));
-        m_buffer.write(data);
-
-        m_buffer.close();
-    }
-
-    WasmRes(QByteArray data)
-        : WasmRes(ByteArray::fromQByteArrayNoCopy(data)) {}
-
-    WasmRes(String str)
-        : WasmRes(str.toUtf8()) {}
-
-    WasmRes(uint32_t num)
-        : WasmRes(numberToByteArray(num)) {}
-
-    WasmRes()
-        : WasmRes(ByteArray()) {}
-
-    inline operator WasmResBytes() {
-        return (WasmResBytes)reallocData(m_buffer.data());
-    }
-
-    static WasmRes fromRet(Ret ret) {
-        // set data to the error message
-        ByteArray data = String::fromStdString(ret.toString()).toUtf8();
-        return WasmRes(data, ret);
-    }
-
-private:
-    io::Buffer m_buffer;
-
-    /**
-     * realloc/copy the data block so that it can be properly referred by its ptr and then freed in c-style
-     */
-    static const char* reallocData(ByteArray data) {
-        auto size = data.size() + 1; // https://doc.qt.io/qt-5/qbytearray.html#data
-        auto buf = (char*)malloc(size);
-        memcpy(buf, data.constData(), size);
-        return buf;
-    }
-
-    static inline ByteArray numberToByteArray(uint32_t num) {
-        return ByteArray((const char*)&num, sizeof(num));
-    }
-};
 
 engraving::MasterScore* maybeUseExcerpt(engraving::MasterScore* score, int excerptId) {
     // -1 means the full score

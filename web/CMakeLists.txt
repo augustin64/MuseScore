@@ -116,6 +116,8 @@ add_subdirectory(importexport)
 
 add_executable(webmscore
     main.cpp
+    wasmres.cpp
+    wasmres.h
 
     ${MU_ROOT}/src/converter/internal/compat/notationmeta.cpp
     ${MU_ROOT}/src/converter/internal/compat/notationmeta.h
