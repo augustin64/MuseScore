@@ -4,8 +4,10 @@
 
 namespace MainAudio {
 
-    void init();
+void initModule();
 
+class Synth {
+public:
     struct SynthRes {
         int done;  // bool
         float startTime; // the chunk's start time in seconds
@@ -14,9 +16,39 @@ namespace MainAudio {
         char chunk[0 /* to be chunkSize */];
     };
 
-    uintptr_t synthAudio(MainScore score, float starttime);
-    const char* processSynth(uintptr_t fn_ptr, bool cancel);
-    const char* processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel);
+    typedef std::function<SynthRes*(bool)>* SynthFnPtr;
+
+    Synth(SynthFnPtr f)
+        : synthFn(f) {}
+
+    Synth(uintptr_t fn_ptr) {
+        synthFn = reinterpret_cast<SynthFnPtr>(fn_ptr);
+    };
+
+    inline operator uintptr_t() {
+        return reinterpret_cast<uintptr_t>(synthFn);
+    }
+
+    inline const char* process(bool cancel) {
+        const auto res = (*synthFn)(cancel);
+        return reinterpret_cast<const char*>(res);
+    }
+
+    const char* processBatch(int batchSize, bool cancel);
+
+    /**
+     * synthesize audio frames
+     * @param starttime The start time offset in seconds
+     */
+    static Synth start(MainScore score, float starttime);
+
+private:
+    SynthFnPtr synthFn = nullptr;
+
+    // can't use std::set<std::function<>>
+    // https://stackoverflow.com/questions/53459693
+    static std::vector<std::function<SynthRes*(bool)>> synthIterators;
+};
 
 } // namespace MainAudio
 

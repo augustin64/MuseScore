@@ -22,15 +22,15 @@ void deInterleave(float* dest, const float* src, size_t framesLen) {
     }
 }
 
-// can't use std::set<std::function<>>
-// https://stackoverflow.com/questions/53459693
-std::vector<std::function<SynthRes*(bool)>> synthIterators;
+const char* Synth::processBatch(int batchSize, bool cancel) {
+    auto resArr = (SynthRes**)calloc(batchSize, sizeof(SynthRes*)); // array of pointers to SynthRes data 
+    for (int i = 0; i < batchSize; i++) {
+        resArr[i] = (*synthFn)(cancel);
+    }
+    return reinterpret_cast<const char*>(resArr);
+}
 
-/**
- * synthesize audio frames
- * @param starttime The start time offset in seconds
- */
-uintptr_t synthAudio(MainScore score, float starttime) {
+Synth Synth::start(MainScore score, float starttime) {
     LOGI() << String(u"starttime %2").arg(starttime);
 
     // use buffer size of 512 frames
@@ -47,7 +47,7 @@ uintptr_t synthAudio(MainScore score, float starttime) {
     auto playback = modularity::ioc()->resolve<audio::Playback>("");
     IF_ASSERT_FAILED (playback->getSequences().size() > 0) {
         LOGE() << "no playback sequence found!";
-        return 0;
+        return nullptr;
     }
     audio::ITrackSequencePtr sequence = playback->getSequences().at(0); // use only the first `sequence`
 
@@ -101,22 +101,7 @@ uintptr_t synthAudio(MainScore score, float starttime) {
     // persist this `synthIterator` function
     synthIterators.push_back(synthIterator);
 
-    return reinterpret_cast<uintptr_t>(&synthIterators.back());
-}
-
-const char* processSynth(uintptr_t fn_ptr, bool cancel) {
-    auto fn = reinterpret_cast<std::function<SynthRes*(bool)>*>(fn_ptr);
-    const auto res = (*fn)(cancel);
-    return reinterpret_cast<const char*>(res);
-}
-
-const char* processSynthBatch(uintptr_t fn_ptr, int batchSize, bool cancel) {
-    auto fn = reinterpret_cast<std::function<SynthRes*(bool)>*>(fn_ptr);
-    auto resArr = (SynthRes**)calloc(batchSize, sizeof(SynthRes*)); // array of pointers to SynthRes data 
-    for (int i = 0; i < batchSize; i++) {
-        resArr[i] = (*fn)(cancel);
-    }
-    return reinterpret_cast<const char*>(resArr);
+    return Synth(&synthIterators.back());
 }
 
 } // namespace MainAudio
