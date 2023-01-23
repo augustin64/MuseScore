@@ -77,6 +77,10 @@ void _init(int argc, char** argv) {
     auto mpeM = new mpe::MpeModule();
     mpeM->registerExports();
 
+    // populate `engraving::instrumentGroups` and `engraving::instrumentTemplates`
+    engraving::clearInstrumentTemplates();
+    engraving::loadInstrumentTemplates("/instruments.xml");
+
     // file import/export
     modularity::ioc()->registerExport<project::INotationReadersRegister>("", new project::NotationReadersRegister());
     modularity::ioc()->registerExport<project::INotationWritersRegister>("", new project::NotationWritersRegister());

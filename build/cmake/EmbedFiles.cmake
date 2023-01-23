@@ -70,6 +70,7 @@ set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} ${PRELOAD_TYPE_FLAG} ${MU_ROOT}/src/engr
 
 # set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} ${PRELOAD_TYPE_FLAG} ${MU_ROOT}/share/styles@/styles")
 set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} ${PRELOAD_TYPE_FLAG} ${MU_ROOT}/share/styles/chords_std.xml@/styles/chords_std.xml")
+set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} ${PRELOAD_TYPE_FLAG} ${MU_ROOT}/share/instruments/instruments.xml@/instruments.xml")
 
 set(WASM_LINK_FLAGS "${WASM_LINK_FLAGS} ${PRELOAD_TYPE_FLAG} ${MU_ROOT}/src/framework/mpe/resources@/mpe")
 
