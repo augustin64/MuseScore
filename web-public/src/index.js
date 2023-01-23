@@ -13,6 +13,11 @@ import {
 
 /** @see WebMscore.hasSoundfont */
 let _hasSoundfont = false
+/**
+ * Don't turn off logs if already set log level before `WebMscore.load(...)` is called
+ * @see WebMscore.setLogLevel
+ */
+let _hasLogLevelSet = false
 
 class WebMscore {
 
@@ -41,6 +46,7 @@ class WebMscore {
      *  - 2: Debug  (`DEBG`)
      */
     static async setLogLevel(level) {
+        _hasLogLevelSet = true
         await WebMscore.ready
         return Module.ccall('setLogLevel', null, ['number'], [level])
     }
@@ -111,8 +117,10 @@ class WebMscore {
         freePtr(dataptr)
         const scoreptr = WasmRes.readNum(resptr)
 
-        // turn off logs by default
-        await WebMscore.setLogLevel(0);
+        if (!_hasLogLevelSet) {
+            // turn off logs by default
+            await WebMscore.setLogLevel(0);
+        }
 
         const mscore = new WebMscore(scoreptr)
         return mscore
