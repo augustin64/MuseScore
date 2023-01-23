@@ -15,6 +15,7 @@ concurrency:
 env:
   EM_VERSION: 2.0.6
   EM_CACHE_FOLDER: 'emsdk-cache'
+  COMMIT_MSG: ${{ github.event.head_commit.message }}
 
 jobs:
   build:
@@ -111,3 +112,36 @@ jobs:
         with:
           name: example-exports
           path: web-example/exported*
+
+  publish:
+    if: github.ref_name == 'webmscore' && startsWith(github.event.head_commit.message, 'release v')
+
+    needs: [build, test]
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+        with:
+          submodules: false
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 12
+      - name: Download webmscore package tarball
+        uses: actions/download-artifact@v3
+        with:
+          name: npm-pack
+      - run: |
+          echo "VERSION=$(echo $COMMIT_MSG | cut -d ' ' -f 2)" >> $GITHUB_ENV
+          echo $VERSION
+      - name: Publish to Github Releases
+        uses: softprops/action-gh-release@v1
+        with:
+          files: webmscore-*.tgz
+          name: webmscore ${{ env.VERSION }}
+          tag_name: ${{ env.VERSION }}
+          target_commitish: ${{ github.sha }}
+      - name: Publish to NPM
+        run: npm publish webmscore-*.tgz
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }} # npm_gUA5...
