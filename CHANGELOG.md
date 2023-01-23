@@ -10,6 +10,20 @@ All notable changes to this project will be documented in this file.
 * Python API
 * Pure WebAssembly API
 
+## 1.2.0 - 2023-01-23
+
+### Added
+
+* Throw `WasmError` when webmscore encounters score processing error
+
+### Changed
+
+* The log level can now be set before `WebMscore.load(...)`, overrides the default behaviour which turns off logs in `WebMscore.load(...)`.
+
+### Fixed
+
+* For score files created in MuseScore versions older than v3.6.0, instruments no longer all sound like piano in the exported audio.
+
 ## 1.1.0 - 2023-01-15
 
 ### Added
