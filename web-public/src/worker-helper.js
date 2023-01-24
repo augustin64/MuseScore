@@ -26,6 +26,13 @@ class WorkerError extends Error {
 }
 
 /**
+ * Set the log level when the instance is created  
+ * default: 0 (Off)
+ * @see WebMscore.setLogLevel
+ */
+let _logLevel = 0
+
+/**
  * Use webmscore as a web worker
  * @implements {import('./index').default}
  */
@@ -66,6 +73,18 @@ class WebMscoreW {
     }
 
     /**
+     * Set log level
+     * @param {0 | 1 | 2} level - See https://github.com/LibreScore/webmscore/blob/v1.0.0/src/framework/global/thirdparty/haw_logger/logger/log_base.h#L30-L33
+     *  - 0: Off
+     *  - 1: Normal (`ERRR` or `WARN` or `INFO`)
+     *  - 2: Debug  (`DEBG`)
+     * @returns {Promise<void>}
+     */
+    static async setLogLevel(level) {
+        _logLevel = level
+    }
+
+    /**
      * Load score data
      * @param {import('../schemas').InputFileFormat} format 
      * @param {Uint8Array} data 
@@ -78,6 +97,7 @@ class WebMscoreW {
             fonts,
             instance.rpc('ready')
         ])
+        await instance.rpc('setLogLevel', [_logLevel]) // default 0 (Off)
         await instance.rpc('load', [format, data, _fonts, doLayout], [data.buffer, ..._fonts.map(f => f.buffer)])
         return instance
     }
@@ -86,11 +106,11 @@ class WebMscoreW {
      * Communicate with the worker thread with JSON-RPC
      * @private
      * @typedef {{ id: number; result?: any; error?: any; }} RPCRes
-     * @param {keyof import('./index').default | '_synthAudio' | 'processSynth' | 'processSynthBatch' | 'load' | 'ready'} method 
+     * @param {keyof import('./index').default | '_synthAudio' | 'processSynth' | 'processSynthBatch' | 'load' | 'ready' | 'setLogLevel'} method 
      * @param {any[]} params 
      * @param {Transferable[]} transfer
      */
-    async rpc(method, params = [], transfer = undefined) {
+    async rpc(method, params = [], transfer = []) {
         const id = Math.random()
 
         return new Promise((resolve, reject) => {
@@ -120,12 +140,16 @@ class WebMscoreW {
      * if no excerpts, generate excerpts from existing instrument parts
      * 
      * @param {number} id  `-1` means the full score 
+     * @returns {Promise<void>}
      */
-    async setExcerptId(id) {
+    setExcerptId(id) {
         return this.rpc('setExcerptId', [id])
     }
 
-    async getExcerptId() {
+    /**
+     * @returns {Promise<number>}
+     */
+    getExcerptId() {
         return this.rpc('getExcerptId')
     }
 
@@ -206,7 +230,7 @@ class WebMscoreW {
      * @param {'mscz' | 'mscx'} format 
      * @returns {Promise<Uint8Array>}
      */
-    async saveMsc(format = 'mscz') {
+    saveMsc(format = 'mscz') {
         return this.rpc('saveMsc', [format])
     }
 
@@ -227,7 +251,7 @@ class WebMscoreW {
      * @param {boolean} transparent
      * @returns {Promise<Uint8Array>}
      */
-    async savePng(pageNumber = 0, drawPageBackground = false, transparent = true) {
+    savePng(pageNumber = 0, drawPageBackground = false, transparent = true) {
         return this.rpc('savePng', [pageNumber, drawPageBackground, transparent])
     }
 
@@ -252,9 +276,10 @@ class WebMscoreW {
     /**
      * Set the soundfont (sf2/sf3) data
      * @param {Uint8Array} data 
+     * @returns {Promise<void>}
      */
-    async setSoundFont(data) {
-        await this.rpc('setSoundFont', [data], [data.buffer])
+    setSoundFont(data) {
+        return this.rpc('setSoundFont', [data], [data.buffer])
     }
 
     /**
