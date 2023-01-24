@@ -1,5 +1,4 @@
 
-import fs from 'fs'
 import babel from '@rollup/plugin-babel'
 import { version } from './package.json'
 
@@ -82,23 +81,10 @@ const BABEL_PLUGIN = babel({
     exclude: ['.cache/**'],
 })
 
-const INJECT_REGENERATOR_RUNTIME = {
-    transform(code) {
-        if (code.includes("regeneratorRuntime")) {
-            const runtimeModule = fs.readFileSync('node_modules/regenerator-runtime/runtime.js', 'utf-8')
-            // use L9-L734 only
-            const runtimeFn = runtimeModule.match(/\s+"use strict";.+?return exports;/s)[0]
-            code = `var regeneratorRuntime = (function (exports) {\n${runtimeFn}\n})({})\n` + code
-        }
-        return { code }
-    }
-}
-
 const WEBPACK_TRANSFORM_PLUGINS = [
     REPLACE_IMPORT_META,
     INJECT_WEBPACK_LOCATE_FILE,
     BABEL_PLUGIN,
-    INJECT_REGENERATOR_RUNTIME,
 ]
 
 export default [
