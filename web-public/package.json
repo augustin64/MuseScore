@@ -39,8 +39,8 @@
     "author": "LibreScore",
     "license": "GPL",
     "devDependencies": {
-        "@babel/core": "^7.12.10",
-        "@babel/preset-env": "^7.12.11",
+        "@babel/core": "^7.20.12",
+        "@babel/preset-env": "^7.20.2",
         "@rollup/plugin-babel": "^5.2.2",
         "rollup": "^2.8.2"
     },
