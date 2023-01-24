@@ -86,8 +86,8 @@ const INJECT_REGENERATOR_RUNTIME = {
     transform(code) {
         if (code.includes("regeneratorRuntime")) {
             const runtimeModule = fs.readFileSync('node_modules/regenerator-runtime/runtime.js', 'utf-8')
-            // use L9-L726 only
-            const runtimeFn = runtimeModule.split('\n').slice(8, 725).join("\n")
+            // use L9-L734 only
+            const runtimeFn = runtimeModule.match(/\s+"use strict";.+?return exports;/s)[0]
             code = `var regeneratorRuntime = (function (exports) {\n${runtimeFn}\n})({})\n` + code
         }
         return { code }
