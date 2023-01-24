@@ -56,17 +56,14 @@ export const getTypedArrayPtr = (data) => {
 }
 
 export class WasmRes {
-    /** @type {number} */
-    _ptr
-    /** @type {number} */
-    _size
-
     /**
      * Read responses from the wasm module
      * @param {number} ptr char* pointer to the responses data
      */
     constructor(ptr) {
+        /** @type {number} */
         this._ptr = ptr
+        /** @type {number} */
         this._size = WasmRes._getUint32(this._sizePtr)
         this._checkRet()
     }
@@ -101,7 +98,7 @@ export class WasmRes {
      */
     _checkRet() {
         const retCode = WasmRes._getUint32(this._retCodePtr)
-        if (retCode !== WasmError.OK) {
+        if (retCode !== WasmError.CODE_OK) {
             // read the error message from data
             const retMsg = this.text()
             this.free()
@@ -224,7 +221,7 @@ export class WasmError extends Error {
         this.errorName = msg
         this.message = `WebMscore Err${this.errorName}`
     }
-
-    /** @type {0} */
-    static OK = 0
 }
+
+/** @type {0} */
+WasmError.CODE_OK = 0
