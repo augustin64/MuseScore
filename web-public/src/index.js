@@ -44,6 +44,7 @@ class WebMscore {
      *  - 0: Off
      *  - 1: Normal (`ERRR` or `WARN` or `INFO`)
      *  - 2: Debug  (`DEBG`)
+     * @returns {Promise<void>}
      */
     static async setLogLevel(level) {
         _hasLogLevelSet = true

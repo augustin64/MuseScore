@@ -7,7 +7,7 @@ import WebMscore from './index.js'
 let score
 
 /**
- * @typedef {{ id: number; method: Exclude<keyof import('./index').default, 'scoreptr' | 'excerptId'> | 'load' | 'ready'; params: any[]; }} RPCReq
+ * @typedef {{ id: number; method: Exclude<keyof import('./index').default, 'scoreptr' | 'excerptId'> | 'load' | 'ready' | 'setLogLevel'; params: any[]; }} RPCReq
  * @typedef {{ id: number; result?: any; error?: any; }} RPCRes
  * @param {number} id 
  * @param {any} result 
@@ -72,6 +72,11 @@ self.onmessage = async (e) => {
                 score = await WebMscore.load.apply(undefined, params)
                 rpcRes(id, 'done')
                 break;
+
+            case 'setLogLevel':
+                await WebMscore.setLogLevel.apply(undefined, params)
+                rpcRes(id, 'done')
+                break
 
             default:
                 if (!score) { rpcErr(id, new Error('Score not loaded')) }
