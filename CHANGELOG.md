@@ -10,6 +10,16 @@ All notable changes to this project will be documented in this file.
 * Python API
 * Pure WebAssembly API
 
+## 1.2.1 - 2023-01-23
+
+### Added
+
+* Export `setLogLevel` on the WebMscore web worker
+
+### Fixed
+
+* Static class fields cause error in babel-transpiled js
+
 ## 1.2.0 - 2023-01-23
 
 ### Added
