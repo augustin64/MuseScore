@@ -105,7 +105,7 @@ mu::Ret ConverterController::fileConvert(const io::path_t& in, const io::path_t&
         return notationProject->save(out);
     }
 
-    if (isConvertPageByPage(suffix)) {
+    if (isConvertPageByPage(suffix) || true) {
         ret = convertPageByPage(writer, notationProject->masterNotation()->notation(), out);
         if (!ret) {
             LOGE() << "Failed to convert page by page, err: " << ret.toString();
@@ -209,10 +209,23 @@ bool ConverterController::isConvertPageByPage(const std::string& suffix) const
 mu::Ret ConverterController::convertPageByPage(INotationWriterPtr writer, INotationPtr notation, const mu::io::path_t& out) const
 {
     TRACEFUNC;
+    mu::notation::INotationPartsPtr parts = notation->parts();
 
-    for (size_t i = 0; i < notation->elements()->pages().size(); i++) {
+    for (size_t idx=0; idx < parts->partList().size()+1; idx++) {
+        // The dirty part is here: the first element written gets all the voices whatever I do
+        // So I write it twice... (to the same file)
+        size_t i = idx %  parts->partList().size();
+
+        const mu::engraving::Part* cur_part = parts->partList().at(i);
+        //std::cout << "Writing " << cur_part->longName().toStdString() << std::endl;
+
+        // Disable the elems you are not using
+        for (size_t j=0; j < parts->partList().size(); j++) {
+            parts->setPartVisible(parts->partList().at(j)->id(), (j == i));
+        }
+
         const QString filePath
-            = io::path_t(io::dirpath(out) + "/" + io::completeBasename(out) + "-%1." + io::suffix(out)).toQString().arg(i + 1);
+            = io::path_t(io::dirpath(out) + "/" + io::completeBasename(out) + "-" + cur_part->longName().toStdString() + "." + io::suffix(out)).toQString();
 
         QFile file(filePath);
         if (!file.open(QFile::WriteOnly)) {
