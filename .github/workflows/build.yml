@@ -28,7 +28,7 @@ jobs:
           submodules: true
       - uses: actions/setup-node@v1
         with:
-          node-version: 12
+          node-version: 16
       - uses: actions/cache@v3
         with:
           path: ${{env.EM_CACHE_FOLDER}}
