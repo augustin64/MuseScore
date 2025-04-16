@@ -27,9 +27,9 @@
 #include "io/path.h"
 #include "types/ret.h"
 
-#include "projecttypes.h"
-#include "notation/imasternotation.h"
 #include "iprojectaudiosettings.h"
+#include "notation/imasternotation.h"
+#include "types/projecttypes.h"
 
 namespace mu::project {
 class INotationProject
@@ -42,6 +42,7 @@ public:
     virtual async::Notification pathChanged() const = 0;
 
     virtual QString displayName() const = 0;
+    virtual async::Notification displayNameChanged() const = 0;
 
     virtual Ret load(const io::path_t& path,
                      const io::path_t& stylePath = io::path_t(), bool forceMode = false, const std::string& format = "") = 0;
@@ -51,6 +52,9 @@ public:
     virtual const CloudProjectInfo& cloudInfo() const = 0;
     virtual void setCloudInfo(const CloudProjectInfo& info) = 0;
 
+    virtual const CloudAudioInfo& cloudAudioInfo() const = 0;
+    virtual void setCloudAudioInfo(const CloudAudioInfo& audioInfo) = 0;
+
     virtual bool isNewlyCreated() const = 0;
     virtual void markAsNewlyCreated() = 0;
 
@@ -59,7 +63,10 @@ public:
     virtual void markAsUnsaved() = 0;
 
     virtual ValNt<bool> needSave() const = 0;
-    virtual bool canSave() const = 0;
+    virtual Ret canSave() const = 0;
+
+    virtual bool needAutoSave() const = 0;
+    virtual void setNeedAutoSave(bool val) = 0;
 
     virtual Ret save(const io::path_t& path = io::path_t(), SaveMode saveMode = SaveMode::Save) = 0;
     virtual Ret writeToDevice(QIODevice* device) = 0;

@@ -43,6 +43,7 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/types/ornamenttypes.h
     ${CMAKE_CURRENT_LIST_DIR}/types/linetypes.h
     ${CMAKE_CURRENT_LIST_DIR}/types/directiontypes.h
+    ${CMAKE_CURRENT_LIST_DIR}/types/slurtietypes.h
     ${CMAKE_CURRENT_LIST_DIR}/types/texttypes.h
     ${CMAKE_CURRENT_LIST_DIR}/types/commontypes.h
     ${CMAKE_CURRENT_LIST_DIR}/types/tremolobartypes.h
@@ -86,10 +87,14 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/models/score/scoredisplaysettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/score/internal/pagetypelistmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/models/score/internal/pagetypelistmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/models/parts/partssettingsmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/models/parts/partssettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/text/textsettingsmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/models/text/textsettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/view/widgets/fretcanvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/widgets/fretcanvas.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/widgets/bendgridcanvas.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/widgets/bendgridcanvas.h
     ${CMAKE_CURRENT_LIST_DIR}/view/widgets/gridcanvas.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/widgets/gridcanvas.h
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/notationsettingsproxymodel.cpp
@@ -104,6 +109,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/barlines/barlinesettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/barlines/barlinesettingsproxymodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/barlines/barlinesettingsproxymodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/beams/beammodesmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/beams/beammodesmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/bends/bendsettingsmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/bends/bendsettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/brackets/bracketsettingsmodel.cpp
@@ -178,8 +185,6 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/notes/notesettingsproxymodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/notes/beams/beamsettingsmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/notes/beams/beamsettingsmodel.h
-    ${CMAKE_CURRENT_LIST_DIR}/models/notation/notes/beams/internal/beammodesmodel.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/models/notation/notes/beams/internal/beammodesmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/notes/chords/chordsettingsmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/notes/chords/chordsettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/notes/hooks/hooksettingsmodel.cpp
@@ -198,6 +203,16 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/tuplets/tupletsettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/instrumentname/instrumentnamesettingsmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/models/notation/instrumentname/instrumentnamesettingsmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/rests/beams/restbeamsettingsmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/rests/beams/restbeamsettingsmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/rests/restsettingsproxymodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/rests/restsettingsproxymodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/dynamics/dynamicsettingsmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/dynamics/dynamicsettingsmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/expressions/expressionsettingsmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/expressions/expressionsettingsmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/stringtunings/stringtuningssettingsmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/models/notation/stringtunings/stringtuningssettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/models/inspectorpopupcontroller.cpp
     ${CMAKE_CURRENT_LIST_DIR}/models/inspectorpopupcontroller.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/services/elementrepositoryservice.cpp
@@ -206,10 +221,6 @@ set(MODULE_SRC
     )
 
 set(MODULE_UI ${inspector_UI} )
-
-set(MODULE_INCLUDE
-    ${PROJECT_SOURCE_DIR}/src/engraving/libmscore
-    )
 
 if (NOT MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.0)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-copy")

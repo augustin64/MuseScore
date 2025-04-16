@@ -197,33 +197,38 @@ void LanguagesService::setCurrentLanguage(const QString& languageCode)
     QLocale::setDefault(locale);
     qApp->setLayoutDirection(locale.textDirection());
 
+    lang.direction = locale.textDirection();
+
     // Currently, no need to retranslate the UI on language change, because we require restart
 
     m_currentLanguage = lang;
     m_currentLanguageChanged.notify();
 }
 
-QString LanguagesService::effectiveLanguageCode(const QString& languageCode) const
+QString LanguagesService::effectiveLanguageCode(QString languageCode) const
 {
+    languageCode.replace('-', '_');
     // Tries decreasingly specific versions of `code`. For example:
     // "nl_NL" -> not found -> try just "nl" -> found -> returns "nl".
     auto tryCode = [this](QString code) -> QString {
-        code.replace('-', '_');
-
         for (;;) {
             if (m_languagesHash.contains(code)) {
                 return code;
             }
 
-            static const std::map<QString, QString> SHORT_TO_LONG_FALLBACK_CODES {
+            static const std::map<QString, QString> SPECIAL_CASES {
+                { "ca_valencia", "ca@valencia" },
+                { "ca_ES_valencia", "ca@valencia" },
+                { "en_AU", "en_GB" },
+                { "en_NZ", "en_GB" },
                 { "en", "en_US" },
                 { "hi", "hi_IN" },
                 { "mn", "mn_MN" },
                 { "zh", "zh_CN" }
             };
 
-            auto it = SHORT_TO_LONG_FALLBACK_CODES.find(code);
-            if (it != SHORT_TO_LONG_FALLBACK_CODES.cend()) {
+            auto it = SPECIAL_CASES.find(code);
+            if (it != SPECIAL_CASES.cend()) {
                 return it->second;
             }
 
@@ -241,7 +246,15 @@ QString LanguagesService::effectiveLanguageCode(const QString& languageCode) con
 
     if (languageCode.isEmpty() || languageCode == SYSTEM_LANGUAGE_CODE) {
         for (const QString& code : QLocale::system().uiLanguages()) {
-            QString effectiveCode = tryCode(code);
+            LOGI() << "System language code: " << code;
+            QString effectiveCode = code;
+            effectiveCode.replace('-', '_');
+            // Prefer Swedish (Modern) over Swedish (Traditional)
+            // when using system language.
+            if (effectiveCode == "sv_SE") {
+                effectiveCode = "sv";
+            }
+            effectiveCode = tryCode(effectiveCode);
             if (!effectiveCode.isEmpty()) {
                 return effectiveCode;
             }

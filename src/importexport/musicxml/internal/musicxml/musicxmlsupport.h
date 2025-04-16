@@ -31,8 +31,9 @@
 // #include <QSourceLocation>
 
 #include "engraving/types/fraction.h"
-#include "libmscore/mscore.h"
-#include "libmscore/note.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/fret.h"
 
 class Chord;
 
@@ -61,12 +62,42 @@ class NoteList
 public:
     NoteList();
     void addNote(const int startTick, const int endTick, const int staff);
-    void dump(const QString& voice) const;
+    void dump(const int& voice) const;
     bool stavesOverlap(const int staff1, const int staff2) const;
     bool anyStaffOverlaps() const;
 private:
     QList<StartStopList> _staffNoteLists;   ///< The note start/stop times in all staves
 };
+
+struct MusicXmlArpeggioDesc {
+    Arpeggio* arp;
+    int no;
+
+    MusicXmlArpeggioDesc(Arpeggio* arp, int no)
+        : arp(arp), no(no) {}
+};
+typedef std::multimap<int, MusicXmlArpeggioDesc> ArpeggioMap;
+
+/**
+ The description of a chord symbol with or without a fret diagram
+ */
+
+struct HarmonyDesc
+{
+    track_idx_t m_track;
+    bool fretDiagramVisible() const { return m_fretDiagram ? m_fretDiagram->visible() : false; }
+    Harmony* m_harmony;
+    FretDiagram* m_fretDiagram;
+
+    HarmonyDesc(track_idx_t m_track, Harmony* m_harmony, FretDiagram* m_fretDiagram)
+        : m_track(m_track), m_harmony(m_harmony),
+        m_fretDiagram(m_fretDiagram) {}
+
+    HarmonyDesc()
+        : m_track(0), m_harmony(nullptr), m_fretDiagram(nullptr) {}
+};
+
+using HarmonyMap = std::multimap<int, HarmonyDesc>;
 
 //---------------------------------------------------------
 //   VoiceDesc
@@ -146,12 +177,12 @@ class VoiceOverlapDetector
 {
 public:
     VoiceOverlapDetector();
-    void addNote(const int startTick, const int endTick, const QString& voice, const int staff);
+    void addNote(const int startTick, const int endTick, const int& voice, const int staff);
     void dump() const;
     void newMeasure();
-    bool stavesOverlap(const QString& voice) const;
+    bool stavesOverlap(const int& voice) const;
 private:
-    QMap<QString, NoteList> _noteLists;   ///< The notelists for all the voices
+    QMap<int, NoteList> _noteLists;   ///< The notelists for all the voices
 };
 
 //---------------------------------------------------------
@@ -242,9 +273,11 @@ extern void domNotImplemented(const QDomElement&);
 inline void domError(const XmlDomNode&) {}; // TODO: print debug logs
 
 extern QString accSymId2MxmlString(const SymId id);
+extern QString accSymId2SmuflMxmlString(const SymId id);
 extern QString accidentalType2MxmlString(const AccidentalType type);
-extern AccidentalType mxmlString2accidentalType(const QString mxmlName);
-extern SymId mxmlString2accSymId(const QString mxmlName);
+extern QString accidentalType2SmuflMxmlString(const AccidentalType type);
+extern AccidentalType mxmlString2accidentalType(const QString mxmlName, const QString smufl);
+extern SymId mxmlString2accSymId(const QString mxmlName, const QString smufl = "");
 extern AccidentalType microtonalGuess(double val);
 extern bool isLaissezVibrer(const SymId id);
 extern const Articulation* findLaissezVibrer(const Chord* const chord);

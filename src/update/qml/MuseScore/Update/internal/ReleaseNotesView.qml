@@ -21,39 +21,31 @@
  */
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
+import QtQuick.Controls 2.15
 
 import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
 
-ColumnLayout {
+Item {
     id: root
 
     property alias notes: notesLabel.text
-
-    spacing: 16
+    property alias previousReleasesNotes: previousReleasesNotesRepeater.model
 
     QtObject {
         id: prv
 
-        readonly property int sideMargin: 36
+        readonly property int sideMargin: 24
     }
-
-    StyledTextLabel {
-        Layout.fillWidth: true
-
-        text: qsTrc("update", "Release notes")
-
-        horizontalAlignment: Qt.AlignLeft
-        font: ui.theme.bodyBoldFont
-    }
-
-    SeparatorLine { Layout.leftMargin: -prv.sideMargin; Layout.rightMargin: -prv.sideMargin }
 
     StyledFlickable {
-        Layout.fillWidth: true
-        Layout.fillHeight: true
+        id: flickable
 
-        contentHeight: notesLabel.implicitHeight
+        anchors.fill: parent
+
+        property int notesSpacing: 12
+
+        contentHeight: notesLabel.implicitHeight + notesSpacing + previousReleasesNotesColumn.childrenRect.height
 
         StyledTextLabel {
             id: notesLabel
@@ -64,9 +56,62 @@ ColumnLayout {
             horizontalAlignment: Text.AlignLeft
             font: ui.theme.largeBodyFont
             wrapMode: Text.WordWrap
-            lineHeight: 2.0
+            textFormat: Text.MarkdownText
+            lineHeight: 1.2
         }
+
+        Column {
+            id: previousReleasesNotesColumn
+
+            anchors.top: notesLabel.bottom
+            anchors.topMargin: flickable.notesSpacing
+
+            anchors.left: parent.left
+            anchors.right: parent.right
+
+            spacing: flickable.notesSpacing
+
+            Repeater {
+                id: previousReleasesNotesRepeater
+
+                ExpandableBlank {
+                    width: parent.width
+
+                    title: qsTrc("update", "Read the %1 release notes").arg(modelData["version"])
+                    titleFont: ui.theme.largeBodyBoldFont
+
+                    isExpanded: false
+
+                    contentItemComponent: Column {
+                        height: implicitHeight
+                        width: parent.width
+
+                        StyledTextLabel {
+                            width: parent.width
+
+                            horizontalAlignment: Text.AlignLeft
+                            font: ui.theme.largeBodyFont
+                            wrapMode: Text.WordWrap
+                            textFormat: Text.MarkdownText
+                            lineHeight: 1.2
+
+                            text: modelData["notes"]
+                        }
+                    }
+                }
+            }
+        }
+
+        ScrollBar.vertical: scrollBar
     }
 
-    SeparatorLine { Layout.leftMargin: -prv.sideMargin; Layout.rightMargin: -prv.sideMargin }
+    StyledScrollBar {
+        id: scrollBar
+        anchors.top: flickable.top
+        anchors.right: flickable.right
+        anchors.rightMargin: -prv.sideMargin
+        anchors.bottom: flickable.bottom
+
+        policy: ScrollBar.AlwaysOn
+    }
 }

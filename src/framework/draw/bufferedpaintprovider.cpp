@@ -23,7 +23,6 @@
 
 #include "utils/drawlogger.h"
 #include "log.h"
-#include "config.h"
 
 using namespace mu;
 using namespace mu::draw;
@@ -42,8 +41,11 @@ BufferedPaintProvider::~BufferedPaintProvider()
 void BufferedPaintProvider::beginTarget(const std::string& name)
 {
     clear();
-    m_buf.name = name;
-    beginObject(name + "_default", PointF());
+    m_buf->name = name;
+    m_stateIsUsed = false;
+    m_currentStateNo = 0;
+    m_buf->states[m_currentStateNo] = DrawData::State(); // default
+    beginObject("target_" + name);
     m_isActive = true;
 }
 
@@ -66,65 +68,130 @@ bool BufferedPaintProvider::isActive() const
     return m_isActive;
 }
 
-void BufferedPaintProvider::beginObject(const std::string& name, const PointF& pagePos)
+void BufferedPaintProvider::beginObject(const std::string& name)
 {
-    // add new object
-    m_currentObjects.push(DrawData::Object(name, pagePos));
+    // no begin any objects
+    if (m_itemLevel < 0) {
+        m_buf->item.name = name;
+        m_buf->item.datas.emplace_back(); // default state
+        m_itemLevel = 0;
+        return;
+    }
 
-#ifdef TRACE_DRAW_OBJ_ENABLED
-    m_drawObjectsLogger.beginObject(name, pagePos);
+    // add new object
+    DrawData::Item& parent = editableItem();
+    DrawData::Item& ch = parent.chilren.emplace_back(name);
+
+    ++m_itemLevel;
+
+    ensureItemInit(ch);
+
+#ifdef MUE_ENABLE_DRAW_TRACE
+    //m_drawObjectsLogger->beginObject(name);
 #endif
 }
 
 void BufferedPaintProvider::endObject()
 {
     TRACEFUNC;
+    IF_ASSERT_FAILED(m_itemLevel > -1) {
+        return;
+    }
 
-    // remove last empty state
-    DrawData::Object& obj = m_currentObjects.top();
-    if (!obj.datas.empty() && obj.datas.back().empty()) {
+    DrawData::Item& obj = editableItem();
+
+    // remove default state or state without data
+    if (obj.datas.back().empty()) {
         obj.datas.pop_back();
     }
 
-    // move object to buffer
-    m_buf.objects.push_back(obj);
+    --m_itemLevel;
 
-    // remove obj
-    m_currentObjects.pop();
-
-#ifdef TRACE_DRAW_OBJ_ENABLED
-    m_drawObjectsLogger.endObject();
+#ifdef MUE_ENABLE_DRAW_TRACE
+    //m_drawObjectsLogger->endObject();
 #endif
+}
+
+void BufferedPaintProvider::ensureItemInit(DrawData::Item& item) const
+{
+    if (item.datas.empty()) {
+        item.datas.emplace_back();                    // default data
+        item.datas.back().state = m_currentStateNo;   // current state
+    }
+}
+
+const DrawData::Item& BufferedPaintProvider::currentItem() const
+{
+    DrawData::Item* itemPtr = &m_buf->item;
+    for (int i = 0; i < m_itemLevel; ++i) {
+        itemPtr = &itemPtr->chilren.back();
+    }
+
+    DrawData::Item& item = *itemPtr;
+
+    ensureItemInit(item);
+
+    return item;
+}
+
+DrawData::Item& BufferedPaintProvider::editableItem()
+{
+    DrawData::Item* itemPtr = &m_buf->item;
+    for (int i = 0; i < m_itemLevel; ++i) {
+        itemPtr = &itemPtr->chilren.back();
+    }
+
+    DrawData::Item& item = *itemPtr;
+
+    ensureItemInit(item);
+
+    return item;
 }
 
 const DrawData::Data& BufferedPaintProvider::currentData() const
 {
-    return m_currentObjects.top().datas.back();
+    return currentItem().datas.back();
 }
 
 const DrawData::State& BufferedPaintProvider::currentState() const
 {
-    return currentData().state;
+    return m_buf->states.at(m_currentStateNo);
 }
 
 DrawData::Data& BufferedPaintProvider::editableData()
 {
-    return m_currentObjects.top().datas.back();
+    m_stateIsUsed = true;
+    return editableItem().datas.back();
 }
 
 DrawData::State& BufferedPaintProvider::editableState()
 {
-    DrawData::Data& data = m_currentObjects.top().datas.back();
-    if (data.empty()) {
-        return data.state;
+    {
+        if (!m_stateIsUsed) {
+            return m_buf->states[m_currentStateNo];
+        }
     }
 
+    // make new state
     {
-        DrawData::Data newData;
-        newData.state = data.state;
-        m_currentObjects.top().datas.push_back(std::move(newData));
+        const DrawData::State& current = m_buf->states.at(m_currentStateNo);
+        m_currentStateNo++;
+        m_buf->states[m_currentStateNo] = current;
     }
-    return m_currentObjects.top().datas.back().state;
+
+    // make new data if current not empty
+    {
+        DrawData::Item& item = editableItem();
+        ensureItemInit(item);
+        if (!item.datas.back().empty()) {
+            item.datas.emplace_back();
+            item.datas.back().state = m_currentStateNo;
+        }
+    }
+
+    m_stateIsUsed = false;
+
+    return m_buf->states[m_currentStateNo];
 }
 
 void BufferedPaintProvider::setAntialiasing(bool arg)
@@ -135,6 +202,15 @@ void BufferedPaintProvider::setAntialiasing(bool arg)
 void BufferedPaintProvider::setCompositionMode(CompositionMode mode)
 {
     editableState().compositionMode = mode;
+}
+
+void BufferedPaintProvider::setWindow(const RectF&)
+{
+}
+
+void BufferedPaintProvider::setViewport(const RectF& viewport)
+{
+    m_buf->viewport = viewport;
 }
 
 void BufferedPaintProvider::setFont(const Font& f)
@@ -216,12 +292,12 @@ void BufferedPaintProvider::drawPolygon(const PointF* points, size_t pointCount,
 
 void BufferedPaintProvider::drawText(const PointF& point, const String& text)
 {
-    editableData().texts.push_back(DrawText { point, text });
+    editableData().texts.push_back(DrawText { DrawText::Point, RectF(point, SizeF()), 0, text });
 }
 
 void BufferedPaintProvider::drawText(const RectF& rect, int flags, const String& text)
 {
-    editableData().rectTexts.push_back(DrawRectText { rect, flags, text });
+    editableData().texts.push_back(DrawText { DrawText::Rect, rect, flags, text });
 }
 
 void BufferedPaintProvider::drawTextWorkaround(const Font& f, const PointF& pos, const String& text)
@@ -237,26 +313,31 @@ void BufferedPaintProvider::drawSymbol(const PointF& point, char32_t ucs4Code)
 
 void BufferedPaintProvider::drawPixmap(const PointF& p, const Pixmap& pm)
 {
-    editableData().pixmaps.push_back(DrawPixmap { p, pm });
+    editableData().pixmaps.push_back(DrawPixmap { DrawPixmap::Single, RectF(p, SizeF()), pm, PointF() });
 }
 
 void BufferedPaintProvider::drawTiledPixmap(const RectF& rect, const Pixmap& pm, const PointF& offset)
 {
-    editableData().tiledPixmap.push_back(DrawTiledPixmap { rect, pm, offset });
+    editableData().pixmaps.push_back(DrawPixmap { DrawPixmap::Tiled, rect, pm, offset });
 }
 
 #ifndef NO_QT_SUPPORT
 void BufferedPaintProvider::drawPixmap(const PointF& p, const QPixmap& pm)
 {
-    editableData().pixmaps.push_back(DrawPixmap { p, Pixmap::fromQPixmap(pm) });
+    editableData().pixmaps.push_back(DrawPixmap { DrawPixmap::Single, RectF(p, SizeF()), Pixmap::fromQPixmap(pm), PointF() });
 }
 
 void BufferedPaintProvider::drawTiledPixmap(const RectF& rect, const QPixmap& pm, const PointF& offset)
 {
-    editableData().tiledPixmap.push_back(DrawTiledPixmap { rect, Pixmap::fromQPixmap(pm), offset });
+    editableData().pixmaps.push_back(DrawPixmap { DrawPixmap::Tiled, rect, Pixmap::fromQPixmap(pm), offset });
 }
 
 #endif
+
+bool BufferedPaintProvider::hasClipping() const
+{
+    return false;
+}
 
 void BufferedPaintProvider::setClipRect(const RectF& rect)
 {
@@ -268,14 +349,13 @@ void BufferedPaintProvider::setClipping(bool enable)
     UNUSED(enable);
 }
 
-const DrawData& BufferedPaintProvider::drawData() const
+DrawDataPtr BufferedPaintProvider::drawData() const
 {
     return m_buf;
 }
 
 void BufferedPaintProvider::clear()
 {
-    m_buf = DrawData();
-    std::stack<DrawData::Object> empty;
-    m_currentObjects.swap(empty);
+    m_buf = std::make_shared<DrawData>();
+    m_itemLevel = -1;
 }

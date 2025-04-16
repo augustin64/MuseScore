@@ -31,14 +31,19 @@
 
 class QItemSelectionModel;
 
+#if (defined(_MSCVER) || defined(_MSC_VER))
+// unreferenced function with internal linkage has been removed
+#pragma warning(disable: 4505)
+#endif
+
 namespace mu::notation {
 class NoteInputBarCustomiseItem;
 class NoteInputBarCustomiseModel : public uicomponents::SelectableItemListModel, public async::Asyncable
 {
     Q_OBJECT
 
-    INJECT(notation, ui::IUiConfiguration, uiConfiguration)
-    INJECT(notation, ui::IUiActionsRegister, actionsRegister)
+    INJECT(ui::IUiConfiguration, uiConfiguration)
+    INJECT(ui::IUiActionsRegister, actionsRegister)
 
     Q_PROPERTY(QItemSelectionModel * selectionModel READ selectionModel NOTIFY selectionChanged)
     Q_PROPERTY(bool isAddSeparatorAvailable READ isAddSeparatorAvailable NOTIFY isAddSeparatorAvailableChanged)

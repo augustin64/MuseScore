@@ -39,6 +39,9 @@ public:
     bool musicxmlExportLayout() const override;
     void setMusicxmlExportLayout(bool value) override;
 
+    bool musicxmlExportMu3Compat() const override;
+    void setMusicxmlExportMu3Compat(bool value) override;
+
     MusicxmlExportBreaksType musicxmlExportBreaksType() const override;
     void setMusicxmlExportBreaksType(MusicxmlExportBreaksType breaksType) override;
 
@@ -47,9 +50,18 @@ public:
 
     bool needUseDefaultFont() const override;
     void setNeedUseDefaultFont(bool value) override;
+    void setNeedUseDefaultFontOverride(std::optional<bool> value) override;
 
     bool needAskAboutApplyingNewStyle() const override;
     void setNeedAskAboutApplyingNewStyle(bool value) override;
+
+    bool inferTextType() const override;
+    void setInferTextType(bool value) override;
+    void setInferTextTypeOverride(std::optional<bool> value) override;
+
+private:
+    std::optional<bool> m_needUseDefaultFontOverride;
+    std::optional<bool> m_inferTextTypeOverride;
 };
 }
 

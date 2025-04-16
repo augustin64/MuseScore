@@ -31,14 +31,8 @@
 namespace mu::io {
 class File : public IODevice
 {
-    INJECT_STATIC(io, IFileSystem, fileSystem)
+    INJECT_STATIC(IFileSystem, fileSystem)
 public:
-
-    enum Error {
-        NoError = 0,
-        ReadError = 1,
-        WriteError = 2
-    };
 
     File() = default;
     File(const path_t& filePath);
@@ -49,11 +43,11 @@ public:
     bool exists() const;
     bool remove();
 
-    Error error() const;
-    std::string errorString() const;
-
     static bool exists(const path_t& filePath);
     static bool remove(const path_t& filePath);
+    static bool copy(const path_t& src, const path_t& dst, bool replace = false);
+    static Ret readFile(const io::path_t& filePath, ByteArray& out);
+    static Ret writeFile(const io::path_t& filePath, const ByteArray& data);
     static bool setPermissionsAllowedForAll(const path_t& filePath);
 
 protected:
@@ -68,7 +62,6 @@ private:
 
     path_t m_filePath;
     ByteArray m_data;
-    Error m_error = Error::NoError;
 };
 }
 

@@ -8,9 +8,11 @@
         <file>qml/MuseScore/UiComponents/IncrementalPropertyControl.qml</file>
         <file>qml/MuseScore/UiComponents/FlatToggleButton.qml</file>
         <file>qml/MuseScore/UiComponents/FlatButton.qml</file>
+        <file>qml/MuseScore/UiComponents/ToggleButton.qml</file>
         <file>qml/MuseScore/UiComponents/ExpandableBlankSection.qml</file>
         <file>qml/MuseScore/UiComponents/ExpandableBlank.qml</file>
         <file>qml/MuseScore/UiComponents/RadioButtonGroup.qml</file>
+        <file>qml/MuseScore/UiComponents/FlatRadioButtonList.qml</file>
         <file>qml/MuseScore/UiComponents/TextInputField.qml</file>
         <file>qml/MuseScore/UiComponents/ValueAdjustControl.qml</file>
         <file>qml/MuseScore/UiComponents/Icon.qml</file>
@@ -56,11 +58,11 @@
         <file>qml/MuseScore/UiComponents/StyledListView.qml</file>
         <file>qml/MuseScore/UiComponents/StyledGridView.qml</file>
         <file>qml/MuseScore/UiComponents/StyledFlickable.qml</file>
+        <file>qml/MuseScore/UiComponents/GradientRectangle.qml</file>
         <file>qml/MuseScore/UiComponents/InfoPanel.qml</file>
         <file>qml/MuseScore/UiComponents/internal/ArrowScrollButton.qml</file>
         <file>qml/MuseScore/UiComponents/SelectMultipleDirectoriesDialog.qml</file>
         <file>qml/MuseScore/UiComponents/internal/DirectoriesView.qml</file>
-        <file>qml/MuseScore/UiComponents/internal/DirectoriesBottomPanel.qml</file>
         <file>qml/MuseScore/UiComponents/internal/DirectoriesTopPanel.qml</file>
         <file>qml/MuseScore/UiComponents/internal/PopupContent.qml</file>
         <file>qml/MuseScore/UiComponents/internal/StyledDropdownLoader.qml</file>
@@ -68,5 +70,7 @@
         <file>qml/MuseScore/UiComponents/internal/StyledMenuItem.qml</file>
         <file>qml/MuseScore/UiComponents/internal/StyledMenu.qml</file>
         <file>qml/MuseScore/UiComponents/internal/MenuMetrics.qml</file>
+        <file>qml/MuseScore/UiComponents/StyledBusyIndicator.qml</file>
+        <file>qml/MuseScore/UiComponents/ButtonBox.qml</file>
     </qresource>
 </RCC>

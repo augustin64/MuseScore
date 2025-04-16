@@ -45,7 +45,7 @@ Ret PrintProvider::printNotation(INotationPtr notation)
     printerDev.setPageSize(ps);
     printerDev.setPageOrientation(pageSizeInch.width() > pageSizeInch.height() ? QPageLayout::Landscape : QPageLayout::Portrait);
 
-    //printerDev.setCreator("MuseScore Version: " VERSION);
+    //printerDev.setCreator("MuseScore Studio Version: " VERSION);
     printerDev.setFullPage(true);
     if (!printerDev.setPageMargins(QMarginsF())) {
         LOGD() << "unable to clear printer margins";
@@ -66,7 +66,8 @@ Ret PrintProvider::printNotation(INotationPtr notation)
     INotationPainting::Options opt;
     opt.fromPage = printerDev.fromPage() - 1;
     opt.toPage = printerDev.toPage() - 1;
-    opt.copyCount = printerDev.copyCount();
+    // See https://doc.qt.io/qt-5/qprinter.html#supportsMultipleCopies
+    opt.copyCount = printerDev.supportsMultipleCopies() ? 1 : printerDev.copyCount();
     opt.deviceDpi = printerDev.logicalDpiX();
     opt.onNewPage = [&printerDev]() { printerDev.newPage(); };
 

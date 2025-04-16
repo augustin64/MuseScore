@@ -29,29 +29,33 @@
 
 using namespace mu::playback;
 using namespace mu::framework;
+using namespace mu::modularity;
 
 static void playback_init_qrc()
 {
     Q_INIT_RESOURCE(playback);
 }
 
-std::string PlaybackStubModule::moduleName() const
+std::string PlaybackModule::moduleName() const
 {
     return "playback_stub";
 }
 
-void PlaybackStubModule::registerExports()
+void PlaybackModule::registerExports()
 {
     ioc()->registerExport<IPlaybackController>(moduleName(), new PlaybackControllerStub());
     ioc()->registerExport<IPlaybackConfiguration>(moduleName(), new PlaybackConfigurationStub());
 }
 
-void PlaybackStubModule::registerResources()
+void PlaybackModule::registerResources()
 {
     playback_init_qrc();
 }
 
-void PlaybackStubModule::registerUiTypes()
+void PlaybackModule::registerUiTypes()
 {
-    ioc()->resolve<ui::IUiEngine>(moduleName())->addSourceImportPath(playback_QML_IMPORT);
+    std::shared_ptr<ui::IUiEngine> ui = ioc()->resolve<ui::IUiEngine>(moduleName());
+    if (ui) {
+        ui->addSourceImportPath(playback_QML_IMPORT);
+    }
 }

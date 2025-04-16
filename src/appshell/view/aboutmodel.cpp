@@ -22,8 +22,7 @@
 #include "aboutmodel.h"
 
 #include "translation.h"
-#include "version.h"
-#include "config.h"
+#include "muversion.h"
 
 #include <QApplication>
 #include <QClipboard>
@@ -39,7 +38,7 @@ AboutModel::AboutModel(QObject* parent)
 QString AboutModel::museScoreVersion() const
 {
     QString version = QString::fromStdString(configuration()->museScoreVersion());
-    return mu::framework::Version::unstable()
+    return mu::framework::MUVersion::unstable()
            ? qtrc("appshell/about", "Unstable prerelease for %1").arg(version)
            : version;
 }
@@ -88,13 +87,20 @@ QVariantMap AboutModel::musicXMLLicenseDeedUrl() const
 void AboutModel::copyRevisionToClipboard() const
 {
     QApplication::clipboard()->setText(
-        QString("OS: %1, Arch.: %2, MuseScore version (%3-bit): %4-%5, revision: github-musescore-musescore-%6")
-        .arg(QSysInfo::prettyProductName())
+        QString("OS: %1, Arch.: %2, MuseScore Studio version (%3-bit): %4-%5, revision: github-musescore-musescore-%6")
+        .arg(QSysInfo::prettyProductName()
+             + ((QSysInfo::productType() == "windows" && (QSysInfo::productVersion() == "10" || QSysInfo::productVersion() == "11"))
+                ? " or later" : ""))
         .arg(QSysInfo::currentCpuArchitecture())
         .arg(QSysInfo::WordSize)
-        .arg(VERSION)
-        .arg(BUILD_NUMBER)
+        .arg(MUSESCORE_VERSION)
+        .arg(MUSESCORE_BUILD_NUMBER)
         .arg(MUSESCORE_REVISION));
+}
+
+void AboutModel::toggleDevMode()
+{
+    globalConfiguration()->setDevModeEnabled(!globalConfiguration()->devModeEnabled());
 }
 
 QVariantMap AboutModel::makeUrl(const QUrl& url, bool showPath) const

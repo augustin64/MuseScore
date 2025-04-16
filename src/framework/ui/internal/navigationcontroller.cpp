@@ -34,8 +34,6 @@
 #include "defer.h"
 #include "log.h"
 
-#include "config.h"
-
 // #define NAVIGATION_LOGGING_ENABLED
 
 #ifdef NAVIGATION_LOGGING_ENABLED
@@ -305,7 +303,7 @@ void NavigationController::reg(INavigationSection* section)
     section->setOnActiveRequested([this](INavigationSection* section, INavigationPanel* panel, INavigationControl* control,
                                          bool enableHighlight, ActivationType activationType) {
         if (control && activationType == ActivationType::ByMouse) {
-            if (mainWindow()->qWindow() == control->window()) {
+            if (section->type() != INavigationSection::Type::Exclusive) {
                 return;
             }
         }
@@ -361,7 +359,7 @@ void NavigationController::resetIfNeed(QObject* watched)
         return;
     }
 
-#ifdef BUILD_DIAGNOSTICS
+#ifdef MUE_BUILD_DIAGNOSTICS_MODULE
     if (diagnostics::isDiagnosticHierarchy(watched)) {
         return;
     }
@@ -369,7 +367,7 @@ void NavigationController::resetIfNeed(QObject* watched)
 
     auto activeCtrl = activeControl();
     if (activeCtrl && activeCtrl != m_defaultNavigationControl && watched == qApp) {
-        resetActive();
+        resetNavigation();
     }
 
     setIsHighlight(false);
@@ -431,7 +429,7 @@ void NavigationController::navigateTo(NavigationController::NavigationType type)
     setIsHighlight(true);
 }
 
-void NavigationController::resetActive()
+void NavigationController::resetNavigation()
 {
     MYLOG() << "===";
     INavigationSection* activeSec = this->activeSection();
@@ -458,6 +456,8 @@ void NavigationController::resetActive()
             m_defaultNavigationControl->setActive(true);
             m_navigationChanged.notify();
         }
+    } else {
+        doActivateFirst();
     }
 }
 
@@ -668,11 +668,24 @@ void NavigationController::goToNextSection()
         return;
     }
 
+    if (activeSec->type() == INavigationSection::Type::Exclusive) {
+        INavigationPanel* first = firstEnabled(activeSec->panels());
+        if (first) {
+            doActivatePanel(first);
+            m_navigationChanged.notify();
+        }
+        return;
+    }
+
     doDeactivateSection(activeSec);
 
     INavigationSection* nextSec = nextEnabled(m_sections, activeSec->index());
     if (!nextSec) { // active is last
         nextSec = firstEnabled(m_sections); // the first to be the next
+    }
+    if (!nextSec) {
+        LOGI() << "no enabled sections!";
+        return;
     }
 
     LOGI() << "nextSec: " << nextSec->name() << ", enabled: " << nextSec->enabled();
@@ -693,6 +706,15 @@ void NavigationController::goToPrevSection(bool isActivateLastPanel)
     INavigationSection* activeSec = findActive(m_sections);
     if (!activeSec) { // no any active
         doActivateLast();
+        return;
+    }
+
+    if (activeSec->type() == INavigationSection::Type::Exclusive) {
+        INavigationPanel* first = firstEnabled(activeSec->panels());
+        if (first) {
+            doActivatePanel(first);
+            m_navigationChanged.notify();
+        }
         return;
     }
 

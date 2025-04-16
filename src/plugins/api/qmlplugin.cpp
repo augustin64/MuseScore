@@ -22,13 +22,13 @@
 
 #include "qmlplugin.h"
 
-#include "version.h"
+#include "muversion.h"
 
-#include "engraving/libmscore/mscore.h"
+#include "engraving/dom/mscore.h"
 
 #include "log.h"
 
-namespace mu::engraving {
+namespace mu::plugins {
 //---------------------------------------------------------
 //   QmlPlugin
 //---------------------------------------------------------
@@ -139,7 +139,7 @@ bool QmlPlugin::requiresScore() const
 
 int QmlPlugin::division() const
 {
-    return Constants::division;
+    return engraving::Constants::DIVISION;
 }
 
 int QmlPlugin::mscoreVersion() const
@@ -149,21 +149,21 @@ int QmlPlugin::mscoreVersion() const
 
 int QmlPlugin::mscoreMajorVersion() const
 {
-    return framework::Version::majorVersion();
+    return framework::MUVersion::majorVersion();
 }
 
 int QmlPlugin::mscoreMinorVersion() const
 {
-    return framework::Version::minorVersion();
+    return framework::MUVersion::minorVersion();
 }
 
 int QmlPlugin::mscoreUpdateVersion() const
 {
-    return framework::Version::patchVersion();
+    return framework::MUVersion::patchVersion();
 }
 
 qreal QmlPlugin::mscoreDPI() const
 {
-    return DPI;
+    return engraving::DPI;
 }
 }

@@ -26,7 +26,8 @@
 #include <cmath>
 #include <cassert>
 
-#include "realfn.h"
+#include "global/realfn.h"
+#include "global/logstream.h"
 
 #ifndef NO_QT_SUPPORT
 #include <QPair>
@@ -63,6 +64,7 @@ public:
 
     inline void setX(T x) { m_x = x; }
     inline void setY(T y) { m_y = y; }
+    inline void setXY(T x, T y) { m_x = x; m_y = y; }
     inline T x() const { return m_x; }
     inline T y() const { return m_y; }
 
@@ -167,6 +169,8 @@ public:
 
     inline LineX(T x1, T y1, T x2, T y2)
         : m_p1(PointX<T>(x1, y1)), m_p2(PointX<T>(x2, y2)) {}
+
+    inline bool isNull() const { return m_p1.isNull() && m_p2.isNull(); }
 
     inline const PointX<T>& p1() const { return m_p1; }
     inline const PointX<T>& p2() const { return m_p2; }
@@ -334,6 +338,20 @@ public:
 
     inline void adjust(double xp1, double yp1, double xp2, double yp2) { m_x += xp1; m_y += yp1; m_w += xp2 - xp1; m_h += yp2 - yp1; }
     inline RectX<T> adjusted(T xp1, T yp1, T xp2, T yp2) const { return RectX<T>(m_x + xp1, m_y + yp1, m_w + xp2 - xp1, m_h + yp2 - yp1); }
+
+    inline RectX<T>& scale(const SizeX<T>& mag)
+    {
+        m_x *= mag.width();
+        m_y *= mag.height();
+        m_w *= mag.width();
+        m_h *= mag.height();
+        return *this;
+    }
+
+    inline RectX<T> scaled(const SizeX<T>& mag) const
+    {
+        return RectX<T>(m_x * mag.width(), m_y * mag.height(), m_w * mag.width(), m_h * mag.height());
+    }
 
     bool contains(const PointX<T>& p) const;
     bool contains(const RectX<T>& r) const;
@@ -710,6 +728,20 @@ RectX<T> RectX<T>::normalized() const
     }
     return r;
 }
+}
+
+template<typename T>
+inline mu::logger::Stream& operator<<(mu::logger::Stream& s, const mu::RectX<T>& r)
+{
+    s << "{x: " << r.x() << ", y: " << r.y() << ", w: " << r.width() << ", h: " << r.height() << "}";
+    return s;
+}
+
+template<typename T>
+inline mu::logger::Stream& operator<<(mu::logger::Stream& s, const mu::PointX<T>& p)
+{
+    s << "{x: " << p.x() << ", y: " << p.y() << "}";
+    return s;
 }
 
 #endif // MU_DRAW_GEOMETRY_H

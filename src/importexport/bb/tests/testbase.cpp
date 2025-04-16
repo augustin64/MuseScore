@@ -27,12 +27,14 @@
 
 #include "io/file.h"
 
-#include "libmscore/masterscore.h"
+#include "engraving/dom/masterscore.h"
 
+#include "engraving/engravingerrors.h"
 #include "engraving/compat/mscxcompat.h"
 #include "engraving/compat/scoreaccess.h"
 #include "engraving/compat/writescorehook.h"
 #include "engraving/infrastructure/localfileinfoprovider.h"
+#include "engraving/rw/rwregister.h"
 
 #include "log.h"
 
@@ -55,7 +57,7 @@ MasterScore* MTest::readScore(const QString& name)
     ScoreLoad sl;
     Err rv;
     if (suffix == "mscz" || suffix == "mscx") {
-        rv = compat::loadMsczOrMscx(score, path, false);
+        rv = static_cast<Err>(compat::loadMsczOrMscx(score, path, false).code());
     } else if (suffix == "sgu") {
         rv = iex::bb::importBB(score, path);
     } else {
@@ -85,8 +87,8 @@ bool MTest::saveScore(Score* score, const QString& name) const
     if (!file.open(IODevice::ReadWrite)) {
         return false;
     }
-    compat::WriteScoreHook hook;
-    return score->writeScore(&file, false, false, hook);
+
+    return rw::RWRegister::writer()->writeScore(score, &file, false);
 }
 
 bool MTest::compareFilesFromPaths(const QString& f1, const QString& f2)

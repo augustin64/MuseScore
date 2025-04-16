@@ -118,6 +118,28 @@ Promise<TrackId, AudioParams> TracksHandler::addTrack(const TrackSequenceId sequ
     }, AudioThread::ID);
 }
 
+Promise<TrackId, AudioOutputParams> TracksHandler::addAuxTrack(const TrackSequenceId sequenceId, const std::string& trackName,
+                                                               const AudioOutputParams& outputParams)
+{
+    return Promise<TrackId, AudioOutputParams>([this, sequenceId, trackName, outputParams](auto resolve, auto reject) {
+        ONLY_AUDIO_WORKER_THREAD;
+
+        ITrackSequencePtr s = sequence(sequenceId);
+
+        if (!s) {
+            return reject(static_cast<int>(Err::InvalidSequenceId), "invalid sequence id");
+        }
+
+        RetVal2<TrackId, AudioOutputParams> result = s->addAuxTrack(trackName, outputParams);
+
+        if (!result.ret) {
+            return reject(result.ret.code(), result.ret.text());
+        }
+
+        return resolve(result.val1, result.val2);
+    }, AudioThread::ID);
+}
+
 void TracksHandler::removeTrack(const TrackSequenceId sequenceId, const TrackId trackId)
 {
     Async::call(this, [this, sequenceId, trackId]() {
@@ -170,6 +192,15 @@ Promise<AudioResourceMetaList> TracksHandler::availableInputResources() const
         ONLY_AUDIO_WORKER_THREAD;
 
         return resolve(resolver()->resolveAvailableResources());
+    }, AudioThread::ID);
+}
+
+Promise<SoundPresetList> TracksHandler::availableSoundPresets(const AudioResourceMeta& resourceMeta) const
+{
+    return Promise<SoundPresetList>([this, resourceMeta](auto resolve, auto /*reject*/) {
+        ONLY_AUDIO_WORKER_THREAD;
+
+        return resolve(resolver()->resolveAvailableSoundPresets(resourceMeta));
     }, AudioThread::ID);
 }
 

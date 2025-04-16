@@ -23,10 +23,10 @@
 
 #include "engraving/style/defaultstyle.h"
 
-#include "libmscore/masterscore.h"
-#include "libmscore/excerpt.h"
-#include "libmscore/mscore.h"
-#include "libmscore/undo.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/excerpt.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/undo.h"
 
 #include "log.h"
 
@@ -40,7 +40,7 @@ NotationStyle::NotationStyle(IGetScore* getScore, INotationUndoStackPtr undoStac
 
 PropertyValue NotationStyle::styleValue(const StyleId& styleId) const
 {
-    return score()->styleV(styleId);
+    return score()->style().styleV(styleId);
 }
 
 PropertyValue NotationStyle::defaultStyleValue(const StyleId& styleId) const
@@ -67,6 +67,7 @@ void NotationStyle::setStyleValue(const StyleId& styleId, const PropertyValue& n
 void NotationStyle::resetStyleValue(const StyleId& styleId)
 {
     score()->resetStyleValue(styleId);
+    score()->update();
     m_styleChanged.notify();
 }
 
@@ -89,33 +90,9 @@ void NotationStyle::applyToAllParts()
     }
 }
 
-void NotationStyle::resetAllStyleValues(const std::set<StyleId>& exceptTheseOnes)
+void NotationStyle::resetAllStyleValues(const StyleIdSet& exceptTheseOnes)
 {
-    static const std::set<StyleId> stylesNotToReset {
-        StyleId::pageWidth,
-        StyleId::pageHeight,
-        StyleId::pagePrintableWidth,
-        StyleId::pageEvenTopMargin,
-        StyleId::pageEvenBottomMargin,
-        StyleId::pageEvenLeftMargin,
-        StyleId::pageOddTopMargin,
-        StyleId::pageOddBottomMargin,
-        StyleId::pageOddLeftMargin,
-        StyleId::pageTwosided,
-        StyleId::spatium,
-        StyleId::concertPitch,
-        StyleId::createMultiMeasureRests
-    };
-
-    int beginIdx = int(StyleId::NOSTYLE) + 1;
-    int endIdx = int(StyleId::STYLES);
-    for (int idx = beginIdx; idx < endIdx; idx++) {
-        StyleId styleId = StyleId(idx);
-        if (stylesNotToReset.find(styleId) == stylesNotToReset.cend() && exceptTheseOnes.find(styleId) == exceptTheseOnes.cend()) {
-            score()->resetStyleValue(styleId);
-        }
-    }
-
+    score()->cmdResetAllStyles(exceptTheseOnes);
     score()->update();
     m_styleChanged.notify();
 }

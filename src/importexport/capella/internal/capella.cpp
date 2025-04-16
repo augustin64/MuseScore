@@ -36,38 +36,38 @@
 
 #include "engraving/engravingerrors.h"
 
-#include "libmscore/arpeggio.h"
-#include "libmscore/articulation.h"
-#include "libmscore/box.h"
-#include "libmscore/breath.h"
-#include "libmscore/chord.h"
-#include "libmscore/clef.h"
-#include "libmscore/dynamic.h"
-#include "libmscore/factory.h"
-#include "libmscore/hairpin.h"
-#include "libmscore/harmony.h"
-#include "libmscore/keysig.h"
-#include "libmscore/layoutbreak.h"
-#include "libmscore/lyrics.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/measure.h"
-#include "libmscore/mscore.h"
-#include "libmscore/note.h"
-#include "libmscore/part.h"
-#include "libmscore/pitchspelling.h"
-#include "libmscore/rest.h"
-#include "libmscore/segment.h"
-#include "libmscore/sig.h"
-#include "libmscore/slur.h"
-#include "libmscore/staff.h"
-#include "libmscore/stafftext.h"
-#include "libmscore/text.h"
-#include "libmscore/tie.h"
-#include "libmscore/timesig.h"
-#include "libmscore/trill.h"
-#include "libmscore/tuplet.h"
-#include "libmscore/utils.h"
-#include "libmscore/volta.h"
+#include "engraving/dom/arpeggio.h"
+#include "engraving/dom/articulation.h"
+#include "engraving/dom/box.h"
+#include "engraving/dom/breath.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/clef.h"
+#include "engraving/dom/dynamic.h"
+#include "engraving/dom/factory.h"
+#include "engraving/dom/hairpin.h"
+#include "engraving/dom/harmony.h"
+#include "engraving/dom/keysig.h"
+#include "engraving/dom/layoutbreak.h"
+#include "engraving/dom/lyrics.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/pitchspelling.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/sig.h"
+#include "engraving/dom/slur.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/stafftext.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/tie.h"
+#include "engraving/dom/timesig.h"
+#include "engraving/dom/trill.h"
+#include "engraving/dom/tuplet.h"
+#include "engraving/dom/utils.h"
+#include "engraving/dom/volta.h"
 
 #include "log.h"
 
@@ -303,7 +303,7 @@ static void processBasicDrawObj(QList<BasicDrawObj*> objects, Segment* s, int tr
 
             text->setPlainText(st->text());
             QPointF p(st->pos());
-            p = p / 32.0 * score->spatium();
+            p = p / 32.0 * score->style().spatium();
             // text->setUserOff(st->pos());
             text->setOffset(mu::PointF::fromQPointF(p));
             // LOGD("setText %s (%f %f)(%f %f) <%s>",
@@ -419,7 +419,7 @@ static bool findChordRests(BasicDrawObj const* const o, Score* score, const int 
     int graceNumber1 = 0;
     bool foundcr1 = false;
     Fraction tick2 = tick;
-    foreach (NoteObj* nobj, objects) {
+    for (NoteObj* nobj : objects) {
         BasicDurationalObj* d = 0;
         if (nobj->type() == CapellaNoteObjectType::REST) {
             d = static_cast<BasicDurationalObj*>(static_cast<RestObj*>(nobj));
@@ -468,14 +468,14 @@ static bool findChordRests(BasicDrawObj const* const o, Score* score, const int 
         if (seg->segmentType() != SegmentType::ChordRest) {
             continue;
         }
-        ChordRest* cr = static_cast<ChordRest*>(seg->element(track));
+        ChordRest* cr = toChordRest(seg->element(track));
         if (cr) {
-            if (graceNumber1 > 0) {       // the spanner is starting from a grace note
-                Chord* chord = static_cast<Chord*>(cr);
-                foreach (Chord* cc, chord->graceNotes()) {
+            if ((graceNumber1 > 0) && cr->isChord()) {       // the spanner is starting from a grace note
+                Chord* chord = toChord(cr);
+                for (Chord* cc : chord->graceNotes()) {
                     --graceNumber1;
                     if ((graceNumber1 == 0) && (!cr1)) {
-                        cr1 = static_cast<ChordRest*>(cc);             // found first ChordRest
+                        cr1 = toChordRest(cc);             // found first ChordRest
                     }
                 }
             }
@@ -489,14 +489,14 @@ static bool findChordRests(BasicDrawObj const* const o, Score* score, const int 
         if (seg->segmentType() != SegmentType::ChordRest) {
             continue;
         }
-        ChordRest* cr = static_cast<ChordRest*>(seg->element(track));
+        ChordRest* cr = toChordRest(seg->element(track));
         if (cr) {
-            if ((graceNumber > 0) && (cr->type() == ElementType::CHORD)) {       // the spanner is ending on a grace note
-                Chord* chord = static_cast<Chord*>(cr);
-                foreach (Chord* cc, chord->graceNotes()) {
+            if ((graceNumber > 0) && cr->isChord()) {       // the spanner is ending on a grace note
+                Chord* chord = toChord(cr);
+                for (Chord* cc : chord->graceNotes()) {
                     --graceNumber;
                     if ((graceNumber == 0) && (!cr2)) {
-                        cr2 = static_cast<ChordRest*>(cc);             // found 2nd ChordRest
+                        cr2 = toChordRest(cc);             // found 2nd ChordRest
                     }
                 }
             }
@@ -745,9 +745,11 @@ static Fraction readCapVoice(Score* score, CapVoice* cvoice, int staffIdx, const
                 break;
             case ClefType::C4:     off = -7;
                 break;
+            case ClefType::C4_8VB: off = -14;
+                break;
             case ClefType::C5:     off = -7;
                 break;
-            case ClefType::G_1:     off = 0;
+            case ClefType::G_1:    off = 0;
                 break;
             case ClefType::F_8VA:  off = -7;
                 break;
@@ -804,7 +806,7 @@ static Fraction readCapVoice(Score* score, CapVoice* cvoice, int staffIdx, const
                 l->setTrack(track);
                 l->setPlainText(v.text);
                 if (v.hyphen) {
-                    l->setSyllabic(Lyrics::Syllabic::BEGIN);
+                    l->setSyllabic(LyricsSyllabic::BEGIN);
                 }
                 l->setNo(v.num);
                 chord->add(l);
@@ -866,8 +868,20 @@ static Fraction readCapVoice(Score* score, CapVoice* cvoice, int staffIdx, const
             LOGD("   <Key>");
             CapKey* o = static_cast<CapKey*>(no);
             KeySigEvent key = score->staff(staffIdx)->keySigEvent(tick);
-            KeySigEvent okey;
-            okey.setKey(Key(o->signature));
+            KeySigEvent okey = key;
+            Key tKey = Key(o->signature);
+            Key cKey = tKey;
+            Interval v = score->staff(staffIdx)->part()->instrument(tick)->transpose();
+            if (!v.isZero() && !score->style().styleB(mu::engraving::Sid::concertPitch)) {
+                cKey = transposeKey(tKey, v);
+                // if there are more than 6 accidentals in transposing key, it cannot be PreferSharpFlat::AUTO
+                Part* part = score->staff(staffIdx)->part();
+                if ((tKey > 6 || tKey < -6) && part->preferSharpFlat() == PreferSharpFlat::AUTO) {
+                    part->setPreferSharpFlat(PreferSharpFlat::NONE);
+                }
+            }
+            okey.setConcertKey(cKey);
+            okey.setKey(tKey);
             if (!(key == okey)) {
                 score->staff(staffIdx)->setKey(tick, okey);
                 Measure* m = score->getCreateMeasure(tick);
@@ -1165,7 +1179,7 @@ void convertCapella(Score* score, Capella* cap, bool capxMode)
     }
 
     score->style().set(Sid::measureSpacing, 1.0);
-    score->setSpatium(cap->normalLineDist * DPMM);
+    score->style().setSpatium(cap->normalLineDist * DPMM);
     score->style().set(Sid::smallStaffMag, cap->smallLineDist / cap->normalLineDist);
     score->style().set(Sid::minSystemDistance, Spatium(8));
     score->style().set(Sid::maxSystemDistance, Spatium(12));
@@ -1276,7 +1290,7 @@ void convertCapella(Score* score, Capella* cap, bool capxMode)
             SimpleTextObj* to = static_cast<SimpleTextObj*>(o);
             TextStyleType tid;
             switch (to->textalign()) {
-            case 0:   tid = TextStyleType::POET;
+            case 0:   tid = TextStyleType::LYRICIST;
                 break;
             case 1:   tid = TextStyleType::TITLE;
                 break;
@@ -1347,10 +1361,8 @@ void convertCapella(Score* score, Capella* cap, bool capxMode)
 
             LOGD("  ReadCapStaff %d/%d", cstaff->numerator, 1 << cstaff->log2Denom);
             int staffIdx = cstaff->iLayout;
-            int voice = 0;
             for (CapVoice* cvoice : cstaff->voices) {
                 Fraction tick = readCapVoice(score, cvoice, staffIdx, systemTick, capxMode);
-                ++voice;
                 if (tick > mtick) {
                     mtick = tick;
                 }
@@ -2411,6 +2423,7 @@ ClefType CapClef::clefType(Form form, ClefLine line, Oct oct)
     case int(Form::C) + (int(ClefLine::L2) << 3) + (int(Oct::OCT_NULL) << 5):  return ClefType::C2;
     case int(Form::C) + (int(ClefLine::L3) << 3) + (int(Oct::OCT_NULL) << 5):  return ClefType::C3;
     case int(Form::C) + (int(ClefLine::L4) << 3) + (int(Oct::OCT_NULL) << 5):  return ClefType::C4;
+    case int(Form::C) + (int(ClefLine::L4) << 3) + (int(Oct::OCT_BASSA) << 5): return ClefType::C4_8VB;
     case int(Form::C) + (int(ClefLine::L5) << 3) + (int(Oct::OCT_NULL) << 5):  return ClefType::C5;
 
     case int(Form::F) + (int(ClefLine::L4) << 3) + (int(Oct::OCT_NULL) << 5):  return ClefType::F;

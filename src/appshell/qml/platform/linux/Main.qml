@@ -24,23 +24,33 @@ import QtQuick 2.15
 import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
 
-import "../"
 import "../../"
 
 AppWindow {
     id: root
 
-    AppMenuBar {
+    Loader {
         id: appMenuBar
 
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
+    }
 
-        appWindow: root
+    Loader {
+        id: platformMenuBar
     }
 
     Component.onCompleted: {
+        platformMenuBar.setSource("../PlatformMenuBar.qml");
+        if (platformMenuBar.item.available) {
+            platformMenuBar.item.load();
+            appMenuBar.active = 0;
+        } else {
+            appMenuBar.setSource("../AppMenuBar.qml", { "appWindow": root });
+            platformMenuBar.active = 0;
+        }
+
         window.init()
     }
 

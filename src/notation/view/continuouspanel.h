@@ -26,6 +26,7 @@
 #include "modularity/ioc.h"
 #include "notation/inotationconfiguration.h"
 #include "engraving/iengravingconfiguration.h"
+#include "engraving/rendering/iscorerenderer.h"
 
 #include "draw/types/geometry.h"
 #include "notation/inotation.h"
@@ -41,8 +42,9 @@ class Painter;
 namespace mu::notation {
 class ContinuousPanel
 {
-    INJECT(notation, INotationConfiguration, notationConfiguration)
-    INJECT(notation, engraving::IEngravingConfiguration, engravingConfiguration)
+    INJECT(INotationConfiguration, notationConfiguration)
+    INJECT(engraving::IEngravingConfiguration, engravingConfiguration)
+    INJECT(engraving::rendering::IScoreRenderer, scoreRender)
 
 public:
     void setNotation(INotationPtr notation);

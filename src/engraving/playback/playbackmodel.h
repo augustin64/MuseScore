@@ -50,7 +50,7 @@ class RepeatList;
 
 class PlaybackModel : public async::Asyncable
 {
-    INJECT(engraving, mpe::IArticulationProfilesRepository, profilesRepository)
+    INJECT(mpe::IArticulationProfilesRepository, profilesRepository)
 
 public:
     void load(Score* score);
@@ -68,8 +68,11 @@ public:
     InstrumentTrackId chordSymbolsTrackId(const ID& partId) const;
     bool isChordSymbolsTrack(const InstrumentTrackId& trackId) const;
 
+    bool hasSoundFlags() const;
+    bool hasSoundFlags(const InstrumentTrackId& trackId) const;
+
     const mpe::PlaybackData& resolveTrackPlaybackData(const InstrumentTrackId& trackId);
-    const mpe::PlaybackData& resolveTrackPlaybackData(const ID& partId, const std::string& instrumentId);
+    const mpe::PlaybackData& resolveTrackPlaybackData(const ID& partId, const String& instrumentId);
     void triggerEventsForItems(const std::vector<const EngravingItem*>& items);
 
     void triggerMetronome(int tick);
@@ -98,7 +101,7 @@ private:
 
     InstrumentTrackId idKey(const EngravingItem* item) const;
     InstrumentTrackId idKey(const std::vector<const EngravingItem*>& items) const;
-    InstrumentTrackId idKey(const ID& partId, const std::string& instrumentId) const;
+    InstrumentTrackId idKey(const ID& partId, const String& instrumentId) const;
 
     void update(const int tickFrom, const int tickTo, const track_idx_t trackFrom, const track_idx_t trackTo,
                 ChangedTrackIdSet* trackChanges = nullptr);
@@ -108,11 +111,13 @@ private:
     void updateEvents(const int tickFrom, const int tickTo, const track_idx_t trackFrom, const track_idx_t trackTo,
                       ChangedTrackIdSet* trackChanges = nullptr);
 
-    void processSegment(const int tickPositionOffset, const Segment* segment, const std::set<staff_idx_t>& changedStaffIdSet,
-                        ChangedTrackIdSet* trackChanges);
+    void processSegment(const int tickPositionOffset, const Segment* segment, const std::set<staff_idx_t>& staffIdxSet,
+                        bool isFirstSegmentOfMeasure, ChangedTrackIdSet* trackChanges);
+    void processMeasureRepeat(const int tickPositionOffset, const MeasureRepeat* measureRepeat, const Measure* currentMeasure,
+                              const staff_idx_t staffIdx, ChangedTrackIdSet* trackChanges);
 
     bool hasToReloadTracks(const ScoreChangesRange& changesRange) const;
-    bool hasToReloadScore(const std::unordered_set<ElementType>& changedTypes) const;
+    bool hasToReloadScore(const ScoreChangesRange& changesRange) const;
 
     bool containsTrack(const InstrumentTrackId& trackId) const;
     void clearExpiredTracks();
@@ -131,7 +136,9 @@ private:
 
     const RepeatList& repeatList() const;
 
-    std::vector<const EngravingItem*> filterPlaybleItems(const std::vector<const EngravingItem*>& items) const;
+    std::vector<const EngravingItem*> filterPlayableItems(const std::vector<const EngravingItem*>& items) const;
+
+    mpe::ArticulationsProfilePtr defaultActiculationProfile(const InstrumentTrackId& trackId) const;
 
     mpe::ArticulationsProfilePtr defaultActiculationProfile(const InstrumentTrackId& trackId) const;
 

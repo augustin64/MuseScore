@@ -28,35 +28,47 @@
 using namespace mu;
 using namespace mu::vst;
 using namespace mu::audio::synth;
+using namespace mu::audio;
 
 static const std::set<Steinberg::Vst::CtrlNumber> SUPPORTED_CONTROLLERS = {
     Steinberg::Vst::kCtrlVolume,
     Steinberg::Vst::kCtrlExpression,
-    Steinberg::Vst::kCtrlSustainOnOff
+    Steinberg::Vst::kCtrlSustainOnOff,
+    Steinberg::Vst::kPitchBend,
 };
 
-VstSynthesiser::VstSynthesiser(VstPluginPtr&& pluginPtr, const audio::AudioInputParams& params)
-    : AbstractSynthesizer(params), m_pluginPtr(pluginPtr), m_vstAudioClient(std::make_unique<VstAudioClient>())
+VstSynthesiser::VstSynthesiser(const TrackId trackId, const audio::AudioInputParams& params)
+    : AbstractSynthesizer(params),
+    m_pluginPtr(std::make_shared<VstPlugin>(params.resourceMeta.id)),
+    m_vstAudioClient(std::make_unique<VstAudioClient>()),
+    m_trackId(trackId)
 {
-    init();
 }
 
-Ret VstSynthesiser::init()
+VstSynthesiser::~VstSynthesiser()
 {
+    pluginsRegister()->unregisterInstrPlugin(m_trackId, m_params.resourceMeta.id);
+}
+
+void VstSynthesiser::init()
+{
+    pluginsRegister()->registerInstrPlugin(m_trackId, m_pluginPtr);
+    m_pluginPtr->load();
+
     m_samplesPerChannel = config()->driverBufferSize();
 
-    m_vstAudioClient->init(VstPluginType::Instrument, m_pluginPtr);
+    m_vstAudioClient->init(AudioPluginType::Instrument, m_pluginPtr);
 
-    auto load = [this]() {
+    auto onPluginLoaded = [this]() {
         m_pluginPtr->updatePluginConfig(m_params.configuration);
         m_vstAudioClient->setBlockSize(m_samplesPerChannel);
         m_sequencer.init(m_vstAudioClient->paramsMapping(SUPPORTED_CONTROLLERS));
     };
 
     if (m_pluginPtr->isLoaded()) {
-        load();
+        onPluginLoaded();
     } else {
-        m_pluginPtr->loadingCompleted().onNotify(this, load);
+        m_pluginPtr->loadingCompleted().onNotify(this, onPluginLoaded);
     }
 
     m_pluginPtr->pluginSettingsChanged().onReceive(this, [this](const audio::AudioUnitConfig& newConfig) {
@@ -68,15 +80,9 @@ Ret VstSynthesiser::init()
         m_paramsChanges.send(m_params);
     });
 
-    m_sequencer.flushedOffStreamEvents().onNotify(this, [this]() {
-        if (!m_vstAudioClient) {
-            return;
-        }
-
+    m_sequencer.setOnOffStreamFlushed([this]() {
         revokePlayingNotes();
     });
-
-    return make_ret(Ret::Code::Ok);
 }
 
 void VstSynthesiser::toggleVolumeGain(const bool isActive)
@@ -115,7 +121,9 @@ std::string VstSynthesiser::name() const
 
 void VstSynthesiser::revokePlayingNotes()
 {
-    m_vstAudioClient->flush();
+    if (m_vstAudioClient) {
+        m_vstAudioClient->flush();
+    }
 }
 
 void VstSynthesiser::flushSound()
@@ -182,8 +190,7 @@ audio::samples_t VstSynthesiser::process(float* buffer, audio::samples_t samples
     }
 
     audio::msecs_t nextMsecs = samplesToMsecs(samplesPerChannel, m_sampleRate);
-
-    const VstSequencer::EventSequence& sequence = m_sequencer.eventsToBePlayed(nextMsecs);
+    VstSequencer::EventSequence sequence = m_sequencer.eventsToBePlayed(nextMsecs);
 
     for (const VstSequencer::EventType& event : sequence) {
         if (std::holds_alternative<VstEvent>(event)) {

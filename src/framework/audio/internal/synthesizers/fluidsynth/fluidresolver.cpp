@@ -36,7 +36,7 @@ FluidResolver::FluidResolver()
     ONLY_AUDIO_WORKER_THREAD;
 
     refresh();
-    soundFontRepository()->soundFontPathsChanged().onNotify(this, [this]() {
+    soundFontRepository()->soundFontsChanged().onNotify(this, [this]() {
         refresh();
     });
 }
@@ -45,17 +45,16 @@ ISynthesizerPtr FluidResolver::resolveSynth(const TrackId /*trackId*/, const Aud
 {
     ONLY_AUDIO_WORKER_THREAD;
 
-    FluidSynthPtr synth = std::make_shared<FluidSynth>(params);
-
 #if 0
     auto search = m_resourcesCache.find(params.resourceMeta.id);
-
     if (search == m_resourcesCache.end()) {
         LOGE() << "Not found: " << params.resourceMeta.id;
-        return synth;
+        return nullptr;
     }
 
-    synth->addSoundFonts({ search->second });
+    FluidSynthPtr synth = std::make_shared<FluidSynth>(params);
+    synth->addSoundFonts({ search->second.path });
+    synth->setPreset(search->second.preset);
 #endif
     // HACK: hard-coded soundfont path
     synth->addSoundFonts({ "/MuseScore_General.sf3" });
@@ -76,17 +75,20 @@ AudioResourceMetaList FluidResolver::resolveResources() const
     result.reserve(m_resourcesCache.size());
 
     for (const auto& pair : m_resourcesCache) {
-        AudioResourceMeta meta;
-        meta.id = pair.first;
-        meta.type = AudioResourceType::FluidSoundfont;
-        meta.vendor = FLUID_VENDOR_NAME;
-        meta.attributes = { { u"playbackSetupData", mpe::GENERIC_SETUP_DATA_STRING } };
-        meta.hasNativeEditorSupport = false;
-
-        result.push_back(std::move(meta));
+        result.push_back(pair.second.meta);
     }
 
     return result;
+}
+
+SoundPresetList FluidResolver::resolveSoundPresets(const audio::AudioResourceMeta&) const
+{
+    return SoundPresetList();
+}
+
+static std::string makeId(const std::string& name, int bank, int program)
+{
+    return name + "\\" + std::to_string(bank) + "\\" + std::to_string(program);
 }
 
 void FluidResolver::refresh()
@@ -95,8 +97,45 @@ void FluidResolver::refresh()
 
     m_resourcesCache.clear();
 
-    for (const SoundFontPath& path : soundFontRepository()->soundFontPaths()) {
-        m_resourcesCache.emplace(io::basename(path).toStdString(), path);
+    for (const auto& pair : soundFontRepository()->soundFonts()) {
+        const SoundFontMeta& soundFont = pair.second;
+
+        std::string name = io::completeBasename(soundFont.path).toStdString();
+
+        {
+            AudioResourceId id = name;
+
+            AudioResourceMeta chooseAutomaticMeta;
+            chooseAutomaticMeta.id = id;
+            chooseAutomaticMeta.type = AudioResourceType::FluidSoundfont;
+            chooseAutomaticMeta.vendor = FLUID_VENDOR_NAME;
+            chooseAutomaticMeta.attributes = {
+                { PLAYBACK_SETUP_DATA_ATTRIBUTE, mpe::GENERIC_SETUP_DATA_STRING },
+                { SOUNDFONT_NAME_ATTRIBUTE, String::fromStdString(name) }
+            };
+            chooseAutomaticMeta.hasNativeEditorSupport = false;
+
+            m_resourcesCache.emplace(id, SoundFontResource { soundFont.path, std::nullopt, std::move(chooseAutomaticMeta) });
+        }
+
+        for (const SoundFontPreset& preset : soundFont.presets) {
+            AudioResourceId id = makeId(name, preset.program.bank, preset.program.program);
+
+            AudioResourceMeta meta;
+            meta.id = id;
+            meta.type = AudioResourceType::FluidSoundfont;
+            meta.vendor = FLUID_VENDOR_NAME;
+            meta.attributes = {
+                { PLAYBACK_SETUP_DATA_ATTRIBUTE, mpe::GENERIC_SETUP_DATA_STRING },
+                { SOUNDFONT_NAME_ATTRIBUTE, String::fromStdString(name) },
+                { PRESET_NAME_ATTRIBUTE, String::fromStdString(preset.name) },
+                { PRESET_BANK_ATTRIBUTE, String::number(preset.program.bank) },
+                { PRESET_PROGRAM_ATTRIBUTE, String::number(preset.program.program) },
+            };
+            meta.hasNativeEditorSupport = false;
+
+            m_resourcesCache.emplace(id, SoundFontResource { soundFont.path, preset.program, std::move(meta) });
+        }
     }
 }
 

@@ -51,6 +51,7 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/inotationparts.h
     ${CMAKE_CURRENT_LIST_DIR}/iinstrumentsrepository.h
     ${CMAKE_CURRENT_LIST_DIR}/iselectinstrumentscenario.h
+    ${CMAKE_CURRENT_LIST_DIR}/inotationcreator.h
 
     ${CMAKE_CURRENT_LIST_DIR}/internal/notationuiactions.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/notationuiactions.h
@@ -105,6 +106,10 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/inotationselectionrange.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsrepository.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/instrumentsrepository.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/notationcreator.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/notationcreator.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/mscoreerrorscontroller.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/mscoreerrorscontroller.h
 
     ${CMAKE_CURRENT_LIST_DIR}/view/abstractnotationpaintview.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/abstractnotationpaintview.h
@@ -138,15 +143,23 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/view/noteinputbarcustomiseitem.h
     ${CMAKE_CURRENT_LIST_DIR}/view/continuouspanel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/continuouspanel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/abstractelementpopupmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/abstractelementpopupmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/internal/undoredomodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/internal/undoredomodel.h
     ${CMAKE_CURRENT_LIST_DIR}/view/internal/noteflagstypeselectormodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/internal/noteflagstypeselectormodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/internal/harppedalpopupmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/internal/harppedalpopupmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/internal/caposettingsmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/internal/caposettingsmodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/view/internal/stringtuningssettingsmodel.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/view/internal/stringtuningssettingsmodel.h
     ${CMAKE_CURRENT_LIST_DIR}/view/selectionfiltermodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/selectionfiltermodel.h
     ${CMAKE_CURRENT_LIST_DIR}/view/editgridsizedialogmodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/editgridsizedialogmodel.h
-    
+
     ${CMAKE_CURRENT_LIST_DIR}/view/pianokeyboard/pianokeyboardtypes.h
     ${CMAKE_CURRENT_LIST_DIR}/view/pianokeyboard/pianokeyboardcontroller.cpp
     ${CMAKE_CURRENT_LIST_DIR}/view/pianokeyboard/pianokeyboardcontroller.h
@@ -163,22 +176,18 @@ set(MODULE_UI
     ${WIDGETS_UI}
     )
 
-set(FREETYPE_LIB )
-if (USE_SYSTEM_FREETYPE)
-    set(FREETYPE_LIB freetype)
-else (USE_SYSTEM_FREETYPE)
-    set(FREETYPE_LIB mscore_freetype)
-endif (USE_SYSTEM_FREETYPE)
-
 set(MODULE_LINK
     Qt5::Svg
-    ${FREETYPE_LIB}
     draw
     engraving
     commonscene
     uicomponents
     ui
     )
+
+if (MUE_BUILD_UNIT_TESTS)
+    add_subdirectory(tests)
+endif()
 
 if (NOT MSVC AND CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 9.0)
    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-deprecated-copy")

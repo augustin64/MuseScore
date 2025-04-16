@@ -23,6 +23,7 @@
 #ifndef MU_AUDIO_FLUIDSYNTHCREATOR_H
 #define MU_AUDIO_FLUIDSYNTHCREATOR_H
 
+#include <optional>
 #include <unordered_map>
 
 #include "async/asyncable.h"
@@ -35,7 +36,7 @@
 namespace mu::audio::synth {
 class FluidResolver : public ISynthResolver::IResolver, public async::Asyncable
 {
-    INJECT(audio, ISoundFontRepository, soundFontRepository)
+    INJECT(ISoundFontRepository, soundFontRepository)
 public:
     explicit FluidResolver();
 
@@ -43,6 +44,7 @@ public:
     bool hasCompatibleResources(const audio::PlaybackSetupData& setup) const override;
 
     audio::AudioResourceMetaList resolveResources() const override;
+    audio::SoundPresetList resolveSoundPresets(const AudioResourceMeta& resourceMeta) const override;
 
     void refresh() override;
     void clearSources() override;
@@ -50,7 +52,13 @@ public:
 private:
     FluidSynthPtr createSynth(const audio::AudioResourceId& resourceId) const;
 
-    std::unordered_map<AudioResourceId, io::path_t> m_resourcesCache;
+    struct SoundFontResource {
+        io::path_t path;
+        std::optional<midi::Program> preset = std::nullopt;
+        AudioResourceMeta meta;
+    };
+
+    std::unordered_map<AudioResourceId, SoundFontResource> m_resourcesCache;
 };
 }
 

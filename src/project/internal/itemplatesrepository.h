@@ -23,8 +23,8 @@
 #ifndef MU_PROJECT_ITEMPLATESREPOSITORY_H
 #define MU_PROJECT_ITEMPLATESREPOSITORY_H
 
-#include "modularity/imoduleexport.h"
-#include "project/projecttypes.h"
+#include "modularity/imoduleinterface.h"
+#include "project/types/projecttypes.h"
 
 #include "types/retval.h"
 

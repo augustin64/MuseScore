@@ -23,14 +23,15 @@
 
 #include <QTextStream>
 
-#include "engraving/libmscore/engravingobject.h"
-#include "engraving/libmscore/score.h"
-#include "engraving/libmscore/masterscore.h"
+#include "engraving/dom/engravingobject.h"
+#include "engraving/dom/score.h"
+#include "engraving/dom/masterscore.h"
 #include "dataformatter.h"
 
 #include "log.h"
 
 using namespace mu::diagnostics;
+using namespace mu::engraving;
 
 EngravingElementsModel::EngravingElementsModel(QObject* parent)
     : QAbstractItemModel(parent)
@@ -191,7 +192,7 @@ QVariantMap EngravingElementsModel::makeData(const mu::engraving::EngravingObjec
     info += "\n";
     if (el->isEngravingItem()) {
         const mu::engraving::EngravingItem* item = mu::engraving::toEngravingItem(el);
-        info += "pagePos: " + formatPoint(item->pagePos()) + ", bbox: " + formatRect(item->bbox());
+        info += "pagePos: " + formatPoint(item->pagePos()) + ", bbox: " + formatRect(item->ldata()->bbox());
     }
 
     QVariantMap d;
@@ -220,10 +221,14 @@ void EngravingElementsModel::reload()
     m_rootItem = createItem(nullptr);
 
     const EngravingObjectList& elements = elementsProvider()->elements();
+    EngravingObjectList notpalettes;
+
     for (const mu::engraving::EngravingObject* el : elements) {
-        if (el == mu::engraving::gpaletteScore) {
+        if (el == mu::engraving::gpaletteScore || el->score() == mu::engraving::gpaletteScore) {
             continue;
         }
+
+        notpalettes.insert(el);
 
         if (el->isScore() && mu::engraving::toScore(el)->isMaster()) {
             Item* scoreItem = createItem(m_rootItem);
@@ -236,7 +241,7 @@ void EngravingElementsModel::reload()
     QVariantMap lostData;
     lostData["info"] = "Lost items";
     lostItem->setData(lostData);
-    findAndAddLost(elements, lostItem);
+    findAndAddLost(notpalettes, lostItem);
 
     endResetModel();
 

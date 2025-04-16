@@ -130,6 +130,19 @@ Item {
 
             dialogObj.object.open()
         }
+
+        function onFireOpenProgressDialog(data) {
+            var dialog = data.data()
+            var dialogObj = createDialog("internal/ProgressDialog.qml", dialog.params)
+            data.setValue("ret", dialogObj.ret)
+            data.setValue("objectId", dialogObj.object.objectId)
+
+            if (dialogObj.ret.errcode > 0) {
+                return
+            }
+
+            dialogObj.object.open()
+        }
     }
 
     function createDialog(path, params) {
@@ -139,6 +152,9 @@ Item {
             return { "ret": { "errcode": 102 } } // CreateFailed
         }
 
+        //! NOTE: set the top-level window as a parent,
+        // because we want to ensure correct interaction between nested dialogs
+        // (when opening one dialog from another)
         var obj = comp.createObject(root.provider.topWindow(), params)
         obj.objectId = root.provider.objectId(obj)
         root.objects[obj.objectId] = obj

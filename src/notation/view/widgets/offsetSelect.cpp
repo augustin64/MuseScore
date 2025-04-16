@@ -22,7 +22,7 @@
 
 #include "offsetSelect.h"
 
-#include "libmscore/types.h"
+#include "engraving/dom/types.h"
 
 using namespace mu::notation;
 
@@ -30,6 +30,8 @@ OffsetSelect::OffsetSelect(QWidget* parent)
     : QWidget(parent)
 {
     setupUi(this);
+
+    setFocusProxy(xVal);
 
     connect(xVal, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &OffsetSelect::_offsetChanged);
     connect(yVal, QOverload<double>::of(&QDoubleSpinBox::valueChanged), this, &OffsetSelect::_offsetChanged);

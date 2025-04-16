@@ -30,13 +30,13 @@
 #include "translation.h"
 
 #include "engraving/types/typesconv.h"
-#include "engraving/libmscore/chord.h"
-#include "engraving/libmscore/engravingitem.h"
-#include "engraving/libmscore/note.h"
-#include "engraving/libmscore/score.h"
-#include "engraving/libmscore/segment.h"
-#include "engraving/libmscore/select.h"
-#include "engraving/libmscore/system.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/score.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/select.h"
+#include "engraving/dom/system.h"
 
 #include "ui/view/widgetstatestore.h"
 
@@ -88,7 +88,9 @@ SelectNoteDialog::SelectNoteDialog(QWidget* parent)
     name->setText(tpc2name(m_note->tpc(), mu::engraving::NoteSpellingType::STANDARD, mu::engraving::NoteCaseType::AUTO, false));
     sameName->setAccessibleName(sameName->text() + name->text());
 
-    inSelection->setEnabled(!m_note->score()->selection().isSingle());
+    const auto isSingleSelection = m_note->score()->selection().isSingle();
+    inSelection->setCheckState(isSingleSelection ? Qt::CheckState::Unchecked : Qt::CheckState::Checked);
+    inSelection->setEnabled(!isSingleSelection);
 
     connect(buttonBox, &QDialogButtonBox::clicked, this, &SelectNoteDialog::buttonClicked);
 
@@ -135,6 +137,18 @@ FilterNotesOptions SelectNoteDialog::noteOptions() const
         options.durationTicks = m_note->chord()->actualTicks();
     } else {
         options.durationTicks = mu::engraving::Fraction(-1, 1);
+    }
+
+    if (sameBeat->isChecked()) {
+        options.beat = m_note->beat();
+    } else {
+        options.beat = mu::engraving::Fraction(0, 0);
+    }
+
+    if (sameMeasure->isChecked()) {
+        options.measure = m_note->findMeasure();
+    } else {
+        options.measure = nullptr;
     }
 
     if (sameStaff->isChecked()) {

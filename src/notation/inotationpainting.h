@@ -23,9 +23,11 @@
 #define MU_NOTATION_INOTATIONPAINTING_H
 
 #include <memory>
+
 #include "notationtypes.h"
 
 #include "draw/painter.h"
+#include "engraving/rendering/iscorerenderer.h"
 
 namespace mu::notation {
 class INotationPainting
@@ -33,27 +35,15 @@ class INotationPainting
 public:
     virtual ~INotationPainting() = default;
 
-    struct Options
-    {
-        bool isSetViewport = true;
-        bool isPrinting = false;
-        bool isMultiPage = false;
-        bool printPageBackground = true;
-        RectF frameRect;
-        int fromPage = -1; // 0 is first
-        int toPage = -1;
-        int copyCount = 1;
-        int trimMarginPixelSize = -1;
-        int deviceDpi = -1;
-
-        std::function<void()> onNewPage;
-    };
+    using Options = engraving::rendering::IScoreRenderer::PaintOptions;
 
     virtual void setViewMode(const ViewMode& vm) = 0;
     virtual ViewMode viewMode() const = 0;
+    virtual async::Notification viewModeChanged() const = 0;
 
     virtual int pageCount() const = 0;
     virtual SizeF pageSizeInch() const = 0;
+    virtual SizeF pageSizeInch(const Options& opt) const = 0;
 
     virtual void paintView(draw::Painter* painter, const RectF& frameRect, bool isPrinting) = 0;
     virtual void paintPdf(draw::Painter* painter, const Options& opt) = 0;

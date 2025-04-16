@@ -33,18 +33,22 @@ public:
     int exportPdfDpiResolution() const override;
     void setExportPdfDpiResolution(int dpi) override;
 
-    void setExportPngDpiResolution(std::optional<float> dpi) override;
     float exportPngDpiResolution() const override;
+    void setExportPngDpiResolution(float dpi) override;
+    void setExportPngDpiResolutionOverride(std::optional<float> dpi) override;
 
     bool exportPngWithTransparentBackground() const override;
     void setExportPngWithTransparentBackground(bool transparent) override;
+
+    bool exportSvgWithTransparentBackground() const override;
+    void setExportSvgWithTransparentBackground(bool transparent) override;
 
     int trimMarginPixelSize() const override;
     void setTrimMarginPixelSize(std::optional<int> pixelSize) override;
 
 private:
     std::optional<int> m_trimMarginPixelSize;
-    std::optional<float> m_customExportPngDpi;
+    std::optional<float> m_customExportPngDpiOverride;
 };
 }
 

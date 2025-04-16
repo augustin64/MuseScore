@@ -26,8 +26,9 @@
 
 #include "audioconfigurationstub.h"
 #include "audiodriverstub.h"
-#include "synthesizersregisterstub.h"
-#include "soundfontsproviderstub.h"
+#include "synthresolverstub.h"
+#include "fxresolverstub.h"
+#include "soundfontrepositorystub.h"
 
 using namespace mu::modularity;
 using namespace mu::audio;
@@ -37,26 +38,31 @@ static void audio_init_qrc()
     Q_INIT_RESOURCE(audio);
 }
 
-std::string AudioStubModule::moduleName() const
+std::string AudioModule::moduleName() const
 {
     return "audio_engine_stub";
 }
 
-void AudioStubModule::registerExports()
+void AudioModule::registerExports()
 {
     ioc()->registerExport<IAudioConfiguration>(moduleName(), new AudioConfigurationStub());
     ioc()->registerExport<IAudioDriver>(moduleName(), new AudioDriverStub());
 
-    ioc()->registerExport<synth::ISynthesizersRegister>(moduleName(), new synth::SynthesizersRegisterStub());
-    ioc()->registerExport<synth::ISoundFontsProvider>(moduleName(), new synth::SoundFontsProviderStub());
+    ioc()->registerExport<synth::ISynthResolver>(moduleName(), new synth::SynthResolverStub());
+    ioc()->registerExport<fx::IFxResolver>(moduleName(), new fx::FxResolverStub());
+
+    ioc()->registerExport<ISoundFontRepository>(moduleName(), new SoundFontRepositoryStub());
 }
 
-void AudioStubModule::registerResources()
+void AudioModule::registerResources()
 {
     audio_init_qrc();
 }
 
-void AudioStubModule::registerUiTypes()
+void AudioModule::registerUiTypes()
 {
-    ioc()->resolve<ui::IUiEngine>(moduleName())->addSourceImportPath(audio_QML_IMPORT);
+    std::shared_ptr<ui::IUiEngine> ui = ioc()->resolve<ui::IUiEngine>(moduleName());
+    if (ui) {
+        ui->addSourceImportPath(audio_QML_IMPORT);
+    }
 }

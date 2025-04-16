@@ -28,9 +28,9 @@
 #include "importmidi_chord.h"
 #include "importmidi_meter.h"
 #include "importmidi_operations.h"
-#include "libmscore/sig.h"
-#include "libmscore/mscore.h"
-#include "libmscore/durationtype.h"
+#include "engraving/dom/sig.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/durationtype.h"
 
 using namespace mu::engraving;
 
@@ -61,7 +61,7 @@ int voiceLimit()
 
     Q_ASSERT_X(allowedVoiceCount <= VOICES,
                "MidiVoice::voiceLimit",
-               "Allowed voice count exceeds MuseScore voice limit");
+               "Allowed voice count exceeds MuseScore Studio voice limit");
 
     return static_cast<int>(allowedVoiceCount);
 }

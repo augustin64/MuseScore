@@ -23,13 +23,14 @@
 #include "elements.h"
 #include "fraction.h"
 #include "part.h"
-#include "libmscore/property.h"
-#include "libmscore/undo.h"
+#include "engraving/dom/property.h"
+#include "engraving/dom/undo.h"
 
 #include "log.h"
 
-namespace mu::engraving {
-namespace PluginAPI {
+using namespace mu::engraving;
+
+namespace mu::plugins::api {
 //---------------------------------------------------------
 //   EngravingItem::setOffsetX
 //---------------------------------------------------------
@@ -57,7 +58,7 @@ void EngravingItem::setOffsetY(qreal offY)
 
 QRectF EngravingItem::bbox() const
 {
-    mu::RectF bbox = element()->bbox();
+    mu::RectF bbox = element()->ldata()->bbox();
     qreal spatium = element()->spatium();
     return QRectF(bbox.x() / spatium, bbox.y() / spatium, bbox.width() / spatium, bbox.height() / spatium);
 }
@@ -124,7 +125,7 @@ bool Note::isChildAllowed(mu::engraving::ElementType elementType)
 ///   \since MuseScore 3.3.3
 //---------------------------------------------------------
 
-void Note::add(mu::engraving::PluginAPI::EngravingItem* wrapped)
+void Note::add(mu::plugins::api::EngravingItem* wrapped)
 {
     mu::engraving::EngravingItem* s = wrapped ? wrapped->element() : nullptr;
     if (s) {
@@ -165,7 +166,7 @@ void Note::addInternal(mu::engraving::Note* note, mu::engraving::EngravingItem* 
 ///   \since MuseScore 3.3.3
 //---------------------------------------------------------
 
-void Note::remove(mu::engraving::PluginAPI::EngravingItem* wrapped)
+void Note::remove(mu::plugins::api::EngravingItem* wrapped)
 {
     mu::engraving::EngravingItem* s = wrapped->element();
     if (!s) {
@@ -223,7 +224,7 @@ void Chord::setPlayEventType(mu::engraving::PlayEventType v)
 //   Chord::add
 //---------------------------------------------------------
 
-void Chord::add(mu::engraving::PluginAPI::EngravingItem* wrapped)
+void Chord::add(mu::plugins::api::EngravingItem* wrapped)
 {
     mu::engraving::EngravingItem* s = wrapped ? wrapped->element() : nullptr;
     if (s) {
@@ -270,7 +271,7 @@ int Page::pagenumber() const
 //   Chord::remove
 //---------------------------------------------------------
 
-void Chord::remove(mu::engraving::PluginAPI::EngravingItem* wrapped)
+void Chord::remove(mu::plugins::api::EngravingItem* wrapped)
 {
     mu::engraving::EngravingItem* s = wrapped->element();
     if (!s) {
@@ -331,5 +332,4 @@ EngravingItem* wrap(mu::engraving::EngravingItem* e, Ownership own)
     }
     return wrap<EngravingItem>(e, own);
 }
-}
-}
+} // namespace mu::plugins::api

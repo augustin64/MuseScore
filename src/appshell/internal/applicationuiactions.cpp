@@ -25,6 +25,7 @@
 #include "context/uicontext.h"
 
 #include "view/dockwindow/idockwindow.h"
+#include "async/notification.h"
 
 #include "log.h"
 
@@ -33,7 +34,8 @@ using namespace mu::ui;
 using namespace mu::actions;
 using namespace mu::dock;
 
-const ActionCode TOGGLE_NAVIGATOR_ACTION_CODE("toggle-navigator");
+static const ActionCode FULL_SCREEN_CODE("fullscreen");
+static const ActionCode TOGGLE_NAVIGATOR_ACTION_CODE("toggle-navigator");
 
 const UiActionList ApplicationUiActions::m_actions = {
     UiAction("quit",
@@ -47,17 +49,17 @@ const UiActionList ApplicationUiActions::m_actions = {
              mu::context::CTX_ANY,
              TranslatableString("action", "Restart")
              ),
-    UiAction("fullscreen",
+    UiAction(FULL_SCREEN_CODE,
              mu::context::UiCtxAny,
              mu::context::CTX_ANY,
              TranslatableString("action", "&Full screen"),
              TranslatableString("action", "Full screen"),
              Checkable::Yes
              ),
-    UiAction("about",
+    UiAction("about-musescore",
              mu::context::UiCtxAny,
              mu::context::CTX_ANY,
-             TranslatableString("action", "&About…")
+             TranslatableString("action", "&About MuseScore Studio…")
              ),
     UiAction("about-qt",
              mu::context::UiCtxAny,
@@ -79,16 +81,6 @@ const UiActionList ApplicationUiActions::m_actions = {
              mu::context::UiCtxAny,
              mu::context::CTX_ANY,
              TranslatableString("action", "As&k for help")
-             ),
-    UiAction("report-bug",
-             mu::context::UiCtxAny,
-             mu::context::CTX_ANY,
-             TranslatableString("action", "&Report a bug")
-             ),
-    UiAction("leave-feedback",
-             mu::context::UiCtxAny,
-             mu::context::CTX_ANY,
-             TranslatableString("action", "F&eedback")
              ),
     UiAction("revert-factory",
              mu::context::UiCtxAny,
@@ -152,7 +144,7 @@ const UiActionList ApplicationUiActions::m_actions = {
              ),
 
     // Navigator
-    UiAction("toggle-navigator",
+    UiAction(TOGGLE_NAVIGATOR_ACTION_CODE,
              mu::context::UiCtxNotationOpened,
              mu::context::CTX_ANY,
              TranslatableString("action", "&Navigator"),
@@ -214,6 +206,10 @@ ApplicationUiActions::ApplicationUiActions(std::shared_ptr<ApplicationActionCont
 
 void ApplicationUiActions::init()
 {
+    mainWindow()->isFullScreenChanged().onNotify(this, [this]() {
+        m_actionCheckedChanged.send({ FULL_SCREEN_CODE });
+    });
+
     configuration()->isNotationNavigatorVisibleChanged().onNotify(this, [this]() {
         m_actionCheckedChanged.send({ TOGGLE_NAVIGATOR_ACTION_CODE });
     });
@@ -262,6 +258,10 @@ bool ApplicationUiActions::actionEnabled(const UiAction& act) const
 
 bool ApplicationUiActions::actionChecked(const UiAction& act) const
 {
+    if (act.code == FULL_SCREEN_CODE) {
+        return mainWindow()->isFullScreen();
+    }
+
     QMap<ActionCode, DockName> toggleDockActions = ApplicationUiActions::toggleDockActions();
     DockName dockName = toggleDockActions.value(act.code, DockName());
 

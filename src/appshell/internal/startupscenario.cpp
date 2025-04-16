@@ -34,7 +34,7 @@ static const mu::Uri FIRST_LAUNCH_SETUP_URI("musescore://firstLaunchSetup");
 static const mu::Uri HOME_URI("musescore://home");
 static const mu::Uri NOTATION_URI("musescore://notation");
 
-static StartupModeType modeTypeTromString(const QString& str)
+static StartupModeType modeTypeTromString(const std::string& str)
 {
     if ("start-empty" == str) {
         return StartupModeType::StartEmpty;
@@ -55,14 +55,32 @@ static StartupModeType modeTypeTromString(const QString& str)
     return StartupModeType::StartEmpty;
 }
 
-void StartupScenario::setModeType(const QString& modeType)
+void StartupScenario::setStartupType(const std::optional<std::string>& type)
 {
-    m_modeTypeStr = modeType;
+    m_startupTypeStr = type ? type.value() : "";
 }
 
-void StartupScenario::setStartupScorePath(const io::path_t& path)
+bool StartupScenario::isStartWithNewFileAsSecondaryInstance() const
 {
-    m_startupScorePath = path;
+    if (m_startupScoreFile.isValid()) {
+        return false;
+    }
+
+    if (!m_startupTypeStr.empty()) {
+        return modeTypeTromString(m_startupTypeStr) == StartupModeType::StartWithNewScore;
+    }
+
+    return false;
+}
+
+const mu::project::ProjectFile& StartupScenario::startupScoreFile() const
+{
+    return m_startupScoreFile;
+}
+
+void StartupScenario::setStartupScoreFile(const std::optional<project::ProjectFile>& file)
+{
+    m_startupScoreFile = file ? file.value() : project::ProjectFile();
 }
 
 void StartupScenario::run()
@@ -76,7 +94,7 @@ void StartupScenario::run()
     StartupModeType modeType = resolveStartupModeType();
     bool isMainInstance = multiInstancesProvider()->isMainInstance();
     if (isMainInstance && sessionsManager()->hasProjectsForRestore()) {
-        modeType = StartupModeType::ContinueLastSession;
+        modeType = StartupModeType::Recovery;
     }
 
     Uri startupUri = startupPageUri(modeType);
@@ -108,12 +126,12 @@ bool StartupScenario::startupCompleted() const
 
 StartupModeType StartupScenario::resolveStartupModeType() const
 {
-    if (!m_startupScorePath.empty()) {
+    if (m_startupScoreFile.isValid()) {
         return StartupModeType::StartWithScore;
     }
 
-    if (!m_modeTypeStr.isEmpty()) {
-        return modeTypeTromString(m_modeTypeStr);
+    if (!m_startupTypeStr.empty()) {
+        return modeTypeTromString(m_startupTypeStr);
     }
 
     return configuration()->startupModeType();
@@ -130,12 +148,15 @@ void StartupScenario::onStartupPageOpened(StartupModeType modeType)
         dispatcher()->dispatch("file-new");
         break;
     case StartupModeType::ContinueLastSession:
+        dispatcher()->dispatch("continue-last-session");
+        break;
+    case StartupModeType::Recovery:
         restoreLastSession();
         break;
     case StartupModeType::StartWithScore: {
-        io::path_t path = m_startupScorePath.empty() ? configuration()->startupScorePath()
-                          : m_startupScorePath;
-        openScore(path);
+        project::ProjectFile file
+            = m_startupScoreFile.isValid() ? m_startupScoreFile : project::ProjectFile(configuration()->startupScorePath());
+        openScore(file);
     } break;
     }
 
@@ -149,28 +170,23 @@ mu::Uri StartupScenario::startupPageUri(StartupModeType modeType) const
     switch (modeType) {
     case StartupModeType::StartEmpty:
     case StartupModeType::StartWithNewScore:
+    case StartupModeType::Recovery:
         return HOME_URI;
     case StartupModeType::StartWithScore:
-        return NOTATION_URI;
     case StartupModeType::ContinueLastSession:
-        return HOME_URI;
+        return NOTATION_URI;
     }
 
     return HOME_URI;
 }
 
-void StartupScenario::openScore(const io::path_t& path)
+void StartupScenario::openScore(const project::ProjectFile& file)
 {
-    dispatcher()->dispatch("file-open", ActionData::make_arg1<io::path_t>(path));
+    dispatcher()->dispatch("file-open", ActionData::make_arg2<QUrl, QString>(file.url, file.displayNameOverride));
 }
 
 void StartupScenario::restoreLastSession()
 {
-    if (!sessionsManager()->hasProjectsForRestore()) {
-        dispatcher()->dispatch("continue-last-session");
-        return;
-    }
-
     IInteractive::Result result = interactive()->question(trc("appshell", "The previous session quit unexpectedly."),
                                                           trc("appshell", "Do you want to restore the session?"),
                                                           { IInteractive::Button::No, IInteractive::Button::Yes });

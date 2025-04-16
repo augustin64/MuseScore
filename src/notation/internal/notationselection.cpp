@@ -23,9 +23,9 @@
 
 #include <QMimeData>
 
-#include "libmscore/masterscore.h"
-#include "libmscore/segment.h"
-#include "libmscore/measure.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/measure.h"
 
 #include "notationselectionrange.h"
 #include "notationerrors.h"
@@ -86,15 +86,9 @@ EngravingItem* NotationSelection::element() const
     return score()->selection().element();
 }
 
-std::vector<EngravingItem*> NotationSelection::elements() const
+const std::vector<EngravingItem*>& NotationSelection::elements() const
 {
-    std::vector<EngravingItem*> els;
-    std::vector<mu::engraving::EngravingItem*> list = score()->selection().elements();
-    els.reserve(list.size());
-    for (mu::engraving::EngravingItem* e : list) {
-        els.push_back(e);
-    }
-    return els;
+    return score()->selection().elements();
 }
 
 std::vector<Note*> NotationSelection::notes(NoteFilter filter) const

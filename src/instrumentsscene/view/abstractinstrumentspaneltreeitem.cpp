@@ -106,9 +106,15 @@ void AbstractInstrumentsPanelTreeItem::appendNewItem()
 {
 }
 
+MoveParams AbstractInstrumentsPanelTreeItem::buildMoveParams(int, int, AbstractInstrumentsPanelTreeItem*, int) const
+{
+    UNREACHABLE;
+    return MoveParams();
+}
+
 void AbstractInstrumentsPanelTreeItem::moveChildren(int sourceRow, int count,
                                                     AbstractInstrumentsPanelTreeItem* destinationParent,
-                                                    int destinationRow)
+                                                    int destinationRow, bool)
 {
     QList<AbstractInstrumentsPanelTreeItem*> childrenToMove;
     for (int i = sourceRow; i < sourceRow + count; ++i) {
@@ -244,7 +250,7 @@ void AbstractInstrumentsPanelTreeItem::setTitle(QString title)
     emit titleChanged(m_title);
 }
 
-void AbstractInstrumentsPanelTreeItem::setIsVisible(bool isVisible)
+void AbstractInstrumentsPanelTreeItem::setIsVisible(bool isVisible, bool setChildren)
 {
     if (m_isVisible == isVisible) {
         return;
@@ -253,8 +259,10 @@ void AbstractInstrumentsPanelTreeItem::setIsVisible(bool isVisible)
     m_isVisible = isVisible;
     emit isVisibleChanged(isVisible);
 
-    for (auto child : m_children) {
-        child->setIsVisible(isVisible);
+    if (setChildren) {
+        for (auto child : m_children) {
+            child->setIsVisible(isVisible);
+        }
     }
 }
 

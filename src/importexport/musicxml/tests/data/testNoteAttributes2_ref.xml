@@ -371,7 +371,7 @@
         <stem>down</stem>
         <notations>
           <articulations>
-            <breath-mark/>
+            <breath-mark>comma</breath-mark>
             </articulations>
           </notations>
         </note>
@@ -386,7 +386,7 @@
         <stem>down</stem>
         <notations>
           <articulations>
-            <breath-mark/>
+            <breath-mark>comma</breath-mark>
             </articulations>
           </notations>
         </note>
@@ -448,7 +448,8 @@
         <stem>up</stem>
         <notations>
           <articulations>
-            <detached-legato/>
+            <staccato/>
+            <tenuto/>
             </articulations>
           </notations>
         </note>
@@ -510,7 +511,7 @@
         <stem>up</stem>
         <notations>
           <technical>
-            <open-string/>
+            <open/>
             </technical>
           </notations>
         </note>

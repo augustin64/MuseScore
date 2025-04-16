@@ -21,17 +21,19 @@
  */
 #include "notationnoteinput.h"
 
-#include "libmscore/masterscore.h"
-#include "libmscore/input.h"
-#include "libmscore/staff.h"
-#include "libmscore/note.h"
-#include "libmscore/chord.h"
-#include "libmscore/slur.h"
-#include "libmscore/articulation.h"
-#include "libmscore/system.h"
-#include "libmscore/stafftype.h"
-#include "libmscore/mscore.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/input.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/slur.h"
+#include "engraving/dom/articulation.h"
+#include "engraving/dom/system.h"
+#include "engraving/dom/stafftype.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/tuplet.h"
 
+#include "mscoreerrorscontroller.h"
 #include "scorecallbacks.h"
 
 #include "log.h"
@@ -175,7 +177,7 @@ EngravingItem* NotationNoteInput::resolveNoteInputStartPosition() const
         if (page) {
             qreal tlY = 0.0;
             Fraction tlTick = Fraction(0, 1);
-            RectF pageRect  = page->bbox().translated(page->x(), page->y());
+            RectF pageRect  = page->ldata()->bbox().translated(page->x(), page->y());
             RectF intersect = viewRect & pageRect;
             intersect.translate(-page->x(), -page->y());
             std::vector<EngravingItem*> el = page->items(intersect);
@@ -336,6 +338,8 @@ void NotationNoteInput::addNote(NoteName noteName, NoteAddingMode addingMode)
 
     notifyNoteAddedChanged();
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 }
 
 void NotationNoteInput::padNote(const Pad& pad)
@@ -349,6 +353,8 @@ void NotationNoteInput::padNote(const Pad& pad)
     apply();
 
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 }
 
 mu::Ret NotationNoteInput::putNote(const PointF& pos, bool replace, bool insert)
@@ -361,6 +367,8 @@ mu::Ret NotationNoteInput::putNote(const PointF& pos, bool replace, bool insert)
 
     notifyNoteAddedChanged();
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 
     return ret;
 }
@@ -379,6 +387,8 @@ void NotationNoteInput::removeNote(const PointF& pos)
     apply();
 
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 }
 
 Notification NotationNoteInput::noteInputStarted() const
@@ -400,6 +410,8 @@ void NotationNoteInput::setAccidental(AccidentalType accidentalType)
     score()->toggleAccidental(accidentalType, editData);
 
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 }
 
 void NotationNoteInput::setArticulation(SymbolId articulationSymbolId)
@@ -413,6 +425,8 @@ void NotationNoteInput::setArticulation(SymbolId articulationSymbolId)
     inputState.setArticulationIds(articulations);
 
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 }
 
 void NotationNoteInput::setDrumNote(int note)
@@ -472,12 +486,8 @@ void NotationNoteInput::addTuplet(const TupletOptions& options)
     mu::engraving::ChordRest* chordRest = inputState.cr();
     if (chordRest) {
         Fraction ratio = options.ratio;
-        // prevent weird dotted tuplets when adding tuplets to dotted durations
         if (options.autoBaseLen) {
-            ratio.setDenominator(inputState.duration().dots() ? 3 : 2);
-            while (ratio.numerator() >= ratio.denominator() * 2) {
-                ratio.setDenominator(ratio.denominator() * 2);      // operator*= reduces, we don't want that here
-            }
+            ratio.setDenominator(mu::engraving::Tuplet::computeTupletDenominator(ratio.numerator(), inputState.ticks()));
         }
         score()->changeCRlen(chordRest, inputState.duration());
         score()->addTuplet(chordRest, ratio, options.numberType, options.bracketType);
@@ -524,7 +534,7 @@ mu::RectF NotationNoteInput::cursorRect() const
     double h = 0.0;
 
     const mu::engraving::StaffType* staffType = staff->staffType(inputState.tick());
-    double spatium = score()->spatium();
+    double spatium = score()->style().spatium();
     double lineDist = staffType->lineDistance().val() * spatium;
     int lines = staffType->lines();
     int inputStateStringsCount = inputState.string();
@@ -589,6 +599,8 @@ void NotationNoteInput::addTie()
     apply();
 
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 }
 
 Notification NotationNoteInput::noteAdded() const
@@ -671,6 +683,8 @@ void NotationNoteInput::doubleNoteInputDuration()
     apply();
 
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 }
 
 void NotationNoteInput::halveNoteInputDuration()
@@ -684,4 +698,6 @@ void NotationNoteInput::halveNoteInputDuration()
     apply();
 
     notifyAboutStateChanged();
+
+    MScoreErrorsController::checkAndShowMScoreError();
 }

@@ -31,8 +31,8 @@ import "../shared"
 Page {
     id: root
 
-    title: qsTrc("appshell/gettingstarted", "Welcome to MuseScore 4")
-    explanation: qsTrc("appshell/gettingstarted", "Let's get started by choosing a theme.")
+    title: qsTrc("appshell/gettingstarted", "Welcome to MuseScore Studio")
+    explanation: qsTrc("appshell/gettingstarted", "Let’s get started by choosing a theme.")
 
     titleContentSpacing: model.isFollowSystemThemeAvailable ? 24 : 28
 

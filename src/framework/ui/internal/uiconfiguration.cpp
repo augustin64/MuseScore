@@ -163,7 +163,7 @@ static const QMap<ThemeStyleKey, QVariant> HIGH_CONTRAST_WHITE_THEME_VALUES {
     { ITEM_OPACITY_DISABLED, 0.3 }
 };
 
-void UiConfiguration::initSettings()
+void UiConfiguration::init()
 {
     settings()->setDefaultValue(UI_CURRENT_THEME_CODE_KEY, Val(LIGHT_THEME_CODE));
     settings()->setDefaultValue(UI_FOLLOW_SYSTEM_THEME_KEY, Val(false));
@@ -212,6 +212,8 @@ void UiConfiguration::initSettings()
     m_uiArrangement.stateChanged(WINDOW_GEOMETRY_KEY).onNotify(this, [this]() {
         m_windowGeometryChanged.notify();
     });
+
+    initThemes();
 }
 
 void UiConfiguration::load()
@@ -604,20 +606,6 @@ std::string UiConfiguration::defaultFontFamily() const
 {
     std::string family = QFontDatabase::systemFont(QFontDatabase::GeneralFont).family().toStdString();
 
-#ifdef Q_OS_MACOS
-    // The macOS default font *is* SF Pro, but under the name ".AppleSystemUIFont".
-    // In Qt, the version under this name has an issue with the width of the comma
-    // character (see https://github.com/musescore/MuseScore/issues/10736). This does
-    // not occur in user-installed versions of the font. So if the user has one, we
-    // use it, otherwise, it will be just the system version.
-    // TODO(qt-6): This can be removed when switching to Qt 6.
-    static const QString defaultMacFamily = "SF Pro";
-    QFontDatabase fontDatabase;
-    if (fontDatabase.hasFamily(defaultMacFamily)) {
-        family = defaultMacFamily.toStdString();
-    }
-#endif
-
 #ifdef Q_OS_WIN
     static const QString defaultWinFamily = "Segoe UI";
     QFontDatabase fontDatabase;
@@ -660,9 +648,16 @@ double UiConfiguration::physicalDpi() const
         return m_customDPI.value();
     }
 
+    constexpr double DEFAULT_DPI = 96;
     const QScreen* screen = mainWindow() ? mainWindow()->screen() : nullptr;
     if (!screen) {
-        constexpr double DEFAULT_DPI = 96;
+        return DEFAULT_DPI;
+    }
+
+    auto physicalSize = screen->physicalSize();
+    // Work around xrandr reporting a 1x1mm size if
+    // the screen doesn't have a valid physical size
+    if (physicalSize.height() <= 1 && physicalSize.width() <= 1) {
         return DEFAULT_DPI;
     }
 
@@ -713,6 +708,11 @@ void UiConfiguration::setWindowGeometry(const QByteArray& geometry)
 Notification UiConfiguration::windowGeometryChanged() const
 {
     return m_windowGeometryChanged;
+}
+
+bool UiConfiguration::isGlobalMenuAvailable() const
+{
+    return platformTheme()->isGlobalMenuAvailable();
 }
 
 void UiConfiguration::applyPlatformStyle(QWindow* window)

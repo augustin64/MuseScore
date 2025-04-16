@@ -22,27 +22,27 @@
 
 #include "musedata.h"
 
-#include "libmscore/factory.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/part.h"
-#include "libmscore/staff.h"
-#include "libmscore/barline.h"
-#include "libmscore/clef.h"
-#include "libmscore/key.h"
-#include "libmscore/note.h"
-#include "libmscore/chord.h"
-#include "libmscore/rest.h"
-#include "libmscore/text.h"
-#include "libmscore/bracket.h"
-#include "libmscore/tuplet.h"
-#include "libmscore/slur.h"
-#include "libmscore/dynamic.h"
-#include "libmscore/lyrics.h"
-#include "libmscore/articulation.h"
-#include "libmscore/sig.h"
-#include "libmscore/measure.h"
-#include "libmscore/timesig.h"
-#include "libmscore/segment.h"
+#include "engraving/dom/factory.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/barline.h"
+#include "engraving/dom/clef.h"
+#include "engraving/dom/key.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/bracket.h"
+#include "engraving/dom/tuplet.h"
+#include "engraving/dom/slur.h"
+#include "engraving/dom/dynamic.h"
+#include "engraving/dom/lyrics.h"
+#include "engraving/dom/articulation.h"
+#include "engraving/dom/sig.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/timesig.h"
+#include "engraving/dom/segment.h"
 
 #include "log.h"
 
@@ -58,9 +58,14 @@ void MuseData::musicalAttribute(QString s, Part* part)
     QStringList al = s.mid(2).split(" ", Qt::SkipEmptyParts);
     foreach (QString item, al) {
         if (item.startsWith("K:")) {
-            int key = item.midRef(2).toInt();
+            Key key = Key(item.midRef(2).toInt());
             KeySigEvent ke;
-            ke.setKey(Key(key));
+            Interval v = part->instrument(curTick)->transpose();
+            ke.setConcertKey(key);
+            if (!v.isZero() && !score->style().styleB(Sid::concertPitch)) {
+                v.flip();
+                ke.setKey(transposeKey(key, v));
+            }
             for (Staff* staff : part->staves()) {
                 staff->setKey(curTick, ke);
             }
@@ -279,7 +284,7 @@ void MuseData::readNote(Part* part, const QString& s)
     if (pitch > 127) {
         pitch = 127;
     }
-    Fraction ticks = Fraction::fromTicks((s.midRef(5, 3).toInt() * Constants::division + _division / 2) / _division);
+    Fraction ticks = Fraction::fromTicks((s.midRef(5, 3).toInt() * Constants::DIVISION + _division / 2) / _division);
     Fraction tick  = curTick;
     curTick  += ticks;
 
@@ -479,7 +484,7 @@ QString MuseData::diacritical(QString s)
 
 void MuseData::readRest(Part* part, const QString& s)
 {
-    Fraction ticks = Fraction::fromTicks((s.midRef(5, 3).toInt() * Constants::division + _division / 2) / _division);
+    Fraction ticks = Fraction::fromTicks((s.midRef(5, 3).toInt() * Constants::DIVISION + _division / 2) / _division);
 
     Fraction tick  = curTick;
     curTick  += ticks;
@@ -523,7 +528,7 @@ void MuseData::readRest(Part* part, const QString& s)
 
 void MuseData::readBackup(const QString& s)
 {
-    Fraction ticks = Fraction::fromTicks((s.midRef(5, 3).toInt() * Constants::division + _division / 2) / _division);
+    Fraction ticks = Fraction::fromTicks((s.midRef(5, 3).toInt() * Constants::DIVISION + _division / 2) / _division);
     if (s[0] == 'b') {
         curTick  -= ticks;
     } else {

@@ -35,6 +35,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/importgtp.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/importptb.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/importptb.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/continiouselementsbuilder.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/continiouselementsbuilder.h
 
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gp6dombuilder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gp6dombuilder.h
@@ -42,8 +44,6 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gp7dombuilder.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gp67dombuilder.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gp67dombuilder.h
-    ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpaudiotrack.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpaudiotrack.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpbar.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpbar.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpbeat.cpp
@@ -52,6 +52,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpconverter.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpdommodel.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpdommodel.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpdrumsetresolver.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpdrumsetresolver.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpmasterbar.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpmasterbar.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/gtp/gpmastertracks.cpp
@@ -80,3 +82,7 @@ set(MODULE_LINK
     )
 
 include(SetupModule)
+
+if (MUE_BUILD_UNIT_TESTS)
+    add_subdirectory(tests)
+endif()

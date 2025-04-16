@@ -28,6 +28,7 @@
 
 #include "color.h"
 #include "drawtypes.h"
+#include "realfn.h"
 
 namespace mu::draw {
 class Pen
@@ -39,11 +40,23 @@ public:
     {
     }
 
-    Pen(const Color& color = Color::black, double width = 1, PenStyle s = PenStyle::SolidLine,
+    Pen(const Color& color = Color::BLACK, double width = 1, PenStyle s = PenStyle::SolidLine,
         PenCapStyle c = PenCapStyle::SquareCap, PenJoinStyle j = PenJoinStyle::BevelJoin)
         : m_color(color), m_width(width), m_style(s), m_capStyle(c), m_joinStyle(j)
     {
     }
+
+    inline bool operator==(const Pen& o) const
+    {
+        return m_color == o.m_color
+               && RealIsEqual(m_width, o.m_width)
+               && m_style == o.m_style
+               && m_capStyle == o.m_capStyle
+               && m_joinStyle == o.m_joinStyle
+               && RealIsEqual(m_dashPattern, o.m_dashPattern);
+    }
+
+    inline bool operator!=(const Pen& o) const { return !this->operator==(o); }
 
     PenStyle style() const
     {
@@ -154,7 +167,9 @@ public:
         Pen p(pen.color(), pen.widthF(), static_cast<PenStyle>(pen.style()),
               static_cast<PenCapStyle>(pen.capStyle()),
               static_cast<PenJoinStyle>(pen.joinStyle()));
-        p.m_dashPattern = std::vector<double>(pen.dashPattern().cbegin(), pen.dashPattern().cend());
+
+        QVector<qreal> dp = pen.dashPattern();
+        p.m_dashPattern = std::vector<double>(dp.cbegin(), dp.cend());
         return p;
     }
 
@@ -162,7 +177,7 @@ public:
 
 private:
 
-    Color m_color = Color::black;
+    Color m_color = Color::BLACK;
     double m_width = 1.0;
     PenStyle m_style = PenStyle::SolidLine;
     PenCapStyle m_capStyle = PenCapStyle::SquareCap;

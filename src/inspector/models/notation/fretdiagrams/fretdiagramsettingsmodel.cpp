@@ -21,8 +21,10 @@
  */
 #include "fretdiagramsettingsmodel.h"
 
-#include "translation.h"
 #include "dataformatter.h"
+#include "translation.h"
+
+#include "engraving/dom/fret.h"
 
 using namespace mu::inspector;
 
@@ -37,8 +39,13 @@ FretDiagramSettingsModel::FretDiagramSettingsModel(QObject* parent, IElementRepo
 
 void FretDiagramSettingsModel::createProperties()
 {
-    m_scale = buildPropertyItem(mu::engraving::Pid::MAG, [this](const mu::engraving::Pid pid, const QVariant& newValue) {
+    m_scale = buildPropertyItem(mu::engraving::Pid::MAG,
+                                [this](const mu::engraving::Pid pid, const QVariant& newValue) {
         onPropertyValueChanged(pid, newValue.toDouble() / 100);
+    },
+                                [this](const mu::engraving::Sid sid, const QVariant& newValue) {
+        updateStyleValue(sid, newValue.toDouble() / 100);
+        emit requestReloadPropertyItems();
     });
 
     m_stringsCount = buildPropertyItem(mu::engraving::Pid::FRET_STRINGS, [this](const mu::engraving::Pid pid, const QVariant& newValue) {
@@ -64,6 +71,7 @@ void FretDiagramSettingsModel::createProperties()
     });
 
     m_placement = buildPropertyItem(mu::engraving::Pid::PLACEMENT);
+    m_orientation = buildPropertyItem(mu::engraving::Pid::ORIENTATION);
 }
 
 void FretDiagramSettingsModel::requestElements()
@@ -88,6 +96,7 @@ void FretDiagramSettingsModel::loadProperties()
 
     loadPropertyItem(m_isNutVisible);
     loadPropertyItem(m_placement);
+    loadPropertyItem(m_orientation);
 }
 
 void FretDiagramSettingsModel::resetProperties()
@@ -115,6 +124,11 @@ PropertyItem* FretDiagramSettingsModel::fretsCount() const
     return m_fretsCount;
 }
 
+PropertyItem* FretDiagramSettingsModel::fretNumber() const
+{
+    return m_fretNumber;
+}
+
 PropertyItem* FretDiagramSettingsModel::isNutVisible() const
 {
     return m_isNutVisible;
@@ -125,9 +139,9 @@ PropertyItem* FretDiagramSettingsModel::placement() const
     return m_placement;
 }
 
-PropertyItem* FretDiagramSettingsModel::fretNumber() const
+PropertyItem* FretDiagramSettingsModel::orientation() const
 {
-    return m_fretNumber;
+    return m_orientation;
 }
 
 QVariant FretDiagramSettingsModel::fretDiagram() const

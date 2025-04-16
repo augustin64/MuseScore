@@ -43,7 +43,7 @@ Column {
         cueSize.navigation.requestActive()
     }
 
-    CheckBoxPropertyView {
+    PropertyCheckBox {
         id: cueSize
         text: qsTrc("inspector", "Cue size")
         propertyItem: root.model ? root.model.isSmall : null
@@ -68,7 +68,7 @@ Column {
 
             measureUnitsSymbol: qsTrc("global", "sp")
             step: 0.25
-            decimals: 1
+            decimals: 2
             maxValue: 20
             minValue: -20
 
@@ -130,6 +130,7 @@ Column {
             propertyItem: root.model ? root.model.lineDistance : null
 
             step: 0.25
+            decimals: 2
             maxValue: 3
             minValue: 0
 
@@ -156,7 +157,7 @@ Column {
         navigationRowStart: lineDistance.navigationRowEnd + 1
     }
 
-    CheckBoxPropertyView {
+    PropertyCheckBox {
         id: invisibleStaffLinesCheckBox
         text: qsTrc("inspector", "Invisible staff lines")
         propertyItem: root.model ? root.model.isInvisible : null
@@ -204,7 +205,7 @@ Column {
 
         width: parent.width
 
-        CheckBoxPropertyView {
+        PropertyCheckBox {
             text: qsTrc("inspector", "Stemless")
             propertyItem: root.model ? root.model.isStemless : null
 
@@ -213,7 +214,7 @@ Column {
             navigation.row: noteHeadScheme.navigationRowEnd + 1
         }
 
-        CheckBoxPropertyView {
+        PropertyCheckBox {
             text: qsTrc("inspector", "Show barlines")
             propertyItem: root.model ? root.model.shouldShowBarlines : null
 
@@ -222,7 +223,7 @@ Column {
             navigation.row: noteHeadScheme.navigationRowEnd + 2
         }
 
-        CheckBoxPropertyView {
+        PropertyCheckBox {
             text: qsTrc("inspector", "Show ledger lines")
             propertyItem: root.model ? root.model.shouldShowLedgerLines : null
 
@@ -231,7 +232,7 @@ Column {
             navigation.row: noteHeadScheme.navigationRowEnd + 3
         }
 
-        CheckBoxPropertyView {
+        PropertyCheckBox {
             text: qsTrc("inspector", "Generate clefs")
             propertyItem: root.model ? root.model.shouldGenerateClefs : null
 
@@ -240,7 +241,7 @@ Column {
             navigation.row: noteHeadScheme.navigationRowEnd + 4
         }
 
-        CheckBoxPropertyView {
+        PropertyCheckBox {
             text: qsTrc("inspector", "Generate time signatures")
             propertyItem: root.model ? root.model.shouldGenerateTimeSignatures : null
 
@@ -249,7 +250,7 @@ Column {
             navigation.row: noteHeadScheme.navigationRowEnd + 5
         }
 
-        CheckBoxPropertyView {
+        PropertyCheckBox {
             text: qsTrc("inspector", "Generate key signatures")
             propertyItem: root.model ? root.model.shouldGenerateKeySignatures : null
 

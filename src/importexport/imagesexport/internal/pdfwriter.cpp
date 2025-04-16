@@ -24,7 +24,7 @@
 
 #include <QPdfWriter>
 
-#include "libmscore/masterscore.h"
+#include "engraving/dom/masterscore.h"
 
 #include "log.h"
 
@@ -120,7 +120,7 @@ mu::Ret PdfWriter::writeList(const INotationPtrList& notations, QIODevice& desti
 void PdfWriter::preparePdfWriter(QPdfWriter& pdfWriter, const QString& title, const QSizeF& size) const
 {
     pdfWriter.setResolution(configuration()->exportPdfDpiResolution());
-    pdfWriter.setCreator("MuseScore Version: " VERSION);
+    pdfWriter.setCreator("MuseScore Studio Version: " MUSESCORE_VERSION);
     pdfWriter.setTitle(title);
     pdfWriter.setPageMargins(QMarginsF());
     pdfWriter.setPageLayout(QPageLayout(QPageSize(size, QPageSize::Inch), QPageLayout::Orientation::Portrait, QMarginsF()));

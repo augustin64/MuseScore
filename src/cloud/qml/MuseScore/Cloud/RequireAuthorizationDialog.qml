@@ -29,14 +29,16 @@ StyledDialogView {
     id: root
 
     property alias text: content.text
+    property bool publishingScore: true
+    property string cloudCode: ""
 
     contentWidth: content.implicitWidth
     contentHeight: content.implicitHeight
 
     margins: 16
 
-    AccountModel {
-        id: accountModel
+    CloudsModel {
+        id: cloudsModel
 
         onUserAuthorizedChanged: {
             if (userAuthorized) {
@@ -45,14 +47,16 @@ StyledDialogView {
         }
     }
 
-    Component.onCompleted: {
-        accountModel.load()
+    onNavigationActivateRequested: {
+        content.focusOnFirst()
     }
 
-    enum ButtonId {
-        Cancel,
-        CreateAccount,
-        Login
+    onAccessibilityActivateRequested: {
+        content.readInfo()
+    }
+
+    Component.onCompleted: {
+        cloudsModel.load()
     }
 
     StandardDialogPanel {
@@ -63,22 +67,34 @@ StyledDialogView {
 
         title: qsTrc("cloud", "You are not signed in")
 
-        buttons: [
-            { "buttonId": RequireAuthorizationDialog.Cancel, "title": qsTrc("global", "Cancel") },
-            { "buttonId": RequireAuthorizationDialog.CreateAccount, "title": qsTrc("cloud", "Create account") },
-            { "buttonId": RequireAuthorizationDialog.Login, "title": qsTrc("cloud", "Login") }
+        customButtons: [
+            { "buttonId": ButtonBoxModel.Cancel, "text": qsTrc("global", "Cancel"), "role": ButtonBoxModel.RejectRole, "isAccent": false, "isLeftSide": false },
+
+            { "buttonId": ButtonBoxModel.CustomButton + 1,
+              "text": publishingScore ? qsTrc("project/save", "Save to computer") : qsTrc("cloud", "Create account"),
+              "role": ButtonBoxModel.ApplyRole, "isAccent": false, "isLeftSide": false },
+
+            { "buttonId": ButtonBoxModel.CustomButton + 2, "text": qsTrc("cloud", "Log in"), "role": ButtonBoxModel.ApplyRole, "isAccent": false, "isLeftSide": false }
         ]
 
         onClicked: function(buttonId, showAgain) {
             switch (buttonId) {
-            case RequireAuthorizationDialog.Cancel:
+            case ButtonBoxModel.Cancel:
                 root.hide()
                 return
-            case RequireAuthorizationDialog.CreateAccount:
-                accountModel.createAccount()
+            case ButtonBoxModel.CustomButton + 1:
+                if (publishingScore) {
+                    root.ret = {
+                        errcode: 0,
+                        value: SaveToCloudResponse.SaveLocallyInstead
+                    }
+                    root.hide()
+                    return
+                }
+                cloudsModel.createAccount(root.cloudCode)
                 return
-            case RequireAuthorizationDialog.Login:
-                accountModel.signIn()
+            case ButtonBoxModel.CustomButton + 2:
+                cloudsModel.signIn(root.cloudCode)
                 return
             }
         }

@@ -27,8 +27,8 @@
 
 #include "async/asyncable.h"
 
-#include "libmscore/engravingitem.h"
-#include "libmscore/property.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/property.h"
 
 #include "internal/interfaces/ielementrepositoryservice.h"
 #include "notation/inotation.h"
@@ -45,8 +45,8 @@ class AbstractInspectorModel : public QObject, public async::Asyncable
 {
     Q_OBJECT
 
-    INJECT(inspector, context::IGlobalContext, context)
-    INJECT(inspector, actions::IActionsDispatcher, dispatcher)
+    INJECT(context::IGlobalContext, context)
+    INJECT(actions::IActionsDispatcher, dispatcher)
 
     Q_PROPERTY(QString title READ title NOTIFY titleChanged)
     Q_PROPERTY(int icon READ icon CONSTANT)
@@ -62,7 +62,8 @@ public:
         SECTION_NOTATION,
         SECTION_TEXT,
         SECTION_SCORE_DISPLAY,
-        SECTION_SCORE_APPEARANCE
+        SECTION_SCORE_APPEARANCE,
+        SECTION_PARTS,
     };
     Q_ENUM(InspectorSectionType)
 
@@ -76,6 +77,8 @@ public:
         TYPE_HOOK,
         TYPE_FERMATA,
         TYPE_TEMPO,
+        TYPE_A_TEMPO,
+        TYPE_TEMPO_PRIMO,
         TYPE_GLISSANDO,
         TYPE_BARLINE,
         TYPE_BREATH,
@@ -117,16 +120,22 @@ public:
         TYPE_TREMOLO,
         TYPE_MEASURE_REPEAT,
         TYPE_DYNAMIC,
+        TYPE_EXPRESSION,
         TYPE_TUPLET,
         TYPE_TEXT_LINE,
         TYPE_GRADUAL_TEMPO_CHANGE,
         TYPE_INSTRUMENT_NAME,
         TYPE_LYRICS,
+        TYPE_REST,
+        TYPE_REST_BEAM,
+        TYPE_STRING_TUNINGS,
     };
     Q_ENUM(InspectorModelType)
 
     explicit AbstractInspectorModel(QObject* parent, IElementRepositoryService* repository = nullptr,
                                     mu::engraving::ElementType elementType = mu::engraving::ElementType::INVALID);
+
+    void init();
 
     Q_INVOKABLE virtual void requestResetToDefaults();
 
@@ -135,9 +144,12 @@ public:
     InspectorSectionType sectionType() const;
     InspectorModelType modelType() const;
 
+    static ElementKey makeKey(const mu::engraving::EngravingItem* item);
     static InspectorModelType modelTypeByElementKey(const ElementKey& elementKey);
     static QSet<InspectorModelType> modelTypesByElementKeys(const ElementKeySet& elementKeySet);
-    static QSet<InspectorSectionType> sectionTypesByElementKeys(const ElementKeySet& elementKeySet, bool isRange);
+    static QSet<InspectorSectionType> sectionTypesByElementKeys(const ElementKeySet& elementKeySet, bool isRange,
+                                                                const QList<mu::engraving::EngravingItem*>& selectedElementList = {});
+    static bool showPartsSection(const QList<mu::engraving::EngravingItem*>& selectedElementList);
 
     virtual bool isEmpty() const;
 
@@ -146,6 +158,8 @@ public:
     virtual void resetProperties() = 0;
 
     virtual void requestElements();
+
+    virtual void onCurrentNotationChanged();
 
 public slots:
     void setTitle(QString title);
@@ -165,11 +179,15 @@ protected:
     void setElementType(mu::engraving::ElementType type);
 
     PropertyItem* buildPropertyItem(const mu::engraving::Pid& pid, std::function<void(const mu::engraving::Pid propertyId,
-                                                                                      const QVariant& newValue)> onPropertyChangedCallBack = nullptr);
+                                                                                      const QVariant& newValue)> onPropertyChangedCallBack = nullptr, std::function<void(const mu::engraving::Sid styleId,
+                                                                                                                                                                         const QVariant& newValue)> onStyleChangedCallBack = nullptr);
     PointFPropertyItem* buildPointFPropertyItem(const mu::engraving::Pid& pid, std::function<void(const mu::engraving::Pid propertyId,
                                                                                                   const QVariant& newValue)> onPropertyChangedCallBack = nullptr);
 
-    void loadPropertyItem(PropertyItem* propertyItem, std::function<QVariant(const QVariant&)> convertElementPropertyValueFunc = nullptr);
+    using ConvertPropertyValueFunc = std::function<QVariant(const QVariant&)>;
+    void loadPropertyItem(PropertyItem* propertyItem, ConvertPropertyValueFunc convertElementPropertyValueFunc = nullptr);
+    void loadPropertyItem(PropertyItem* propertyItem, const QList<engraving::EngravingItem*>& elements,
+                          ConvertPropertyValueFunc convertElementPropertyValueFunc = nullptr);
 
     bool isNotationExisting() const;
 
@@ -193,7 +211,6 @@ protected:
 
     notation::INotationSelectionPtr selection() const;
 
-    virtual void onCurrentNotationChanged();
     virtual void onNotationChanged(const mu::engraving::PropertyIdSet& changedPropertyIdSet,
                                    const mu::engraving::StyleIdSet& changedStyleIdSet);
 
@@ -203,13 +220,14 @@ protected:
 
 protected slots:
     void onPropertyValueChanged(const mu::engraving::Pid pid, const QVariant& newValue);
+    void setPropertyValue(const QList<mu::engraving::EngravingItem*>& items, const mu::engraving::Pid pid, const QVariant& newValue);
     void updateProperties();
 
 private:
-    void setupCurrentNotationChangedConnection();
-
     void initPropertyItem(PropertyItem* propertyItem, std::function<void(const mu::engraving::Pid propertyId,
-                                                                         const QVariant& newValue)> onPropertyChangedCallBack = nullptr);
+                                                                         const QVariant& newValue)> onPropertyChangedCallBack = nullptr,
+                          std::function<void(const mu::engraving::Sid styleId,
+                                             const QVariant& newValue)> onStyleChangedCallBack = nullptr);
 
     mu::engraving::Sid styleIdByPropertyId(const mu::engraving::Pid pid) const;
     mu::engraving::PropertyIdSet propertyIdSetFromStyleIdSet(const mu::engraving::StyleIdSet& styleIdSet) const;

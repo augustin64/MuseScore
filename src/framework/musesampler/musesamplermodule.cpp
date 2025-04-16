@@ -33,13 +33,11 @@
 #include "internal/musesampleruiactions.h"
 #include "internal/musesampleractioncontroller.h"
 
+#include "diagnostics/idiagnosticspathsregister.h"
+
 using namespace mu;
 using namespace mu::modularity;
 using namespace mu::musesampler;
-
-static std::shared_ptr<MuseSamplerConfiguration> s_configuration = std::make_shared<MuseSamplerConfiguration>();
-static std::shared_ptr<MuseSamplerActionController> s_actionController = std::make_shared<MuseSamplerActionController>();
-static std::shared_ptr<MuseSamplerResolver> s_resolver = std::make_shared<MuseSamplerResolver>();
 
 std::string MuseSamplerModule::moduleName() const
 {
@@ -48,8 +46,12 @@ std::string MuseSamplerModule::moduleName() const
 
 void MuseSamplerModule::registerExports()
 {
-    ioc()->registerExport<IMuseSamplerConfiguration>(moduleName(), s_configuration);
-    ioc()->registerExport<IMuseSamplerInfo>(moduleName(), s_resolver);
+    m_configuration = std::make_shared<MuseSamplerConfiguration>();
+    m_actionController = std::make_shared<MuseSamplerActionController>();
+    m_resolver = std::make_shared<MuseSamplerResolver>();
+
+    ioc()->registerExport<IMuseSamplerConfiguration>(moduleName(), m_configuration);
+    ioc()->registerExport<IMuseSamplerInfo>(moduleName(), m_resolver);
 }
 
 void MuseSamplerModule::resolveImports()
@@ -57,7 +59,7 @@ void MuseSamplerModule::resolveImports()
     auto synthResolver = ioc()->resolve<audio::synth::ISynthResolver>(moduleName());
 
     if (synthResolver) {
-        synthResolver->registerResolver(audio::AudioSourceType::MuseSampler, s_resolver);
+        synthResolver->registerResolver(audio::AudioSourceType::MuseSampler, m_resolver);
     }
 
     auto ar = ioc()->resolve<ui::IUiActionsRegister>(moduleName());
@@ -68,10 +70,17 @@ void MuseSamplerModule::resolveImports()
 
 void MuseSamplerModule::onInit(const framework::IApplication::RunMode& mode)
 {
-    if (framework::IApplication::RunMode::Editor != mode) {
+    if (framework::IApplication::RunMode::AudioPluginRegistration == mode) {
         return;
     }
 
-    s_actionController->init();
-    s_resolver->init();
+    m_configuration->init();
+    m_actionController->init();
+    m_resolver->init();
+
+    auto pr = ioc()->resolve<diagnostics::IDiagnosticsPathsRegister>(moduleName());
+    if (pr) {
+        pr->reg("musesampler", m_configuration->userLibraryPath());
+        pr->reg("musesampler fallback", m_configuration->fallbackLibraryPath());
+    }
 }

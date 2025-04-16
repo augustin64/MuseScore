@@ -66,9 +66,12 @@ public:
     virtual void setIsOpen(bool opened) = 0;
     virtual async::Notification openChanged() const = 0;
 
+    virtual bool hasVisibleParts() const = 0;
+
     // draw
     virtual ViewMode viewMode() const = 0;
     virtual void setViewMode(const ViewMode& viewMode) = 0;
+    virtual async::Notification viewModeChanged() const = 0;
 
     virtual INotationPaintingPtr painting() const = 0;
     virtual INotationViewStatePtr viewState() const = 0;

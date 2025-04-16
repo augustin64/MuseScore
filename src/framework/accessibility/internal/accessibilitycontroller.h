@@ -49,10 +49,10 @@ namespace mu::accessibility {
 class AccessibilityController : public IAccessibilityController, public IAccessible, public async::Asyncable,
     public std::enable_shared_from_this<AccessibilityController>
 {
-    INJECT(accessibility, framework::IApplication, application)
-    INJECT(accessibility, ui::IMainWindow, mainWindow)
-    INJECT(accessibility, ui::IInteractiveProvider, interactiveProvider)
-    INJECT(accessibility, IAccessibilityConfiguration, configuration)
+    INJECT(framework::IApplication, application)
+    INJECT(ui::IMainWindow, mainWindow)
+    INJECT(ui::IInteractiveProvider, interactiveProvider)
+    INJECT(IAccessibilityConfiguration, configuration)
 
 public:
     AccessibilityController() = default;
@@ -69,6 +69,9 @@ public:
 
     bool needToVoicePanelInfo() const override;
     QString currentPanelAccessibleName() const override;
+
+    void setIgnoreQtAccessibilityEvents(bool ignore) override;
+
     // -----
 
     // IAccessibility (root)
@@ -103,6 +106,9 @@ public:
     QString accessibleTextAfterOffset(int offset, TextBoundaryType boundaryType, int* startOffset, int* endOffset) const override;
     QString accessibleTextAtOffset(int offset, TextBoundaryType boundaryType, int* startOffset, int* endOffset) const override;
     int accessibleCharacterCount() const override;
+
+    // ListView item Interface
+    int accessibleRowIndex() const override;
 
     async::Channel<Property, Val> accessiblePropertyChanged() const override;
     async::Channel<State, bool> accessibleStateChanged() const override;

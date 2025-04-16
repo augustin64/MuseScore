@@ -26,7 +26,7 @@
 #include <QDialog>
 
 #include "ui_measureproperties.h"
-#include "libmscore/sig.h"
+#include "engraving/dom/sig.h"
 #include "modularity/ioc.h"
 #include "context/iglobalcontext.h"
 #include "notation/inotation.h"
@@ -40,7 +40,7 @@ class MeasurePropertiesDialog : public QDialog, private Ui::MeasurePropertiesBas
 {
     Q_OBJECT
 
-    INJECT(notation, mu::context::IGlobalContext, context)
+    INJECT(mu::context::IGlobalContext, context)
 
 public:
     MeasurePropertiesDialog(QWidget* parent = nullptr);

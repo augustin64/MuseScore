@@ -27,7 +27,7 @@
 
 #include "mpe/events.h"
 
-#include "libmscore/instrument.h"
+#include "dom/instrument.h"
 
 namespace mu::engraving {
 template<class T>
@@ -42,7 +42,7 @@ public:
         }
 
         result = T::doResolve(instrument);
-        result.musicXmlSoundId = std::make_optional(instrument->instrumentId().toStdString());
+        result.musicXmlSoundId = std::make_optional(instrument->musicXmlId().toStdString());
 
         return result.isValid();
     }

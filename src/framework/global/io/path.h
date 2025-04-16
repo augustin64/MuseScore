@@ -29,6 +29,7 @@
 
 #ifndef NO_QT_SUPPORT
 #include <QString>
+#include <QUrl>
 #endif
 
 namespace mu::io {
@@ -71,10 +72,12 @@ struct path_t {
 
 #ifndef NO_QT_SUPPORT
     path_t(const QString& s);
+    explicit path_t(const QUrl& u);
     inline path_t& operator=(const QString& other) { m_path = other.toStdString(); return *this; }
     inline path_t operator+(const QString& other) const { path_t p = *this; p += String::fromQString(other); return p; }
     inline path_t& operator+=(const QString& other) { m_path += other.toStdString(); return *this; }
     QString toQString() const;
+    QUrl toQUrl() const;
     std::wstring toStdWString() const;
 #endif
 
@@ -108,6 +111,8 @@ bool isAbsolute(const path_t& path);
 
 bool isAllowedFileName(const path_t& fn);
 path_t escapeFileName(const path_t& fn);
+
+path_t toNativeSeparators(const path_t& path);
 
 paths_t pathsFromString(const std::string& str, const std::string& delim = ";");
 std::string pathsToString(const paths_t& ps, const std::string& delim = ";");

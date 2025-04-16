@@ -69,8 +69,9 @@ FocusableItem {
             navigationRowStart: noteHeadParenthesesView.navigationRowEnd + 1
         }
 
-        CheckBoxPropertyView {
+        PropertyCheckBox {
             id: hideNoteheadCheckBox
+            visible: root.model ? !root.model.isTrillCueNote : true
 
             text: qsTrc("inspector", "Hide notehead")
             propertyItem: root.model ? root.model.isHeadHidden : null
@@ -80,7 +81,7 @@ FocusableItem {
             navigation.row: noteHeadSection.navigationRowEnd + 1
         }
 
-        CheckBoxPropertyView {
+        PropertyCheckBox {
             id: smallNoteheadCheckBox
 
             text: qsTrc("inspector", "Small notehead")
@@ -93,6 +94,7 @@ FocusableItem {
 
         FlatRadioButtonGroupPropertyView {
             id: durationDotPosition
+            visible: root.model ? !root.model.isTrillCueNote : true
 
             titleText: qsTrc("inspector", "Duration dot position")
             propertyItem: root.model ? root.model.dotPosition : null
@@ -110,6 +112,7 @@ FocusableItem {
 
         ExpandableBlank {
             id: showItem
+            visible: root.model ? !root.model.isTrillCueNote : true
 
             isExpanded: false
 
@@ -129,7 +132,7 @@ FocusableItem {
                 DropdownPropertyView {
                     id: noteHeadSystemSection
 
-                    titleText: qsTrc("inspector", "Notehead system")
+                    titleText: qsTrc("inspector", "Notehead scheme")
                     propertyItem: root.model ? root.model.headSystem : null
 
                     model: root.model.possibleHeadSystemTypes()

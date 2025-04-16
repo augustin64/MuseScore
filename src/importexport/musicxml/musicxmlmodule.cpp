@@ -21,8 +21,6 @@
  */
 #include "musicxmlmodule.h"
 
-#include "log.h"
-#include "config.h"
 #include "modularity/ioc.h"
 
 #include "project/inotationreadersregister.h"
@@ -34,10 +32,10 @@
 
 #include "internal/musicxmlconfiguration.h"
 
+#include "log.h"
+
 using namespace mu::iex::musicxml;
 using namespace mu::project;
-
-static std::shared_ptr<MusicXmlConfiguration> s_configuration = std::make_shared<MusicXmlConfiguration>();
 
 static void musicxml_init_qrc()
 {
@@ -56,13 +54,13 @@ void MusicXmlModule::registerResources()
 
 void MusicXmlModule::registerExports()
 {
-    modularity::ioc()->registerExport<IMusicXmlConfiguration>(moduleName(), s_configuration);
+    m_configuration = std::make_shared<MusicXmlConfiguration>();
+
+    modularity::ioc()->registerExport<IMusicXmlConfiguration>(moduleName(), m_configuration);
 }
 
 void MusicXmlModule::resolveImports()
 {
-    s_configuration->init();
-
     auto readers = modularity::ioc()->resolve<INotationReadersRegister>(moduleName());
     if (readers) {
         readers->reg({ "xml", "musicxml", "mxl" }, std::make_shared<MusicXmlReader>());
@@ -73,4 +71,9 @@ void MusicXmlModule::resolveImports()
         writers->reg({ "musicxml", "xml" }, std::make_shared<MusicXmlWriter>());
         writers->reg({ "mxl" }, std::make_shared<MxlWriter>());
     }
+}
+
+void MusicXmlModule::onInit(const framework::IApplication::RunMode&)
+{
+    m_configuration->init();
 }

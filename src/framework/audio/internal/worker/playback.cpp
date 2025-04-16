@@ -19,6 +19,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
+
+#include <utility>
+
 #include "playback.h"
 
 #include "log.h"
@@ -58,6 +61,11 @@ void Playback::deinit()
     m_audioOutputPtr = nullptr;
 
     disconnectAll();
+}
+
+bool Playback::isInited() const
+{
+    return m_playerHandlersPtr != nullptr;
 }
 
 Promise<TrackSequenceId> Playback::addSequence()

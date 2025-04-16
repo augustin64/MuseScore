@@ -22,7 +22,7 @@
 #ifndef MU_FRAMEWORK_IGLOBALCONFIGURATION_H
 #define MU_FRAMEWORK_IGLOBALCONFIGURATION_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "io/path.h"
 
 namespace mu::framework {
@@ -36,9 +36,12 @@ public:
     //! NOTE Each platform has its own paths and rules
     //! More details about paths: https://github.com/musescore/MuseScore/wiki/Resources
 
+    //! //! NOTE The path to the executable file
+    virtual io::path_t appBinPath() const = 0;
+
     //! NOTE The path to the dir with the executable file (probably readonly, probably private for a user)
     //! Like: programs/MuseScore/bin
-    virtual io::path_t appBinPath() const = 0;
+    virtual io::path_t appBinDirPath() const = 0;
 
     //! NOTE The path to the dir with the app data files (probably readonly, probably private for a user)
     //! Like: programs/MuseScore/share
@@ -63,9 +66,16 @@ public:
     //! NOTE System paths
     virtual io::path_t homePath() const = 0;
     virtual io::path_t downloadsPath() const = 0;
+    virtual io::path_t genericDataPath() const = 0;
 
     virtual bool useFactorySettings() const = 0;
     virtual bool enableExperimental() const = 0;
+
+    virtual bool devModeEnabled() const = 0;
+    virtual void setDevModeEnabled(bool enabled) = 0;
+
+    virtual bool metricUnit() const = 0;
+    virtual void setMetricUnit(bool metricUnit) = 0;
 
     virtual std::string museScoreUrl() const = 0;
 };

@@ -101,6 +101,24 @@ inline void swapItemsAt(std::vector<T>& vec, size_t idx1, size_t idx2)
 }
 
 template<typename T>
+inline bool moveItem(std::vector<T>& vec, size_t oldIdx, size_t newIdx)
+{
+    if (oldIdx == mu::nidx || oldIdx == newIdx) {
+        return false;
+    }
+
+    newIdx = std::min(vec.size() - 1, newIdx);
+
+    if (oldIdx > newIdx) {
+        std::rotate(vec.rend() - oldIdx - 1, vec.rend() - oldIdx, vec.rend() - newIdx);
+    } else {
+        std::rotate(vec.begin() + oldIdx, vec.begin() + oldIdx + 1, vec.begin() + newIdx + 1);
+    }
+
+    return true;
+}
+
+template<typename T>
 std::vector<T> mid(const std::vector<T>& c, size_t pos, int alength = -1)
 {
     if (c.empty()) {
@@ -175,6 +193,18 @@ inline T takeLast(std::list<T>& l)
     return v;
 }
 
+template<typename T>
+inline std::pair<bool, T> take(std::list<T>& l, const T& v)
+{
+    auto it = std::find(l.begin(), l.end(), v);
+    if (it == l.end()) {
+        return std::make_pair(false, T());
+    }
+    std::pair<bool, T> ret = std::make_pair(true, *it);
+    l.erase(it);
+    return ret;
+}
+
 // set
 template<typename T>
 inline bool contains(const std::set<T>& s, const T& v)
@@ -200,6 +230,12 @@ inline size_t indexOf(const Container& c, const T& v)
 
 template<typename K, typename V>
 inline bool contains(const std::map<K, V>& m, const K& k)
+{
+    return m.find(k) != m.cend();
+}
+
+template<typename K, typename V>
+inline bool contains(const std::multimap<K, V>& m, const K& k)
 {
     return m.find(k) != m.cend();
 }
@@ -288,7 +324,7 @@ inline bool remove(Map& c, const T& v)
 template<typename Map, typename K>
 inline auto take(Map& m, const K& k) -> typename Map::mapped_type
 {
-    auto it = m.find(static_cast<int>(k));
+    auto it = m.find(k);
     if (it != m.end()) {
         auto v = it->second;
         m.erase(it);
@@ -329,6 +365,51 @@ inline typename C::const_iterator findLessOrEqual(const C& c, const typename C::
     auto it = c.upper_bound(k);
     if (it == c.cbegin()) {
         return c.cend();
+    }
+
+    return std::prev(it);
+}
+
+template<typename C>
+inline typename C::iterator findLessOrEqual(C& c, const typename C::key_type& k)
+{
+    if (c.empty()) {
+        return c.end();
+    }
+
+    auto it = c.upper_bound(k);
+    if (it == c.begin()) {
+        return c.end();
+    }
+
+    return std::prev(it);
+}
+
+template<typename C>
+inline typename C::const_iterator findLess(const C& c, const typename C::key_type& k)
+{
+    if (c.empty()) {
+        return c.cend();
+    }
+
+    auto it = c.lower_bound(k);
+    if (it == c.cbegin()) {
+        return c.cend();
+    }
+
+    return std::prev(it);
+}
+
+template<typename C>
+inline typename C::iterator findLess(C& c, const typename C::key_type& k)
+{
+    if (c.empty()) {
+        return c.end();
+    }
+
+    auto it = c.lower_bound(k);
+    if (it == c.begin()) {
+        return c.end();
     }
 
     return std::prev(it);

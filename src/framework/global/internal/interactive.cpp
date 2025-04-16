@@ -39,6 +39,7 @@
 #elif defined(Q_OS_WIN)
 #include <QDir>
 #include <QProcess>
+#include "platform/win/wininteractivehelper.h"
 #endif
 
 #include "log.h"
@@ -94,10 +95,10 @@ IInteractive::ButtonData Interactive::buttonData(Button b) const
 
     switch (b) {
     case IInteractive::Button::NoButton:    return ButtonData(int(b), "");
-    case IInteractive::Button::Ok:          return ButtonData(int(b), trc("global", "OK"));
+    case IInteractive::Button::Ok:          return ButtonData(int(b), trc("global", "OK"), accent);
     case IInteractive::Button::Save:        return ButtonData(int(b), trc("global", "Save"), accent);
     case IInteractive::Button::SaveAll:     return ButtonData(int(b), trc("global", "Save all"));
-    case IInteractive::Button::DontSave:    return ButtonData(int(b), trc("global", "Don't save"));
+    case IInteractive::Button::DontSave:    return ButtonData(int(b), trc("global", "Don’t save"));
     case IInteractive::Button::Open:        return ButtonData(int(b), trc("global", "Open"));
     case IInteractive::Button::Yes:         return ButtonData(int(b), trc("global", "Yes"), accent);
     case IInteractive::Button::YesToAll:    return ButtonData(int(b), trc("global", "Yes to all"), accent);
@@ -113,6 +114,12 @@ IInteractive::ButtonData Interactive::buttonData(Button b) const
     case IInteractive::Button::Apply:       return ButtonData(int(b), trc("global", "Apply"));
     case IInteractive::Button::Reset:       return ButtonData(int(b), trc("global", "Reset"));
     case IInteractive::Button::Continue:    return ButtonData(int(b), trc("global", "Continue"));
+    case IInteractive::Button::Next:
+    case IInteractive::Button::Back:
+    case IInteractive::Button::Select:
+    case IInteractive::Button::Clear:
+    case IInteractive::Button::Done:
+    case IInteractive::Button::RestoreDefaults:
     case IInteractive::Button::CustomButton: break;
     }
 
@@ -135,27 +142,47 @@ IInteractive::Result Interactive::info(const std::string& title, const Text& tex
 Interactive::Result Interactive::warning(const std::string& title, const std::string& text, const Buttons& buttons, const Button& defBtn,
                                          const Options& options) const
 {
-    return standardDialogResult(provider()->warning(title, text, buttonDataList(buttons), int(defBtn), options));
+    return standardDialogResult(provider()->warning(title, text, {}, buttonDataList(buttons), int(defBtn), options));
 }
 
 IInteractive::Result Interactive::warning(const std::string& title, const Text& text, const ButtonDatas& buttons,
                                           int defBtn,
                                           const Options& options) const
 {
-    return standardDialogResult(provider()->warning(title, text, buttons, defBtn, options));
+    return standardDialogResult(provider()->warning(title, text, {}, buttons, defBtn, options));
 }
 
-IInteractive::Result Interactive::error(const std::string& title, const std::string& text, const Buttons& buttons, const Button& defBtn,
-                                        const Options& options) const
+IInteractive::Result Interactive::warning(const std::string& title, const Text& text, const std::string& detailedText,
+                                          const ButtonDatas& buttons, int defBtn,
+                                          const Options& options) const
 {
-    return standardDialogResult(provider()->error(title, text, buttonDataList(buttons), int(defBtn), options));
+    return standardDialogResult(provider()->warning(title, text, detailedText, buttons, defBtn, options));
 }
 
-IInteractive::Result Interactive::error(const std::string& title, const Text& text, const ButtonDatas& buttons,
-                                        int defBtn,
+IInteractive::Result Interactive::error(const std::string& title, const std::string& text,
+                                        const Buttons& buttons, const Button& defBtn,
                                         const Options& options) const
 {
-    return standardDialogResult(provider()->error(title, text, buttons, defBtn, options));
+    return standardDialogResult(provider()->error(title, text, {}, buttonDataList(buttons), int(defBtn), options));
+}
+
+IInteractive::Result Interactive::error(const std::string& title, const Text& text,
+                                        const ButtonDatas& buttons, int defBtn,
+                                        const Options& options) const
+{
+    return standardDialogResult(provider()->error(title, text, {}, buttons, defBtn, options));
+}
+
+IInteractive::Result Interactive::error(const std::string& title, const Text& text, const std::string& detailedText,
+                                        const ButtonDatas& buttons, int defBtn,
+                                        const Options& options) const
+{
+    return standardDialogResult(provider()->error(title, text, detailedText, buttons, defBtn, options));
+}
+
+Ret Interactive::showProgress(const std::string& title, framework::Progress* progress) const
+{
+    return provider()->showProgress(title, progress);
 }
 
 mu::io::path_t Interactive::selectOpeningFile(const QString& title, const io::path_t& dir, const std::vector<std::string>& filter)
@@ -210,7 +237,8 @@ io::paths_t Interactive::selectMultipleDirectories(const QString& title, const i
 
 QColor Interactive::selectColor(const QColor& color, const QString& title)
 {
-    return QColorDialog::getColor(color, nullptr, title);
+    QColor selectedColor = QColorDialog::getColor(color, nullptr, title);
+    return selectedColor.isValid() ? selectedColor : color;
 }
 
 RetVal<Val> Interactive::open(const std::string& uri) const
@@ -296,6 +324,43 @@ Ret Interactive::openUrl(const std::string& url) const
 Ret Interactive::openUrl(const QUrl& url) const
 {
     return QDesktopServices::openUrl(url);
+}
+
+Ret Interactive::isAppExists(const std::string& appIdentifier) const
+{
+#ifdef Q_OS_MACOS
+    return MacOSInteractiveHelper::isAppExists(appIdentifier);
+#else
+    NOT_IMPLEMENTED;
+    UNUSED(appIdentifier);
+    return false;
+#endif
+}
+
+Ret Interactive::canOpenApp(const Uri& uri) const
+{
+#ifdef Q_OS_MACOS
+    return MacOSInteractiveHelper::canOpenApp(uri);
+#else
+    NOT_IMPLEMENTED;
+    UNUSED(uri);
+    return false;
+#endif
+}
+
+async::Promise<Ret> Interactive::openApp(const Uri& uri) const
+{
+#ifdef Q_OS_MACOS
+    return MacOSInteractiveHelper::openApp(uri);
+#elif defined(Q_OS_WIN)
+    return WinInteractiveHelper::openApp(uri);
+#else
+    UNUSED(uri);
+    return async::Promise<Ret>([](auto, auto reject) {
+        Ret ret = make_ret(Ret::Code::NotImplemented);
+        return reject(ret.code(), ret.text());
+    });
+#endif
 }
 
 Ret Interactive::revealInFileBrowser(const io::path_t& filePath) const

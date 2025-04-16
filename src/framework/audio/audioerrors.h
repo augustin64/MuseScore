@@ -44,10 +44,9 @@ enum class Err {
     NoLoadedSoundFonts = 331,
     SoundFontFailedLoad = 332,
     SoundFontFailedUnload = 333,
-    UndefinedSoundFontFormat = 334,
-    UnknownSynthType = 335,
+    UnknownSynthType = 334,
 
-    //common
+    // common
     InvalidTrackId = 340,
     InvalidMixerChannelId = 341,
     InvalidSequenceId = 342,
@@ -57,9 +56,12 @@ enum class Err {
     InvalidFxParams = 346,
     InvalidAudioSourceParams = 347,
     DisabledAudioExport = 348,
+    NoAudioToExport = 349,
+    ErrorEncode = 350,
+    UnknownPluginType = 351,
 
     // clock
-    InvalidTimeLoop = 350,
+    InvalidTimeLoop = 360,
 };
 
 inline Ret make_ret(Err e)

@@ -24,12 +24,7 @@
 #include <QGuiApplication>
 #include <QScreen>
 
-#include "log.h"
-
-#include "libmscore/masterscore.h"
-#include "libmscore/page.h"
-#include "libmscore/rendermidi.h"
-#include "engraving/infrastructure/paint.h"
+#include "engraving/dom/masterscore.h"
 
 #include "notationpainting.h"
 #include "notationviewstate.h"
@@ -42,9 +37,12 @@
 // #include "notationmidiinput.h"
 #include "notationparts.h"
 #include "../notationtypes.h"
+
+#include "log.h"
 #include "draw/types/pen.h"
 
 using namespace mu::notation;
+using namespace mu::engraving;
 
 Notation::Notation(mu::engraving::Score* score)
 {
@@ -125,11 +123,9 @@ void Notation::init()
 {
     bool isVertical = configuration()->canvasOrientation().val == framework::Orientation::Vertical;
     mu::engraving::MScore::setVerticalOrientation(isVertical);
-
-    mu::engraving::MScore::playRepeats = configuration()->isPlayRepeatsEnabled();
 }
 
-void Notation::setScore(mu::engraving::Score* score)
+void Notation::setScore(Score* score)
 {
     if (m_score == score) {
         return;
@@ -212,7 +208,8 @@ QString Notation::projectWorkTitleAndPartName() const
 
 bool Notation::isOpen() const
 {
-    return score()->isOpen();
+    const Score* s = score();
+    return s && s->isOpen();
 }
 
 void Notation::setIsOpen(bool open)
@@ -221,13 +218,33 @@ void Notation::setIsOpen(bool open)
         return;
     }
 
-    score()->setIsOpen(open);
+    Score* s = score();
+    IF_ASSERT_FAILED(s) {
+        return;
+    }
+
+    s->setIsOpen(open);
     m_openChanged.notify();
 }
 
 mu::async::Notification Notation::openChanged() const
 {
     return m_openChanged;
+}
+
+bool Notation::hasVisibleParts() const
+{
+    if (!m_parts || !m_parts->hasParts()) {
+        return false;
+    }
+
+    for (const Part* part : m_parts->partList()) {
+        if (part->show()) {
+            return true;
+        }
+    }
+
+    return false;
 }
 
 void Notation::notifyAboutNotationChanged()
@@ -238,6 +255,11 @@ void Notation::notifyAboutNotationChanged()
 void Notation::setViewMode(const ViewMode& viewMode)
 {
     m_painting->setViewMode(viewMode);
+}
+
+mu::async::Notification Notation::viewModeChanged() const
+{
+    return m_painting->viewModeChanged();
 }
 
 ViewMode Notation::viewMode() const
@@ -295,7 +317,7 @@ INotationPartsPtr Notation::parts() const
     return m_parts;
 }
 
-mu::engraving::Score* Notation::score() const
+Score* Notation::score() const
 {
     return m_score;
 }

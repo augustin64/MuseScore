@@ -36,8 +36,8 @@ class GeneralSettingsModel : public AbstractInspectorModel
     Q_PROPERTY(PropertyItem * isPlayable READ isPlayable CONSTANT)
     Q_PROPERTY(PropertyItem * isSmall READ isSmall CONSTANT)
 
-    Q_PROPERTY(QObject * playbackProxyModel READ playbackProxyModel NOTIFY playbackProxyModelChanged)
-    Q_PROPERTY(QObject * appearanceSettingsModel READ appearanceSettingsModel NOTIFY appearanceSettingsModelChanged)
+    Q_PROPERTY(QObject * playbackProxyModel READ playbackProxyModel CONSTANT)
+    Q_PROPERTY(QObject * appearanceSettingsModel READ appearanceSettingsModel CONSTANT)
 
 public:
     explicit GeneralSettingsModel(QObject* parent, IElementRepositoryService* repository);
@@ -50,13 +50,7 @@ public:
     QObject* playbackProxyModel() const;
     QObject* appearanceSettingsModel() const;
 
-public slots:
-    void setPlaybackProxyModel(mu::inspector::PlaybackProxyModel* playbackProxyModel);
-    void setAppearanceSettingsModel(mu::inspector::AppearanceSettingsModel* appearanceSettingsModel);
-
-signals:
-    void playbackProxyModelChanged(QObject* playbackProxyModel);
-    void appearanceSettingsModelChanged(QObject* appearanceSettingsModel);
+    void onCurrentNotationChanged() override;
 
 private:
     void createProperties() override;
@@ -65,6 +59,7 @@ private:
     void resetProperties() override;
     void onNotationChanged(const mu::engraving::PropertyIdSet& changedPropertyIdSet,
                            const mu::engraving::StyleIdSet& changedStyleIdSet) override;
+    void onVisibleChanged(bool visible);
 
     void loadProperties(const mu::engraving::PropertyIdSet& propertyIdSet);
 
@@ -75,6 +70,8 @@ private:
 
     PlaybackProxyModel* m_playbackProxyModel = nullptr;
     AppearanceSettingsModel* m_appearanceSettingsModel = nullptr;
+
+    QList<engraving::EngravingItem*> m_elementsForIsSmallProperty;
 };
 }
 

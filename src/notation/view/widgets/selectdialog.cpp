@@ -26,7 +26,7 @@
  Implementation of class Selection plus other selection related functions.
 */
 
-#include "engraving/libmscore/system.h"
+#include "engraving/dom/system.h"
 
 #include "notationtypes.h"
 
@@ -57,7 +57,11 @@ SelectDialog::SelectDialog(QWidget* parent)
 
     sameSubtype->setEnabled(m_element->subtype() != -1);
     subtype->setEnabled(m_element->subtype() != -1);
-    inSelection->setEnabled(!m_element->score()->selection().isSingle());
+
+    const auto isSingleSelection = m_element->score()->selection().isSingle();
+    inSelection->setCheckState(isSingleSelection ? Qt::CheckState::Unchecked : Qt::CheckState::Checked);
+    inSelection->setEnabled(!isSingleSelection);
+
     sameDuration->setEnabled(m_element->isRest());
 
     connect(buttonBox, &QDialogButtonBox::clicked, this, &SelectDialog::buttonClicked);
@@ -108,6 +112,30 @@ FilterElementsOptions SelectDialog::elementOptions() const
         options.durationTicks = rest->actualTicks();
     } else {
         options.durationTicks = Fraction(-1, 1);
+    }
+
+    if (sameBeat->isChecked()) {
+        options.beat = m_element->beat();
+    } else {
+        options.beat = Fraction(0, 0);
+    }
+
+    if (sameMeasure->isChecked()) {
+        auto m = m_element->findMeasure();
+        if (!m && m_element->isSpannerSegment()) {
+            if (auto ss = toSpannerSegment(m_element)) {
+                if (auto s = ss->spanner()) {
+                    if (auto se = s->startElement()) {
+                        if (auto mse = se->findMeasure()) {
+                            m = mse;
+                        }
+                    }
+                }
+            }
+        }
+        options.measure = m;
+    } else {
+        options.measure = nullptr;
     }
 
     options.voice = sameVoice->isChecked() ? static_cast<int>(m_element->voice()) : -1;

@@ -1,13 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<museScore version="4.00">
+<museScore version="4.30">
   <Score>
-    <LayerTag id="0" tag="default"></LayerTag>
-    <currentLayer>0</currentLayer>
     <Division>480</Division>
     <Style>
-      <frameSystemDistance>13</frameSystemDistance>
-      <measureSpacing>1.14</measureSpacing>
+      <frameSystemDistance>7</frameSystemDistance>
       <voltaPosAbove x="0" y="-2"/>
+      <defaultsVersion>114</defaultsVersion>
       <Spatium>1.764</Spatium>
       </Style>
     <showInvisible>1</showInvisible>
@@ -20,19 +18,18 @@
     <metaTag name="lyricist"></metaTag>
     <metaTag name="movementNumber"></metaTag>
     <metaTag name="movementTitle"></metaTag>
-    <metaTag name="poet"></metaTag>
     <metaTag name="source"></metaTag>
     <metaTag name="translator"></metaTag>
     <metaTag name="workNumber"></metaTag>
     <metaTag name="workTitle"></metaTag>
-    <Part>
+    <Part id="1">
       <Staff id="1">
         <StaffType group="pitched">
           </StaffType>
-        <bracket type="-1" span="1" col="0"/>
+        <bracket type="-1" span="1" col="0" visible="1"/>
         </Staff>
       <trackName>Flute</trackName>
-      <Instrument>
+      <Instrument id="flute">
         <trackName>Flute</trackName>
         <minPitchP>59</minPitchP>
         <maxPitchP>98</maxPitchP>
@@ -72,7 +69,7 @@
         <boxAutoSize>0</boxAutoSize>
         <Text>
           <style>title</style>
-          <text><font size="24"/><font face="Times New Roman"/>Tuplets</text>
+          <text>Tuplets</text>
           </Text>
         </VBox>
       <Measure>
@@ -80,7 +77,11 @@
           <Clef>
             <concertClefType>G</concertClefType>
             <transposingClefType>G</transposingClefType>
+            <isHeader>1</isHeader>
             </Clef>
+          <KeySig>
+            <concertKey>0</concertKey>
+            </KeySig>
           <TimeSig>
             <sigN>4</sigN>
             <sigD>4</sigD>
@@ -94,8 +95,8 @@
               </Number>
             </Tuplet>
           <Beam>
-            <l1>19</l1>
-            <l2>19</l2>
+            <l1>38</l1>
+            <l2>38</l2>
             </Beam>
           <Chord>
             <durationType>16th</durationType>
@@ -159,8 +160,8 @@
               </Number>
             </Tuplet>
           <Beam>
-            <l1>20</l1>
-            <l2>19</l2>
+            <l1>38</l1>
+            <l2>36</l2>
             </Beam>
           <Chord>
             <durationType>eighth</durationType>
@@ -191,8 +192,8 @@
               </Note>
             </Chord>
           <Beam>
-            <l1>19</l1>
-            <l2>21</l2>
+            <l1>38</l1>
+            <l2>42</l2>
             </Beam>
           <Chord>
             <durationType>eighth</durationType>
@@ -258,8 +259,8 @@
             </Chord>
           <endTuplet/>
           <Beam>
-            <l1>17</l1>
-            <l2>17</l2>
+            <l1>34</l1>
+            <l2>34</l2>
             </Beam>
           <Chord>
             <durationType>eighth</durationType>
@@ -284,8 +285,8 @@
               </Number>
             </Tuplet>
           <Beam>
-            <l1>20</l1>
-            <l2>19</l2>
+            <l1>40</l1>
+            <l2>38</l2>
             </Beam>
           <Chord>
             <durationType>16th</durationType>
@@ -322,8 +323,8 @@
             <direction>up</direction>
             </Tuplet>
           <Beam>
-            <l1>31</l1>
-            <l2>27</l2>
+            <l1>56</l1>
+            <l2>56</l2>
             </Beam>
           <Chord>
             <durationType>16th</durationType>

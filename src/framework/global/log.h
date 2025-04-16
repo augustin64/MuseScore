@@ -23,34 +23,13 @@
 #ifndef MU_FRAMEWORK_LOG_H
 #define MU_FRAMEWORK_LOG_H
 
+#include <cstdlib>
 #include <cassert>
 
-#include "thirdparty/haw_profiler/src/profiler.h"
-#include "thirdparty/haw_logger/logger/log_base.h"
+#include "profiler.h"
+#include "logger.h"
 
-#define ASSERT_X(msg) \
-    LOGE() << "\"ASSERT!\": " << msg << ", file: " << __FILE__ << ", line: " << __LINE__; \
-    assert(false); \
-
-#define IF_ASSERT_FAILED_X(cond, msg) if (!(cond)) { \
-        LOGE() << "\"ASSERT FAILED!\": " << msg << ", file: " << __FILE__ << ", line: " << __LINE__; \
-        assert(cond); \
-} \
-    if (!(cond)) \
-
-#define IF_ASSERT_FAILED(cond) IF_ASSERT_FAILED_X(cond, #cond)
-
-#define IF_FAILED(cond) if (!(cond)) { \
-        LOGE() << "\"FAILED!\": " << #cond << ", file: " << __FILE__ << ", line: " << __LINE__; \
-} \
-    if (!(cond)) \
-
-#define UNUSED(x) (void)x;
-
-#define UNREACHABLE \
-    LOGE() << "\"UNREACHABLE!\": " << ", file: " << __FILE__ << ", line: " << __LINE__; \
-    ASSERT_X("UNREACHABLE was reached"); \
-
+#undef FALLTHROUGH
 
 #if __has_cpp_attribute(fallthrough)
 #define MU_FALLTHROUGH() [[fallthrough]]

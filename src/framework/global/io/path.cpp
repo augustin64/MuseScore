@@ -21,6 +21,10 @@
  */
 #include "path.h"
 
+#ifndef NO_QT_SUPPORT
+#include <QDir>
+#endif
+
 #include "stringutils.h"
 #include "fileinfo.h"
 
@@ -97,9 +101,19 @@ path_t::path_t(const QString& s)
 {
 }
 
+path_t::path_t(const QUrl& u)
+    : m_path(u.toLocalFile().toStdString())
+{
+}
+
 QString path_t::toQString() const
 {
     return QString::fromStdString(m_path);
+}
+
+QUrl path_t::toQUrl() const
+{
+    return QUrl::fromLocalFile(QString::fromStdString(m_path));
 }
 
 std::wstring path_t::toStdWString() const
@@ -272,4 +286,13 @@ std::string mu::io::pathsToString(const paths_t& ps, const std::string& delim)
     }
 
     return result;
+}
+
+path_t mu::io::toNativeSeparators(const path_t& path)
+{
+#ifndef NO_QT_SUPPORT
+    return QDir::toNativeSeparators(path.toQString());
+#else
+    return path;
+#endif
 }

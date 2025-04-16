@@ -45,11 +45,13 @@ public:
     bool endTarget(bool endDraw = false) override;
     bool isActive() const override;
 
-    void beginObject(const std::string& name, const PointF& pagePos) override;
+    void beginObject(const std::string& name) override;
     void endObject() override;
 
     void setAntialiasing(bool arg) override;
     void setCompositionMode(CompositionMode mode) override;
+    void setWindow(const RectF& window) override;
+    void setViewport(const RectF& viewport) override;
 
     void setFont(const Font& font) override;
     const Font& font() const override;
@@ -82,6 +84,8 @@ public:
 
     void drawPixmap(const PointF& point, const QPixmap& pm) override;
     void drawTiledPixmap(const RectF& rect, const QPixmap& pm, const PointF& offset = PointF()) override;
+
+    bool hasClipping() const override;
 
     void setClipRect(const RectF& rect) override;
     void setClipping(bool enable) override;

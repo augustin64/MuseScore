@@ -27,6 +27,7 @@
 
 #ifndef NO_QT_SUPPORT
 #include <QPixmap>
+#include <QImage>
 #include <QBuffer>
 #endif
 
@@ -38,6 +39,8 @@ public:
     Pixmap() = default;
     Pixmap(Size size)
         : m_size(size) {}
+    Pixmap(int w, int h)
+        : m_size(Size(w, h)) {}
 
     int width() const { return m_size.width(); }
     int height() const { return m_size.height(); }
@@ -48,26 +51,54 @@ public:
 
     unsigned int key() const { return m_key; }
 
+    bool operator==(const Pixmap& o) const { return m_size == o.m_size && m_key == o.m_key && m_data == o.m_data; }
+    bool operator!=(const Pixmap& o) const { return !this->operator==(o); }
+
 #ifndef NO_QT_SUPPORT
-    static Pixmap fromQPixmap(const QPixmap& qtPixmap)
+    static Pixmap fromQImage(const QImage& qim)
     {
         QByteArray bytes;
         QBuffer buffer(&bytes);
         buffer.open(QIODevice::WriteOnly);
-        qtPixmap.save(&buffer, "PNG");
+        qim.save(&buffer, "PNG");
 
-        Pixmap result({ qtPixmap.width(), qtPixmap.height() });
-        result.setData(ByteArray::fromQByteArray(bytes));
+        Pixmap px(qim.width(), qim.height());
+        px.setData(ByteArray::fromQByteArray(bytes));
 
-        return result;
+        return px;
     }
 
-    static QPixmap toQPixmap(const Pixmap& pixmap)
+    static QImage toQImage(const Pixmap& px)
     {
-        QPixmap qtPixMap;
-        qtPixMap.loadFromData(pixmap.data().toQByteArrayNoCopy());
+        QImage qim(px.width(), px.height(), QImage::Format_ARGB32_Premultiplied);
+        ByteArray data = px.data();
+        if (!data.empty()) {
+            qim.loadFromData(data.toQByteArrayNoCopy());
+        }
+        return qim;
+    }
 
-        return qtPixMap;
+    static Pixmap fromQPixmap(const QPixmap& qpx)
+    {
+        QByteArray bytes;
+        QBuffer buffer(&bytes);
+        buffer.open(QIODevice::WriteOnly);
+        qpx.save(&buffer, "PNG");
+
+        Pixmap px(qpx.width(), qpx.height());
+        px.setData(ByteArray::fromQByteArray(bytes));
+
+        return px;
+    }
+
+    static QPixmap toQPixmap(const Pixmap& px)
+    {
+        QPixmap qpx(px.width(), px.height());
+        ByteArray data = px.data();
+        if (!data.empty()) {
+            qpx.loadFromData(data.toQByteArrayNoCopy());
+        }
+        return qpx;
     }
 
 #endif

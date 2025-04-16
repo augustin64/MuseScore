@@ -36,7 +36,6 @@
 using namespace mu;
 using namespace mu::async;
 using namespace mu::audio;
-using namespace mu::midi;
 
 TrackSequence::TrackSequence(const TrackSequenceId id)
     : m_id(id)
@@ -46,6 +45,10 @@ TrackSequence::TrackSequence(const TrackSequenceId id)
     m_clock = std::make_shared<Clock>();
     m_player = std::make_shared<SequencePlayer>(this, m_clock);
     m_audioIO = std::make_shared<SequenceIO>(this);
+
+    AudioEngine::instance()->modeChanged().onNotify(this, [this]() {
+        m_prevActiveTrackId = INVALID_TRACK_ID;
+    });
 
     mixer()->addClock(m_clock);
 }
@@ -86,11 +89,21 @@ RetVal2<TrackId, AudioParams> TrackSequence::addTrack(const std::string& trackNa
 
     TrackId newId = newTrackId();
 
+    auto onOffStreamReceived = [this](const TrackId trackId) {
+        if (m_prevActiveTrackId == INVALID_TRACK_ID) {
+            mixer()->setTracksToProcessWhenIdle({ trackId });
+        } else {
+            mixer()->setTracksToProcessWhenIdle({ m_prevActiveTrackId, trackId });
+        }
+
+        m_prevActiveTrackId = trackId;
+    };
+
     EventTrackPtr trackPtr = std::make_shared<EventTrack>();
     trackPtr->id = newId;
     trackPtr->name = trackName;
     trackPtr->setPlaybackData(playbackData);
-    trackPtr->inputHandler = std::make_shared<EventAudioSource>(newId, playbackData);
+    trackPtr->inputHandler = std::make_shared<EventAudioSource>(newId, playbackData, onOffStreamReceived);
     trackPtr->outputHandler = mixer()->addChannel(newId, trackPtr->inputHandler).val;
     trackPtr->setInputParams(requiredParams.in);
     trackPtr->setOutputParams(requiredParams.out);
@@ -137,6 +150,37 @@ RetVal2<TrackId, AudioParams> TrackSequence::addTrack(const std::string& trackNa
     result.ret = make_ret(Err::NoError);
     result.val1 = newId;
     result.val2 = { trackPtr->inputParams(), trackPtr->outputParams() };
+
+    return result;
+}
+
+RetVal2<TrackId, AudioOutputParams> TrackSequence::addAuxTrack(const std::string& trackName, const AudioOutputParams& requiredOutputParams)
+{
+    ONLY_AUDIO_WORKER_THREAD;
+
+    RetVal2<TrackId, AudioOutputParams> result;
+    result.val1 = -1;
+
+    IF_ASSERT_FAILED(mixer()) {
+        result.ret = make_ret(Err::Undefined);
+        return result;
+    }
+
+    TrackId newId = newTrackId();
+
+    EventTrackPtr trackPtr = std::make_shared<EventTrack>();
+    trackPtr->id = newId;
+    trackPtr->name = trackName;
+    trackPtr->outputHandler = mixer()->addAuxChannel(newId).val;
+    trackPtr->setOutputParams(requiredOutputParams);
+
+    m_trackAboutToBeAdded.send(trackPtr);
+    m_tracks.emplace(newId, trackPtr);
+    m_trackAdded.send(newId);
+
+    result.ret = make_ret(Err::NoError);
+    result.val1 = newId;
+    result.val2 = trackPtr->outputParams();
 
     return result;
 }
@@ -233,7 +277,7 @@ TrackPtr TrackSequence::track(const TrackId id) const
     return nullptr;
 }
 
-TracksMap TrackSequence::allTracks() const
+const TracksMap& TrackSequence::allTracks() const
 {
     ONLY_AUDIO_WORKER_THREAD;
 

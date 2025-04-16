@@ -31,26 +31,26 @@
 #include "translation.h"
 
 #include "engraving/types/typesconv.h"
-#include "libmscore/barline.h"
-#include "libmscore/chord.h"
-#include "libmscore/jump.h"
-#include "libmscore/key.h"
-#include "libmscore/keysig.h"
-#include "libmscore/marker.h"
-#include "libmscore/measure.h"
-#include "libmscore/measurebase.h"
-#include "libmscore/mscore.h"
-#include "libmscore/page.h"
-#include "libmscore/part.h"
-#include "libmscore/rehearsalmark.h"
-#include "libmscore/rest.h"
-#include "libmscore/score.h"
-#include "libmscore/staff.h"
-#include "libmscore/system.h"
-#include "libmscore/tempo.h"
-#include "libmscore/tempotext.h"
-#include "libmscore/text.h"
-#include "libmscore/timesig.h"
+#include "engraving/dom/barline.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/jump.h"
+#include "engraving/dom/key.h"
+#include "engraving/dom/keysig.h"
+#include "engraving/dom/marker.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/measurebase.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/rehearsalmark.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/score.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/system.h"
+#include "engraving/dom/tempo.h"
+#include "engraving/dom/tempotext.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/timesig.h"
 
 #include "log.h"
 
@@ -1299,24 +1299,21 @@ void Timeline::keyMeta(Segment* seg, int* stagger, int pos)
 
         Key globalKey;
         if (seg) {
-            globalKey = stave->key(seg->tick());
+            globalKey = stave->concertKey(seg->tick());
         } else {
-            globalKey = stave->key(Fraction(0, 1));
+            globalKey = stave->concertKey(Fraction(0, 1));
         }
         if (currKeySig) {
             if (currKeySig->generated()) {
                 return;
             }
-            globalKey = currKeySig->key();
+            globalKey = currKeySig->concertKey();
         }
 
         if (currKeySig && currKeySig->isAtonal()) {
             globalKey = Key::INVALID;
         } else if (currKeySig && currKeySig->isCustom()) {
             globalKey = Key::NUM_OF;
-        } else {
-            const Interval currInterval = stave->part()->instrument()->transpose();
-            globalKey = transposeKey(globalKey, currInterval, stave->part()->preferSharpFlat());
         }
 
         std::map<Key, int>::iterator it = keyFrequencies.find(globalKey);
@@ -1460,7 +1457,10 @@ void Timeline::jumpMarkerMeta(Segment* seg, int* stagger, int pos)
         measure = marker->measure();
         if (marker->markerType() == MarkerType::FINE
             || marker->markerType() == MarkerType::TOCODA
-            || marker->markerType() == MarkerType::TOCODASYM) {
+            || marker->markerType() == MarkerType::TOCODASYM
+            || marker->markerType() == MarkerType::DA_CODA
+            || marker->markerType() == MarkerType::DA_DBLCODA
+            ) {
             elementType = ElementType::MARKER;
             std::get<2>(_repeatInfo) = std::get<3>(_repeatInfo);
             std::get<3>(_repeatInfo) = nullptr;
@@ -2026,7 +2026,7 @@ void Timeline::drawSelection()
         // ws: If style flag Sid::createMultiMeasureRests is not set, then
         // measure->mmRest() is not valid
 
-        if (measure->mmRest() && measure->score()->styleB(Sid::createMultiMeasureRests)) {
+        if (measure->mmRest() && measure->score()->style().styleB(Sid::createMultiMeasureRests)) {
             int mmrestCount = measure->mmRest()->mmRestCount();
             Measure* tmpMeasure = measure;
             for (int mmrestMeasure = 0; mmrestMeasure < mmrestCount; mmrestMeasure++) {
@@ -2052,7 +2052,7 @@ void Timeline::drawSelection()
 
         if (stave == -1 && it != metaLabelsSet.end()) {
             //Make sure the element is correct
-            std::vector<EngravingItem*> elementList = interaction()->selection()->elements();
+            const std::vector<EngravingItem*>& elementList = interaction()->selection()->elements();
             EngravingItem* targetElement = static_cast<EngravingItem*>(graphicsItem->data(4).value<void*>());
             Segment* seg = static_cast<Segment*>(graphicsItem->data(6).value<void*>());
 
@@ -2646,7 +2646,7 @@ void Timeline::updateView()
     for (Measure* currMeasure = score()->firstMeasure(); currMeasure; currMeasure = currMeasure->nextMeasure(), ++measureIndex) {
         System* system = currMeasure->system();
 
-        if (currMeasure->mmRest() && score()->styleB(Sid::createMultiMeasureRests)) {
+        if (currMeasure->mmRest() && score()->style().styleB(Sid::createMultiMeasureRests)) {
             // Handle mmRests
             Measure* mmrestMeasure = currMeasure->mmRest();
             system = mmrestMeasure->system();

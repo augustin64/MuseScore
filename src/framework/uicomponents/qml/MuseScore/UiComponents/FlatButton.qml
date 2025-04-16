@@ -32,6 +32,11 @@ FocusScope {
     property string text: ""
     property int textFormat: Text.AutoText
 
+    //!NOTE: used to sort buttons inside a button box
+    property int buttonId: 0
+    property int buttonRole: 0
+    property bool isLeftSide: false
+
     property string toolTipTitle: ""
     property string toolTipDescription: ""
     property string toolTipShortcut: ""
@@ -93,12 +98,13 @@ FocusScope {
     }
 
     signal clicked(var mouse)
-    signal pressAndHold(var mouse)
+    // There are intentionally no "forwarded" signals here from the MouseArea, like `pressAndHold`
+    // See https://github.com/musescore/MuseScore/issues/16012#issuecomment-1399656043
 
     objectName: root.text
 
-    implicitWidth: contentLoader.implicitWidth + 2 * margins
-    implicitHeight: Math.max(contentLoader.implicitHeight, ui.theme.defaultButtonSize)
+    implicitWidth: contentLoader.itemImplicitWidth + 2 * margins
+    implicitHeight: Math.max(contentLoader.itemImplicitHeight, ui.theme.defaultButtonSize)
 
     opacity: root.enabled ? 1.0 : ui.theme.itemOpacityDisabled
 
@@ -176,6 +182,9 @@ FocusScope {
         anchors.verticalCenter: parent ? parent.verticalCenter : undefined
         anchors.horizontalCenter: parent ? parent.horizontalCenter : undefined
 
+        readonly property real itemImplicitWidth: item ? item.implicitWidth : 0
+        readonly property real itemImplicitHeight: item ? item.implicitHeight : 0
+
         sourceComponent: root.contentItem ? root.contentItem : defaultContentComponent
         readonly property Component defaultContentComponent: root.isVertical ? verticalContentComponent : horizontalContentComponent
     }
@@ -184,6 +193,7 @@ FocusScope {
         id: verticalContentComponent
 
         ColumnLayout {
+            width: Math.min(implicitWidth, root.width)
             spacing: 4
 
             StyledIconLabel {
@@ -194,6 +204,7 @@ FocusScope {
             }
 
             StyledTextLabel {
+                Layout.fillWidth: true
                 Layout.alignment: Qt.AlignHCenter
                 text: root.text
                 font: root.textFont
@@ -208,6 +219,7 @@ FocusScope {
         id: horizontalContentComponent
 
         RowLayout {
+            width: Math.min(implicitWidth, root.width)
             spacing: 8
 
             StyledIconLabel {
@@ -218,6 +230,7 @@ FocusScope {
             }
 
             StyledTextLabel {
+                Layout.fillWidth: true
                 Layout.alignment: Qt.AlignVCenter
                 text: root.text
                 font: root.textFont
@@ -246,7 +259,7 @@ FocusScope {
 
             PropertyChanges {
                 target: root
-                implicitWidth: Math.max(contentLoader.implicitWidth + 2 * root.margins,
+                implicitWidth: Math.max(contentLoader.itemImplicitWidth + 2 * root.margins,
                                         root.minWidth)
                 implicitHeight: ui.theme.defaultButtonSize
             }
@@ -288,10 +301,6 @@ FocusScope {
 
         onPressed: {
             ui.tooltip.hide(root, true)
-        }
-
-        onPressAndHold: function(mouse) {
-            root.pressAndHold(mouse)
         }
 
         onContainsMouseChanged: {

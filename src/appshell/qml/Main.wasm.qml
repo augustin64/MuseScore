@@ -33,7 +33,7 @@ ApplicationWindow {
     height: 480
 
     visible: true
-    title: qsTrc("appshell", "MuseScore")
+    title: qsTrc("appshell", "MuseScore Studio")
 
     header: ToolBar {
         contentHeight: 40
@@ -61,9 +61,6 @@ ApplicationWindow {
             id: notationView
             Layout.fillWidth: true
             Layout.fillHeight: true
-
-            Component.onCompleted: {
-            }
         }
 
     }

@@ -21,7 +21,7 @@
  */
 #include "selectionfiltermodel.h"
 
-#include "engraving/libmscore/select.h"
+#include "engraving/dom/select.h"
 
 #include "log.h"
 #include "translation.h"
@@ -196,7 +196,7 @@ QString SelectionFilterModel::titleForType(SelectionFilterType type) const
     case SelectionFilterType::ARPEGGIO:
         return qtrc("notation", "Arpeggios");
     case SelectionFilterType::GLISSANDO:
-        return qtrc("notation", "Glissandi");
+        return qtrc("notation", "Glissandos");
     case SelectionFilterType::FRET_DIAGRAM:
         return qtrc("notation", "Fretboard diagrams");
     case SelectionFilterType::BREATH:

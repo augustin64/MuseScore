@@ -26,8 +26,13 @@
 #include "global/realfn.h"
 #include "mpe/mpetypes.h"
 
-#include "libmscore/score.h"
-#include "libmscore/repeatlist.h"
+#include "dom/score.h"
+#include "dom/repeatlist.h"
+#include "dom/tempo.h"
+#include "dom/chord.h"
+#include "dom/note.h"
+#include "dom/tie.h"
+
 #include "types/constants.h"
 
 namespace mu::engraving {
@@ -41,17 +46,84 @@ inline int timestampToTick(const Score* score, const mpe::timestamp_t timestamp)
     return score->repeatList().utime2utick(timestamp / 1000000.f);
 }
 
-inline mpe::duration_t durationFromTicks(const double beatsPerSecond, const int durationTicks, const int ticksPerBeat = Constants::division)
+inline mpe::duration_t pauseUs(const Score* score, const int tick)
+{
+    double secs = score->tempomap()->pauseSecs(tick);
+    return RealIsNull(secs) ? 0 : secs* 1000000;
+}
+
+inline mpe::duration_t durationFromStartAndEndTick(const Score* score, const int startTick, const int endTick,
+                                                   const int tickPositionOffset)
+{
+    mpe::timestamp_t startTimestamp = timestampFromTicks(score, startTick + tickPositionOffset);
+    mpe::timestamp_t endTimestamp = timestampFromTicks(score, endTick + tickPositionOffset);
+    mpe::duration_t pause = pauseUs(score, endTick);
+
+    return endTimestamp - startTimestamp - pause;
+}
+
+inline mpe::duration_t durationFromStartAndTicks(const Score* score, const int startTick, const int durationTicks,
+                                                 const int tickPositionOffset)
+{
+    return durationFromStartAndEndTick(score, startTick, startTick + durationTicks, tickPositionOffset);
+}
+
+struct TimestampAndDuration {
+    mpe::timestamp_t timestamp = 0;
+    mpe::duration_t duration = 0;
+};
+
+inline TimestampAndDuration timestampAndDurationFromStartAndDurationTicks(const Score* score,
+                                                                          const int startTick, const int durationTicks,
+                                                                          const int tickPositionOffset)
+{
+    int startTickWithOffset = startTick + tickPositionOffset;
+    mpe::timestamp_t startTimestamp = timestampFromTicks(score, startTickWithOffset);
+    mpe::timestamp_t endTimestamp = timestampFromTicks(score, startTickWithOffset + durationTicks);
+    mpe::duration_t pause = pauseUs(score, startTick + durationTicks);
+    mpe::duration_t duration = endTimestamp - startTimestamp - pause;
+
+    return { startTimestamp, duration };
+}
+
+inline mpe::duration_t durationFromTempoAndTicks(const double beatsPerSecond, const int durationTicks,
+                                                 const int ticksPerBeat = Constants::DIVISION)
 {
     float beatsNumber = static_cast<float>(durationTicks) / static_cast<float>(ticksPerBeat);
 
     return (beatsNumber / beatsPerSecond) * 1000000;
 }
 
-static constexpr int CROTCHET_TICKS = Constants::division;
-static constexpr int QUAVER_TICKS = Constants::division / 2;
-static constexpr int SEMIQUAVER_TICKS = Constants::division / 4;
-static constexpr int DEMISEMIQUAVER_TICKS = Constants::division / 8;
+inline int ticksFromTempoAndDuration(const double beatsPerSecond, const mpe::duration_t duration,
+                                     const int ticksPerBeat = Constants::DIVISION)
+{
+    return (duration * beatsPerSecond * ticksPerBeat) / 1000000;
+}
+
+inline mpe::duration_t tiedNotesTotalDuration(const Score* score, const Note* firstNote, mpe::duration_t firstNoteDuration,
+                                              const int tickPositionOffset)
+{
+    //! NOTE: calculate the duration from the 2nd note, since the duration of the 1st note is already known
+    const Note* secondNote = firstNote->tieFor()->endNote();
+    IF_ASSERT_FAILED(secondNote) {
+        return firstNoteDuration;
+    }
+
+    int startTick = secondNote->tick().ticks();
+
+    const Note* lastNote = firstNote->lastTiedNote();
+
+    int endTick = lastNote
+                  ? lastNote->tick().ticks() + lastNote->chord()->actualTicks().ticks()
+                  : startTick + secondNote->chord()->actualTicks().ticks();
+
+    return firstNoteDuration + durationFromStartAndEndTick(score, startTick, endTick, tickPositionOffset);
+}
+
+static constexpr int CROTCHET_TICKS = Constants::DIVISION;
+static constexpr int QUAVER_TICKS = Constants::DIVISION / 2;
+static constexpr int SEMIQUAVER_TICKS = Constants::DIVISION / 4;
+static constexpr int DEMISEMIQUAVER_TICKS = Constants::DIVISION / 8;
 
 static const double PRESTISSIMO_BPS_BOUND = RealRound(200 /*bpm*/ / 60.f /*secs*/, 2);
 static const double PRESTO_BPS_BOUND = RealRound(168 /*bpm*/ / 60.f /*secs*/, 2);

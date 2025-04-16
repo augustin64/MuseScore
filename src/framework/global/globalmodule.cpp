@@ -24,16 +24,18 @@
 #include "modularity/ioc.h"
 #include "internal/globalconfiguration.h"
 
-#include "log.h"
+#include "logger.h"
 #include "logremover.h"
-#include "thirdparty/haw_logger/logger/logdefdest.h"
-#include "version.h"
-#include "config.h"
+#include "thirdparty/kors_logger/src/logdefdest.h"
+#include "profiler.h"
+#include "muversion.h"
 
 #include "internal/application.h"
 #include "internal/interactive.h"
 #include "internal/invoker.h"
 #include "internal/cryptographichash.h"
+#include "internal/process.h"
+#include "internal/systeminfo.h"
 
 #include "runtime.h"
 #include "async/processevents.h"
@@ -44,15 +46,13 @@
 
 #include "diagnostics/idiagnosticspathsregister.h"
 
-#include "config.h"
+#include "log.h"
 
 using namespace mu::framework;
 using namespace mu::modularity;
 using namespace mu::io;
 
-static std::shared_ptr<GlobalConfiguration> s_globalConf = std::make_shared<GlobalConfiguration>();
-
-static Invoker s_asyncInvoker;
+std::shared_ptr<Invoker> GlobalModule::s_asyncInvoker = {};
 
 std::string GlobalModule::moduleName() const
 {
@@ -61,11 +61,17 @@ std::string GlobalModule::moduleName() const
 
 void GlobalModule::registerExports()
 {
+    m_configuration = std::make_shared<GlobalConfiguration>();
+    s_asyncInvoker = std::make_shared<Invoker>();
+    m_systemInfo = std::make_shared<SystemInfo>();
+
     ioc()->registerExport<IApplication>(moduleName(), new Application());
-    ioc()->registerExport<IGlobalConfiguration>(moduleName(), s_globalConf);
+    ioc()->registerExport<IGlobalConfiguration>(moduleName(), m_configuration);
+    ioc()->registerExport<ISystemInfo>(moduleName(), m_systemInfo);
     ioc()->registerExport<IInteractive>(moduleName(), new Interactive());
     ioc()->registerExport<IFileSystem>(moduleName(), new FileSystem());
     ioc()->registerExport<ICryptographicHash>(moduleName(), new CryptographicHash());
+    ioc()->registerExport<IProcess>(moduleName(), new Process());
 }
 
 void GlobalModule::onPreInit(const IApplication::RunMode& mode)
@@ -78,46 +84,64 @@ void GlobalModule::onPreInit(const IApplication::RunMode& mode)
     settings()->load();
 
     //! --- Setup logger ---
-    using namespace haw::logger;
+    using namespace mu::logger;
     Logger* logger = Logger::instance();
     logger->clearDests();
 
     //! Console
-    if (mode == IApplication::RunMode::Editor || mu::runtime::isDebug()) {
-        logger->addDest(new ConsoleLogDest(LogLayout("${time} | ${type|5} | ${thread} | ${tag|10} | ${message}")));
+    if (mode == IApplication::RunMode::GuiApp || mu::runtime::isDebug()) {
+        logger->addDest(new ConsoleLogDest(LogLayout("${time} | ${type|5} | ${thread|15} | ${tag|15} | ${message}")));
     }
 
-    io::path_t logPath = s_globalConf->userAppDataPath() + "/logs";
+    io::path_t logPath = m_configuration->userAppDataPath() + "/logs";
     fileSystem()->makePath(logPath);
 
-    //! Remove old logs
-    LogRemover::removeLogs(logPath, 7, u"MuseScore_yyMMdd_HHmmss.log");
+    io::path_t logFilePath = logPath;
+    String logFileNamePattern;
 
-    //! File, this creates a file named "data/logs/MuseScore_yyMMdd_HHmmss.log"
-    io::path_t logFilePath = logPath + "/MuseScore_"
-                             + QDateTime::currentDateTime().toString("yyMMdd_HHmmss")
-                             + ".log";
+    if (mode == IApplication::RunMode::AudioPluginRegistration) {
+        logFileNamePattern = u"audiopluginregistration_yyMMdd.log";
+
+        //! This creates a file named "data/logs/audiopluginregistration_yyMMdd.log"
+        logFilePath += "/audiopluginregistration_"
+                       + QDateTime::currentDateTime().toString("yyMMdd")
+                       + ".log";
+    } else {
+        logFileNamePattern = u"MuseScore_yyMMdd_HHmmss.log";
+
+        //! This creates a file named "data/logs/MuseScore_yyMMdd_HHmmss.log"
+        logFilePath += "/MuseScore_"
+                       + QDateTime::currentDateTime().toString("yyMMdd_HHmmss")
+                       + ".log";
+    }
+
+    //! Remove old logs
+    LogRemover::removeLogs(logPath, 7, logFileNamePattern);
 
     FileLogDest* logFile = new FileLogDest(logFilePath.toStdString(),
-                                           LogLayout("${datetime} | ${type|5} | ${thread} | ${tag|10} | ${message}"));
+                                           LogLayout("${datetime} | ${type|5} | ${thread|15} | ${tag|15} | ${message}"));
 
     logger->addDest(logFile);
 
-#ifdef LOGGER_DEBUGLEVEL_ENABLED
-    logger->setLevel(haw::logger::Debug);
+    if (m_loggerLevel) {
+        logger->setLevel(m_loggerLevel.value());
+    } else {
+#ifdef MUE_ENABLE_LOGGER_DEBUGLEVEL
+        logger->setLevel(mu::logger::Level::Debug);
 #else
-    logger->setLevel(haw::logger::Normal);
+        logger->setLevel(mu::logger::Level::Normal);
 #endif
+    }
 
-    LOGI() << "log path: " << logFile->filePath();
-    LOGI() << "=== Started MuseScore " << framework::Version::fullVersion() << ", build number " << BUILD_NUMBER << " ===";
+    LOGI() << "log path: " << logFilePath;
+    LOGI() << "=== Started MuseScore " << framework::MUVersion::fullVersion() << ", build number " << MUSESCORE_BUILD_NUMBER << " ===";
 
     //! --- Setup profiler ---
-    using namespace haw::profiler;
+    using namespace mu::profiler;
     struct MyPrinter : public Profiler::Printer
     {
-        void printDebug(const std::string& str) override { LOG_STREAM(Logger::DEBG, "Profiler", "")() << str; }
-        void printInfo(const std::string& str) override { LOG_STREAM(Logger::INFO, "Profiler", "")() << str; }
+        void printDebug(const std::string& str) override { LOG_STREAM(Logger::DEBG, "Profiler", Color::Magenta)() << str; }
+        void printInfo(const std::string& str) override { LOG_STREAM(Logger::INFO, "Profiler", Color::Magenta)() << str; }
     };
 
     Profiler::Options profOpt;
@@ -125,7 +149,7 @@ void GlobalModule::onPreInit(const IApplication::RunMode& mode)
     profOpt.funcsTimeEnabled = true;
     profOpt.funcsTraceEnabled = false;
     profOpt.funcsMaxThreadCount = 100;
-    profOpt.dataTopCount = 150;
+    profOpt.statTopCount = 150;
 
     Profiler* profiler = Profiler::instance();
     profiler->setup(profOpt, new MyPrinter());
@@ -135,19 +159,41 @@ void GlobalModule::onPreInit(const IApplication::RunMode& mode)
     Invoker::setup();
 
     mu::async::onMainThreadInvoke([](const std::function<void()>& f, bool isAlwaysQueued) {
-        s_asyncInvoker.invoke(f, isAlwaysQueued);
+        s_asyncInvoker->invoke(f, isAlwaysQueued);
     });
 
     //! --- Diagnostics ---
     auto pr = ioc()->resolve<diagnostics::IDiagnosticsPathsRegister>(moduleName());
     if (pr) {
-        pr->reg("appBinPath", s_globalConf->appBinPath());
-        pr->reg("appDataPath", s_globalConf->appDataPath());
-        pr->reg("appConfigPath", s_globalConf->appConfigPath());
-        pr->reg("userAppDataPath", s_globalConf->userAppDataPath());
-        pr->reg("userBackupPath", s_globalConf->userBackupPath());
-        pr->reg("userDataPath", s_globalConf->userDataPath());
-        pr->reg("log file", logFile->filePath());
+        pr->reg("appBinPath", m_configuration->appBinPath());
+        pr->reg("appBinDirPath", m_configuration->appBinDirPath());
+        pr->reg("appDataPath", m_configuration->appDataPath());
+        pr->reg("appConfigPath", m_configuration->appConfigPath());
+        pr->reg("userAppDataPath", m_configuration->userAppDataPath());
+        pr->reg("userBackupPath", m_configuration->userBackupPath());
+        pr->reg("userDataPath", m_configuration->userDataPath());
+        pr->reg("log file", logFilePath);
         pr->reg("settings file", settings()->filePath());
     }
+}
+
+void GlobalModule::onInit(const IApplication::RunMode&)
+{
+    m_configuration->init();
+    m_systemInfo->init();
+}
+
+void GlobalModule::onDeinit()
+{
+    invokeQueuedCalls();
+}
+
+void GlobalModule::invokeQueuedCalls()
+{
+    s_asyncInvoker->invokeQueuedCalls();
+}
+
+void GlobalModule::setLoggerLevel(const mu::logger::Level& level)
+{
+    m_loggerLevel = level;
 }

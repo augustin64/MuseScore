@@ -13,7 +13,7 @@ add_subdirectory(${OPUS_LIB_DIR} opus)
 
 aux_source_directory(${OPUSENC_DIR}/src SOURCE_LIB)
 
-configure_file(${OPUSENC_DIR}/config.h.in ${OPUSENC_DIR}/config.h)
+configure_file(${OPUSENC_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
 
 set(MODULE_DEF
     -DOUTSIDE_SPEEX
@@ -47,6 +47,7 @@ target_no_warning(${MODULE} -Wno-implicit-fallthrough)
 target_no_warning(${MODULE} -Wno-empty-body)
 target_no_warning(${MODULE} -Wno-attributes)
 target_no_warning(${MODULE} -Wno-sign-compare)
+target_no_warning(${MODULE} -Wno-restrict)
 target_no_warning(${MODULE} -WMSVC-no-translation-unit-is-empty)
 target_no_warning(${MODULE} -WMSVC-no-nonstandard-extension-used)
 target_no_warning(${MODULE} -WMSVC-no-assignment-within-conditional-expression)

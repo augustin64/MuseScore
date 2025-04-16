@@ -21,15 +21,15 @@
  */
 #include "dummyelement.h"
 
-#include "libmscore/factory.h"
-#include "libmscore/score.h"
-#include "libmscore/page.h"
-#include "libmscore/system.h"
-#include "libmscore/measure.h"
-#include "libmscore/segment.h"
-#include "libmscore/chord.h"
-#include "libmscore/note.h"
-#include "libmscore/bracketItem.h"
+#include "dom/factory.h"
+#include "dom/score.h"
+#include "dom/page.h"
+#include "dom/system.h"
+#include "dom/measure.h"
+#include "dom/segment.h"
+#include "dom/chord.h"
+#include "dom/note.h"
+#include "dom/bracketItem.h"
 
 #ifndef ENGRAVING_NO_ACCESSIBILITY
 #include "accessibility/accessibleitem.h"
@@ -62,14 +62,14 @@ void DummyElement::init()
 #endif
 
     m_root = new RootItem(score());
-    m_root->setParent(explicitParent());
+    m_root->setParent(this);
 
 #ifndef ENGRAVING_NO_ACCESSIBILITY
     m_root->setupAccessible();
 #endif
 
     m_page = Factory::createPage(m_root);
-    m_page->setParent(explicitParent());
+    m_page->setParent(m_root);
 
     m_system = Factory::createSystem(m_page);
     m_system->setParent(m_page);
@@ -138,7 +138,7 @@ EngravingItem* DummyElement::clone() const
 #ifndef ENGRAVING_NO_ACCESSIBILITY
 AccessibleItemPtr DummyElement::createAccessible()
 {
-    return std::make_shared<AccessibleItem>(this, accessibility::IAccessible::Panel);
+    return std::make_shared<AccessibleItem>(this, accessibility::IAccessible::Group);
 }
 
 #endif

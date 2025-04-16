@@ -35,7 +35,7 @@ public:
     VstAudioClient() = default;
     ~VstAudioClient();
 
-    void init(VstPluginType&& type, VstPluginPtr plugin, audio::audioch_t&& audioChannelsCount = 2);
+    void init(audio::AudioPluginType type, VstPluginPtr plugin, audio::audioch_t&& audioChannelsCount = 2);
 
     bool handleEvent(const VstEvent& event);
     bool handleParamChange(const PluginParamInfo& param);
@@ -62,15 +62,19 @@ private:
 
     IAudioProcessorPtr pluginProcessor() const;
     PluginComponentPtr pluginComponent() const;
+
     void setUpProcessData();
     void updateProcessSetup();
-    void extractInputSamples(const audio::samples_t& sampleCount, const float* sourceBuffer);
-    bool fillOutputBuffer(unsigned int samples, float* output);
+    void extractInputSamples(audio::samples_t sampleCount, const float* sourceBuffer);
+    bool fillOutputBuffer(audio::samples_t sampleCount, float* output);
 
     void ensureActivity();
     void disableActivity();
 
     void flushBuffers();
+
+    void loadAllNotesOffParam();
+    void addParamChange(const PluginParamInfo& param);
 
     bool m_isActive = false;
     audio::gain_t m_volumeGain = 1.f; // 0.0 - 1.0
@@ -90,8 +94,10 @@ private:
 
     bool m_needUnprepareProcessData = false;
 
-    VstPluginType m_type = VstPluginType::Undefined;
+    audio::AudioPluginType m_type = audio::AudioPluginType::Undefined;
     audio::audioch_t m_audioChannelsCount = 0;
+
+    std::optional<PluginParamInfo> m_allNotesOffParam;
 };
 }
 

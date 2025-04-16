@@ -20,14 +20,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 #include "importmidi_swing.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/chordrest.h"
-#include "libmscore/stafftext.h"
-#include "libmscore/engravingitem.h"
-#include "libmscore/segment.h"
-#include "libmscore/measure.h"
-#include "libmscore/staff.h"
-#include "libmscore/tuplet.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/chordrest.h"
+#include "engraving/dom/stafftext.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/tuplet.h"
 #include "importmidi_fraction.h"
 
 using namespace mu::engraving;
@@ -70,7 +70,7 @@ void SwingDetector::add(ChordRest* cr)
             return;
         }
         const int tickInBar = (cr->tick() - cr->measure()->tick()).ticks();
-        if (tickInBar % Constants::division == 0) {
+        if (tickInBar % Constants::DIVISION == 0) {
             append(cr);
         }
     } else {
@@ -172,7 +172,7 @@ void SwingDetector::applySwing()
     const int startTick = first->segment()->tick().ticks();
     ChordRest* last = elements.back();
     last->segment()->remove(last);
-    Segment* s = last->measure()->getSegment(SegmentType::ChordRest, Fraction::fromTicks(startTick + Constants::division / 2));
+    Segment* s = last->measure()->getSegment(SegmentType::ChordRest, Fraction::fromTicks(startTick + Constants::DIVISION / 2));
     s->add(last);
 
     if (elements.size() == 3) {

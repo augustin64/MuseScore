@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<museScore version="3.01">
+<museScore version="4.30">
   <Score>
-    <LayerTag id="0" tag="default"></LayerTag>
-    <currentLayer>0</currentLayer>
     <Division>480</Division>
     <Style>
       <Spatium>1.76389</Spatium>
@@ -17,19 +15,18 @@
     <metaTag name="lyricist"></metaTag>
     <metaTag name="movementNumber"></metaTag>
     <metaTag name="movementTitle"></metaTag>
-    <metaTag name="poet"></metaTag>
     <metaTag name="source"></metaTag>
     <metaTag name="translator"></metaTag>
     <metaTag name="workNumber"></metaTag>
     <metaTag name="workTitle">testpart1</metaTag>
-    <Part>
+    <Part id="1">
       <Staff id="1">
         <StaffType group="pitched">
           <name>Standard</name>
           </StaffType>
         </Staff>
       <trackName>Alto</trackName>
-      <Instrument>
+      <Instrument id="alto">
         <longName>Alto</longName>
         <shortName>A.</shortName>
         <trackName>Alto</trackName>
@@ -37,6 +34,7 @@
         <maxPitchP>77</maxPitchP>
         <minPitchA>55</minPitchA>
         <maxPitchA>74</maxPitchA>
+        <instrumentId>voice.alto</instrumentId>
         <Articulation>
           <velocity>100</velocity>
           <gateTime>100</gateTime>
@@ -54,17 +52,18 @@
           <gateTime>100</gateTime>
           </Articulation>
         <Channel>
+          <program value="52"/>
           </Channel>
         </Instrument>
       </Part>
-    <Part>
+    <Part id="2">
       <Staff id="2">
         <StaffType group="pitched">
           <name>Standard</name>
           </StaffType>
         </Staff>
       <trackName>Tenor</trackName>
-      <Instrument>
+      <Instrument id="tenor">
         <longName>Tenor</longName>
         <shortName>T.</shortName>
         <trackName>Tenor</trackName>
@@ -72,6 +71,7 @@
         <maxPitchP>72</maxPitchP>
         <minPitchA>48</minPitchA>
         <maxPitchA>69</maxPitchA>
+        <instrumentId>voice.tenor</instrumentId>
         <Articulation>
           <velocity>100</velocity>
           <gateTime>100</gateTime>
@@ -89,6 +89,7 @@
           <gateTime>100</gateTime>
           </Articulation>
         <Channel>
+          <program value="52"/>
           </Channel>
         </Instrument>
       </Part>
@@ -107,6 +108,7 @@
           <Clef>
             <concertClefType>G</concertClefType>
             <transposingClefType>G</transposingClefType>
+            <isHeader>1</isHeader>
             <linkedMain/>
             </Clef>
           <TimeSig>
@@ -452,6 +454,7 @@
           <Clef>
             <concertClefType>G8vb</concertClefType>
             <transposingClefType>G8vb</transposingClefType>
+            <isHeader>1</isHeader>
             <linkedMain/>
             </Clef>
           <TimeSig>
@@ -778,19 +781,18 @@
         </Measure>
       </Staff>
     <Score>
-      <LayerTag id="0" tag="default"></LayerTag>
-      <currentLayer>0</currentLayer>
+      <name>Alto</name>
+      <initialPartId>1</initialPartId>
       <Division>480</Division>
       <Style>
-        <createMultiMeasureRests>1</createMultiMeasureRests>
-        <Spatium>1.76389</Spatium>
+        <Spatium>1.74978</Spatium>
         </Style>
       <showInvisible>1</showInvisible>
       <showUnprintable>1</showUnprintable>
       <showFrames>1</showFrames>
       <showMargins>0</showMargins>
       <metaTag name="partName">Alto</metaTag>
-      <Part>
+      <Part id="1">
         <Staff id="1">
           <linkedTo>1</linkedTo>
           <StaffType group="pitched">
@@ -798,7 +800,7 @@
             </StaffType>
           </Staff>
         <trackName>Alto</trackName>
-        <Instrument>
+        <Instrument id="alto">
           <longName>Alto</longName>
           <shortName>A.</shortName>
           <trackName>Alto</trackName>
@@ -806,6 +808,7 @@
           <maxPitchP>77</maxPitchP>
           <minPitchA>55</minPitchA>
           <maxPitchA>74</maxPitchA>
+          <instrumentId>voice.alto</instrumentId>
           <Articulation>
             <velocity>100</velocity>
             <gateTime>100</gateTime>
@@ -823,6 +826,7 @@
             <gateTime>100</gateTime>
             </Articulation>
           <Channel>
+            <program value="52"/>
             </Channel>
           </Instrument>
         </Part>
@@ -847,6 +851,7 @@
             <Clef>
               <concertClefType>G</concertClefType>
               <transposingClefType>G</transposingClefType>
+              <isHeader>1</isHeader>
               <linked>
                 </linked>
               </Clef>
@@ -957,15 +962,6 @@
               </Rest>
             </voice>
           </Measure>
-        <Measure len="108/4">
-          <multiMeasureRest>27</multiMeasureRest>
-          <voice>
-            <Rest>
-              <durationType>measure</durationType>
-              <duration>108/4</duration>
-              </Rest>
-            </voice>
-          </Measure>
         <Measure>
           <voice>
             <Rest>
@@ -1227,22 +1223,20 @@
             </voice>
           </Measure>
         </Staff>
-      <name>Alto</name>
       </Score>
     <Score>
-      <LayerTag id="0" tag="default"></LayerTag>
-      <currentLayer>0</currentLayer>
+      <name>Tenor</name>
+      <initialPartId>2</initialPartId>
       <Division>480</Division>
       <Style>
-        <createMultiMeasureRests>1</createMultiMeasureRests>
-        <Spatium>1.76389</Spatium>
+        <Spatium>1.74978</Spatium>
         </Style>
       <showInvisible>1</showInvisible>
       <showUnprintable>1</showUnprintable>
       <showFrames>1</showFrames>
       <showMargins>0</showMargins>
       <metaTag name="partName">Tenor</metaTag>
-      <Part>
+      <Part id="2">
         <Staff id="1">
           <linkedTo>2</linkedTo>
           <StaffType group="pitched">
@@ -1250,7 +1244,7 @@
             </StaffType>
           </Staff>
         <trackName>Tenor</trackName>
-        <Instrument>
+        <Instrument id="tenor">
           <longName>Tenor</longName>
           <shortName>T.</shortName>
           <trackName>Tenor</trackName>
@@ -1258,6 +1252,7 @@
           <maxPitchP>72</maxPitchP>
           <minPitchA>48</minPitchA>
           <maxPitchA>69</maxPitchA>
+          <instrumentId>voice.tenor</instrumentId>
           <Articulation>
             <velocity>100</velocity>
             <gateTime>100</gateTime>
@@ -1275,6 +1270,7 @@
             <gateTime>100</gateTime>
             </Articulation>
           <Channel>
+            <program value="52"/>
             </Channel>
           </Instrument>
         </Part>
@@ -1305,6 +1301,7 @@
             <Clef>
               <concertClefType>G8vb</concertClefType>
               <transposingClefType>G8vb</transposingClefType>
+              <isHeader>1</isHeader>
               <linked>
                 </linked>
               </Clef>
@@ -1382,15 +1379,6 @@
               </Rest>
             </voice>
           </Measure>
-        <Measure len="124/4">
-          <multiMeasureRest>31</multiMeasureRest>
-          <voice>
-            <Rest>
-              <durationType>measure</durationType>
-              <duration>124/4</duration>
-              </Rest>
-            </voice>
-          </Measure>
         <Measure>
           <voice>
             <Rest>
@@ -1692,7 +1680,6 @@
             </voice>
           </Measure>
         </Staff>
-      <name>Tenor</name>
       </Score>
     </Score>
   </museScore>

@@ -27,8 +27,9 @@
 
 #include "modularity/ioc.h"
 #include "context/iglobalcontext.h"
+#include "iinteractive.h"
 
-#include "internal/isoundprofilesrepository.h"
+#include "isoundprofilesrepository.h"
 #include "iplaybackconfiguration.h"
 #include "iplaybackcontroller.h"
 #include "playbacktypes.h"
@@ -38,10 +39,11 @@ class SoundProfilesModel : public QAbstractListModel
 {
     Q_OBJECT
 
-    INJECT_STATIC(playback, ISoundProfilesRepository, profilesRepo)
-    INJECT_STATIC(playback, context::IGlobalContext, context)
-    INJECT_STATIC(playback, IPlaybackConfiguration, config)
-    INJECT_STATIC(playback, IPlaybackController, controller)
+    INJECT_STATIC(ISoundProfilesRepository, profilesRepo)
+    INJECT_STATIC(context::IGlobalContext, context)
+    INJECT_STATIC(IPlaybackConfiguration, config)
+    INJECT_STATIC(IPlaybackController, controller)
+    INJECT_STATIC(mu::framework::IInteractive, interactive)
 
     Q_PROPERTY(QString activeProfile READ activeProfile WRITE setActiveProfile NOTIFY activeProfileChanged)
     Q_PROPERTY(
@@ -74,6 +76,10 @@ private:
         RoleTitle = Qt::UserRole + 1,
         RoleEnabled
     };
+
+    mu::notation::INotationPlaybackPtr notationPlayback() const;
+
+    bool askAboutChangingSounds();
 
     std::vector<SoundProfile> m_profiles;
 

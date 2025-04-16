@@ -23,8 +23,6 @@
 
 #include "types/translatablestring.h"
 
-#include "config.h"
-#include "version.h"
 #include "log.h"
 
 using namespace mu::appshell;
@@ -72,9 +70,14 @@ void AppMenuModel::load()
     appMenuModelHook()->onAppMenuInited();
 }
 
+bool AppMenuModel::isGlobalMenuAvailable()
+{
+    return uiConfiguration()->isGlobalMenuAvailable();
+}
+
 void AppMenuModel::setupConnections()
 {
-    recentProjectsProvider()->recentProjectListChanged().onNotify(this, [this]() {
+    recentFilesController()->recentFilesListChanged().onNotify(this, [this]() {
         MenuItem& recentScoreListItem = findMenu("menu-file-open");
 
         MenuItemList recentScoresList = makeRecentScoresItems();
@@ -143,9 +146,9 @@ MenuItem* AppMenuModel::makeFileMenu()
         makeSeparator(),
         makeMenuItem("file-import-pdf"),
         makeMenuItem("file-export"),
+        makeMenuItem("file-share-audio"),
         makeSeparator(),
         makeMenuItem("project-properties"),
-        makeMenuItem("parts"),
         makeSeparator(),
         makeMenuItem("print"),
         makeSeparator(),
@@ -242,6 +245,7 @@ MenuItem* AppMenuModel::makeFormatMenu()
         makeMenuItem("reset-text-style-overrides"),
         makeMenuItem("reset-beammode"),
         makeMenuItem("reset"),
+        makeMenuItem("reset-to-default-layout"),
         makeSeparator(),
         makeMenuItem("load-style"),
         makeMenuItem("save-style")
@@ -322,10 +326,8 @@ MenuItem* AppMenuModel::makeHelpMenu()
         makeMenuItem("online-handbook"),
         makeSeparator(),
         makeMenuItem("ask-help"),
-        makeMenuItem("report-bug"),
-        makeMenuItem("leave-feedback"),
         makeSeparator(),
-        makeMenuItem("about", MenuItemRole::AboutRole),
+        makeMenuItem("about-musescore", MenuItemRole::AboutRole),
         makeMenuItem("about-qt", MenuItemRole::AboutQtRole),
         makeMenuItem("about-musicxml"),
         makeSeparator(),
@@ -348,33 +350,12 @@ MenuItem* AppMenuModel::makeDiagnosticMenu()
         makeMenuItem("diagnostic-show-profiler"),
     };
 
-    MenuItemList accessibilityItems {
-        makeMenuItem("diagnostic-show-navigation-tree"),
-        makeMenuItem("diagnostic-show-accessible-tree"),
-        makeMenuItem("diagnostic-accessible-tree-dump"),
-    };
-
-    MenuItemList engravingItems {
-        makeMenuItem("diagnostic-show-engraving-elements"),
-        makeSeparator(),
-        makeMenuItem("show-element-bounding-rects"),
-        makeMenuItem("color-element-shapes"),
-        makeMenuItem("show-segment-shapes"),
-        makeMenuItem("color-segment-shapes"),
-        makeMenuItem("show-skylines"),
-        makeMenuItem("show-system-bounding-rects"),
-        makeMenuItem("show-corrupted-measures")
-    };
-
-    MenuItemList autobotItems {
-        makeMenuItem("autobot-show-scripts"),
-    };
-
     MenuItemList items {
+        makeMenuItem("diagnostic-save-diagnostic-files"),
         makeMenu(TranslatableString("appshell/menu/diagnostic", "&System"), systemItems, "menu-system")
     };
 
-#ifdef BUILD_MUSESAMPLER_MODULE
+#ifdef MUE_BUILD_MUSESAMPLER_MODULE
     MenuItemList museSamplerItems {
         makeMenuItem("musesampler-check"),
     };
@@ -382,7 +363,29 @@ MenuItem* AppMenuModel::makeDiagnosticMenu()
     items << makeMenu(TranslatableString("appshell/menu/diagnostic", "&Muse Sampler"), museSamplerItems, "menu-musesampler");
 #endif
 
-    if (framework::Version::unstable()) {
+    if (globalConfiguration()->devModeEnabled()) {
+        MenuItemList engravingItems {
+            makeMenuItem("diagnostic-show-engraving-elements"),
+            makeSeparator(),
+            makeMenuItem("show-element-bounding-rects"),
+            makeMenuItem("color-element-shapes"),
+            makeMenuItem("show-segment-shapes"),
+            makeMenuItem("color-segment-shapes"),
+            makeMenuItem("show-skylines"),
+            makeMenuItem("show-system-bounding-rects"),
+            makeMenuItem("show-corrupted-measures")
+        };
+
+        MenuItemList autobotItems {
+            makeMenuItem("autobot-show-scripts"),
+        };
+
+        MenuItemList accessibilityItems {
+            makeMenuItem("diagnostic-show-navigation-tree"),
+            makeMenuItem("diagnostic-show-accessible-tree"),
+            makeMenuItem("diagnostic-accessible-tree-dump"),
+        };
+
         items << makeMenu(TranslatableString("appshell/menu/diagnostic", "&Accessibility"), accessibilityItems, "menu-accessibility")
               << makeMenu(TranslatableString("appshell/menu/diagnostic", "&Engraving"), engravingItems, "menu-engraving")
               << makeMenu(TranslatableString("appshell/menu/diagnostic", "Auto&bot"), autobotItems, "menu-autobot")
@@ -395,15 +398,15 @@ MenuItem* AppMenuModel::makeDiagnosticMenu()
 MenuItemList AppMenuModel::makeRecentScoresItems()
 {
     MenuItemList items;
-    ProjectMetaList recentProjects = recentProjectsProvider()->recentProjectList();
+    const RecentFilesList& recentFiles = recentFilesController()->recentFilesList();
 
     int index = 0;
-    for (const ProjectMeta& meta : recentProjects) {
+    for (const RecentFile& file : recentFiles) {
         MenuItem* item = new MenuItem(this);
 
         UiAction action;
         action.code = "file-open";
-        action.title = TranslatableString::untranslatable(meta.fileName().toString());
+        action.title = TranslatableString::untranslatable(file.displayName(/*includingExtension*/ true));
         item->setAction(action);
 
         item->setId(makeId(item->action().code, index++));
@@ -413,7 +416,7 @@ MenuItemList AppMenuModel::makeRecentScoresItems()
         item->setState(state);
 
         item->setSelectable(true);
-        item->setArgs(ActionData::make_arg1<io::path_t>(meta.filePath));
+        item->setArgs(ActionData::make_arg2<QUrl, QString>(file.path.toQUrl(), file.displayNameOverride));
 
         items << item;
     }
@@ -624,7 +627,8 @@ MenuItemList AppMenuModel::makeShowItems()
         makeMenuItem("show-unprintable"),
         makeMenuItem("show-frames"),
         makeMenuItem("show-pageborders"),
-        makeMenuItem("show-irregular")
+        makeMenuItem("show-irregular"),
+        makeMenuItem("show-soundflags"),
     };
 
     return items;

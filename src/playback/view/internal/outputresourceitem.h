@@ -35,6 +35,11 @@
 
 #include "abstractaudioresourceitem.h"
 
+#if (defined(_MSCVER) || defined(_MSC_VER))
+// unreferenced function with internal linkage has been removed
+#pragma warning(disable: 4505)
+#endif
+
 namespace mu::playback {
 class OutputResourceItem : public AbstractAudioResourceItem, public async::Asyncable
 {
@@ -43,7 +48,7 @@ class OutputResourceItem : public AbstractAudioResourceItem, public async::Async
     Q_PROPERTY(QString id READ id NOTIFY fxParamsChanged)
     Q_PROPERTY(bool isActive READ isActive WRITE setIsActive NOTIFY isActiveChanged)
 
-    INJECT(playback, audio::IPlayback, playback)
+    INJECT(audio::IPlayback, playback)
 
 public:
     explicit OutputResourceItem(QObject* parent, const audio::AudioFxParams& params);

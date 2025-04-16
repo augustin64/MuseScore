@@ -36,8 +36,8 @@ class PartListModel : public QAbstractListModel
 {
     Q_OBJECT
 
-    INJECT(notation, context::IGlobalContext, context)
-    INJECT(notation, framework::IInteractive, interactive)
+    INJECT(context::IGlobalContext, context)
+    INJECT(framework::IInteractive, interactive)
 
     Q_PROPERTY(bool hasSelection READ hasSelection NOTIFY selectionChanged)
 
@@ -56,6 +56,7 @@ public:
     Q_INVOKABLE void openAllParts();
 
     Q_INVOKABLE void selectPart(int partIndex);
+    Q_INVOKABLE void resetPart(int partIndex);
     Q_INVOKABLE void removePart(int partIndex);
     Q_INVOKABLE void copyPart(int partIndex);
 
@@ -67,22 +68,24 @@ signals:
     void partAdded(int index);
 
 private:
-    void openNotations(const QList<int>& rows) const;
+    void openExcerpts(const QList<int>& rows) const;
 
     Ret doValidatePartTitle(int partIndex, const QString& title) const;
 
     bool isExcerptIndexValid(int index) const;
 
+    void doResetPart(int partIndex);
     void doRemovePart(int partIndex);
 
     IMasterNotationPtr masterNotation() const;
 
-    void insertExcerpt(int destinationIndex, IExcerptNotationPtr excerpt);
+    void insertNewExcerpt(int destinationIndex, IExcerptNotationPtr excerpt);
     void notifyAboutNotationChanged(int index);
 
     enum Roles {
         RoleTitle = Qt::UserRole + 1,
         RoleIsSelected,
+        RoleIsInited,
         RoleIsCustom
     };
 

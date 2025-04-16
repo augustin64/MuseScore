@@ -23,7 +23,9 @@
 #ifndef MU_MUSESAMPLER_IMUSESAMPLERINFO_H
 #define MU_MUSESAMPLER_IMUSESAMPLERINFO_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
+
+#include "musesamplertypes.h"
 
 namespace mu::musesampler {
 class IMuseSamplerInfo : MODULE_EXPORT_INTERFACE
@@ -35,6 +37,11 @@ public:
 
     virtual std::string version() const = 0;
     virtual bool isInstalled() const = 0;
+
+    virtual float defaultReverbLevel(const String& instrumentSoundId) const = 0;
+
+    virtual ByteArray drumMapping(int instrumentId) const = 0;
+    virtual std::vector<Instrument> instruments() const = 0;
 };
 }
 

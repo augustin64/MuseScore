@@ -22,19 +22,44 @@
 #ifndef MU_FRAMEWORK_GLOBALMODULE_H
 #define MU_FRAMEWORK_GLOBALMODULE_H
 
+#include <memory>
+#include <optional>
+
+#include "logger.h"
+
 #include "modularity/imodulesetup.h"
 #include "modularity/ioc.h"
 #include "io/ifilesystem.h"
 
+namespace mu {
+class SystemInfo;
+}
+
 namespace mu::framework {
+class Invoker;
+class GlobalConfiguration;
 class GlobalModule : public modularity::IModuleSetup
 {
-    INJECT(framework, io::IFileSystem, fileSystem)
+    INJECT(io::IFileSystem, fileSystem)
 public:
 
     std::string moduleName() const override;
     void registerExports() override;
     void onPreInit(const IApplication::RunMode& mode) override;
+    void onInit(const IApplication::RunMode& mode) override;
+    void onDeinit() override;
+
+    static void invokeQueuedCalls();
+
+    void setLoggerLevel(const mu::logger::Level& level);
+
+private:
+    std::shared_ptr<GlobalConfiguration> m_configuration;
+    std::shared_ptr<SystemInfo> m_systemInfo;
+
+    std::optional<mu::logger::Level> m_loggerLevel;
+
+    static std::shared_ptr<Invoker> s_asyncInvoker;
 };
 }
 

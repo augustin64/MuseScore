@@ -25,7 +25,7 @@
 #include "io/path.h"
 #include "network/networktypes.h"
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 
 namespace mu::update {
 class IUpdateConfiguration : MODULE_EXPORT_INTERFACE
@@ -37,17 +37,23 @@ public:
 
     virtual bool isAppUpdatable() const = 0;
 
-    virtual bool isTestingMode() const = 0;
-    virtual void setIsTestingMode(bool isTesting) = 0;
+    virtual bool allowUpdateOnPreRelease() const = 0;
+    virtual void setAllowUpdateOnPreRelease(bool allow) = 0;
 
     virtual bool needCheckForUpdate() const = 0;
     virtual void setNeedCheckForUpdate(bool needCheck) = 0;
 
     virtual std::string skippedReleaseVersion() const = 0;
-    virtual void setSkippedReleaseVersion(const std::string& version) const = 0;
+    virtual void setSkippedReleaseVersion(const std::string& version) = 0;
 
-    virtual std::string checkForUpdateUrl() const = 0;
-    virtual network::RequestHeaders checkForUpdateHeaders() const = 0;
+    virtual std::string lastShownMuseSoundsReleaseVersion() const = 0;
+    virtual void setLastShownMuseSoundsReleaseVersion(const std::string& version) = 0;
+
+    virtual std::string checkForAppUpdateUrl() const = 0;
+    virtual std::string previousAppReleasesNotesUrl() const = 0;
+    virtual std::string checkForMuseSamplerUpdateUrl() const = 0;
+
+    virtual network::RequestHeaders updateHeaders() const = 0;
 
     virtual std::string museScoreUrl() const = 0;
     virtual std::string museScorePrivacyPolicyUrl() const = 0;

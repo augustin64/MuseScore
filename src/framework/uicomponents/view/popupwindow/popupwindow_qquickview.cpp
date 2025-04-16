@@ -22,6 +22,7 @@
 #include "popupwindow_qquickview.h"
 
 #include <QTimer>
+
 #include "log.h"
 
 using namespace mu::uicomponents;
@@ -37,21 +38,41 @@ PopupWindow_QQuickView::~PopupWindow_QQuickView()
     delete m_view;
 }
 
-void PopupWindow_QQuickView::init(QQmlEngine* engine, std::shared_ptr<ui::IUiConfiguration> uiConfiguration, bool isDialogMode)
+void PopupWindow_QQuickView::init(QQmlEngine* engine, bool isDialogMode, bool isFrameless)
 {
-    //! NOTE Without a parent on MacOS with FullScreen, the popup is shown on another virtual Desktop.
-    //! With parent on WinOS not work transparent background.
-
+    //! NOTE: do not set the window when constructing the view
+    //! This causes different bugs on different OS (e.g., no transparency for popups on windows)
     m_view = new QQuickView(engine, nullptr);
-    m_view->setObjectName("PopupWindow_QQuickView");
 
+    //! NOTE: We must set the parent
+    //! Otherwise, the garbage collector may take ownership of the view and destroy it when we don't expect it
+    m_view->QObject::setParent(this);
+
+    m_view->setObjectName("PopupWindow_QQuickView");
     m_view->setResizeMode(QQuickView::SizeRootObjectToView);
 
     // dialog
     if (isDialogMode) {
         m_view->setFlags(Qt::Dialog);
-        QString bgColorStr = uiConfiguration->currentTheme().values.value(ui::BACKGROUND_PRIMARY_COLOR).toString();
-        m_view->setColor(QColor(bgColorStr));
+
+        if (isFrameless) {
+            m_view->setColor(QColor(Qt::transparent));
+        } else {
+            auto updateBackgroundColor = [this]() {
+                if (!m_view) {
+                    return;
+                }
+
+                QString bgColorStr = uiConfiguration()->currentTheme().values.value(ui::BACKGROUND_PRIMARY_COLOR).toString();
+                m_view->setColor(QColor(bgColorStr));
+            };
+
+            uiConfiguration()->currentThemeChanged().onNotify(this, [updateBackgroundColor]() {
+                updateBackgroundColor();
+            });
+
+            updateBackgroundColor();
+        }
     }
     // popup
     else {
@@ -76,9 +97,9 @@ void PopupWindow_QQuickView::init(QQmlEngine* engine, std::shared_ptr<ui::IUiCon
     m_view->installEventFilter(this);
 }
 
-void PopupWindow_QQuickView::setContent(QQuickItem* item)
+void PopupWindow_QQuickView::setContent(QQmlComponent* component, QQuickItem* item)
 {
-    m_view->setContent(QUrl(), nullptr, item);
+    m_view->setContent(QUrl(), component, item);
     m_view->setObjectName(item->objectName() + "_(PopupWindow_QQuickView)");
 
     connect(item, &QQuickItem::implicitWidthChanged, [this, item]() {
@@ -102,8 +123,17 @@ void PopupWindow_QQuickView::setContent(QQuickItem* item)
 
 void PopupWindow_QQuickView::forceActiveFocus()
 {
-    if (!m_view->rootObject()->hasActiveFocus()) {
-        m_view->rootObject()->forceActiveFocus();
+    if (!m_view) {
+        return;
+    }
+
+    QQuickItem* rootObject = m_view->rootObject();
+    if (!rootObject) {
+        return;
+    }
+
+    if (!rootObject->hasActiveFocus()) {
+        rootObject->forceActiveFocus();
     }
 }
 
@@ -195,7 +225,7 @@ void PopupWindow_QQuickView::setResizable(bool resizable)
     }
 
     m_resizable = resizable;
-    if (m_view) {
+    if (m_view && isVisible()) {
         updateSize(m_view->size());
     }
 }

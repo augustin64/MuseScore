@@ -22,7 +22,7 @@
 #ifndef MU_AUTOBOT_TESTCASECONTEXT_H
 #define MU_AUTOBOT_TESTCASECONTEXT_H
 
-#include "itestcasecontext.h"
+#include "../itestcasecontext.h"
 
 namespace mu::autobot {
 struct TestCaseContext : public ITestCaseContext
@@ -44,7 +44,6 @@ public:
     Val findVal(const Key& key) const override;
 
 private:
-
     std::map<Key, Val > m_globalVals;
     std::vector<StepContext> m_steps;
 };

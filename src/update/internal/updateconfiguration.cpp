@@ -21,7 +21,9 @@
  */
 #include "updateconfiguration.h"
 
-#include "config.h"
+#include "modularity/ioc.h"
+#include "global/iapplication.h"
+
 #include "settings.h"
 
 using namespace mu::update;
@@ -30,8 +32,9 @@ using namespace mu::framework;
 static const std::string module_name("update");
 
 static const Settings::Key CHECK_FOR_UPDATE_KEY(module_name, "application/checkForUpdate");
-static const Settings::Key CHECK_FOR_UPDATE_TESTING_MODE_KEY(module_name, "application/checkForUpdateTestingMode");
+static const Settings::Key ALLOW_UPDATE_ON_PRERELEASE(module_name, "application/allowUpdateOnPreRelease");
 static const Settings::Key SKIPPED_VERSION_KEY(module_name, "application/skippedVersion");
+static const Settings::Key LAST_MUSESOUNDS_SHOWN_VERSION_KEY(module_name, "application/lastShownMuseSoundsReleaseVersion");
 
 static const std::string PRIVACY_POLICY_URL_PATH("/about/desktop-privacy-policy");
 
@@ -50,33 +53,35 @@ static QString userAgent()
     QString cpuArchitecture = QSysInfo::currentCpuArchitecture();
 
     return QString("Musescore/%1 (%2 %3; %4)")
-           .arg(VERSION, osName, osVersion, cpuArchitecture);
+           .arg(MUSESCORE_VERSION, osName, osVersion, cpuArchitecture);
 }
 
 void UpdateConfiguration::init()
 {
     settings()->setDefaultValue(CHECK_FOR_UPDATE_KEY, Val(isAppUpdatable()));
 
-    settings()->setDefaultValue(CHECK_FOR_UPDATE_TESTING_MODE_KEY, Val(false));
+    bool allowUpdateOnPreRelease = false;
+#ifdef MUSESCORE_ALLOW_UPDATE_ON_PRERELEASE
+    allowUpdateOnPreRelease = true;
+#else
+    allowUpdateOnPreRelease = false;
+#endif
+    settings()->setDefaultValue(ALLOW_UPDATE_ON_PRERELEASE, Val(allowUpdateOnPreRelease));
 }
 
 bool UpdateConfiguration::isAppUpdatable() const
 {
-#ifdef APP_UPDATABLE
     return true;
-#else
-    return false;
-#endif
 }
 
-bool UpdateConfiguration::isTestingMode() const
+bool UpdateConfiguration::allowUpdateOnPreRelease() const
 {
-    return settings()->value(CHECK_FOR_UPDATE_TESTING_MODE_KEY).toBool();
+    return settings()->value(ALLOW_UPDATE_ON_PRERELEASE).toBool();
 }
 
-void UpdateConfiguration::setIsTestingMode(bool isTesting)
+void UpdateConfiguration::setAllowUpdateOnPreRelease(bool allow)
 {
-    settings()->setSharedValue(CHECK_FOR_UPDATE_TESTING_MODE_KEY, Val(isTesting));
+    settings()->setSharedValue(ALLOW_UPDATE_ON_PRERELEASE, Val(allow));
 }
 
 bool UpdateConfiguration::needCheckForUpdate() const
@@ -94,17 +99,40 @@ std::string UpdateConfiguration::skippedReleaseVersion() const
     return settings()->value(SKIPPED_VERSION_KEY).toString();
 }
 
-void UpdateConfiguration::setSkippedReleaseVersion(const std::string& version) const
+void UpdateConfiguration::setSkippedReleaseVersion(const std::string& version)
 {
     settings()->setSharedValue(SKIPPED_VERSION_KEY, Val(version));
 }
 
-std::string UpdateConfiguration::checkForUpdateUrl() const
+std::string UpdateConfiguration::lastShownMuseSoundsReleaseVersion() const
 {
-    return !isTestingMode() ? "https://updates.musescore.org/feed/latest.xml" : "https://updates.musescore.org/feed/latest.test.xml";
+    return settings()->value(LAST_MUSESOUNDS_SHOWN_VERSION_KEY).toString();
 }
 
-mu::network::RequestHeaders UpdateConfiguration::checkForUpdateHeaders() const
+void UpdateConfiguration::setLastShownMuseSoundsReleaseVersion(const std::string& version)
+{
+    settings()->setSharedValue(LAST_MUSESOUNDS_SHOWN_VERSION_KEY, Val(version));
+}
+
+std::string UpdateConfiguration::checkForAppUpdateUrl() const
+{
+    return !allowUpdateOnPreRelease() ? "https://updates.musescore.org/feed/latest.xml"
+           : "https://updates.musescore.org/feed/latest.test.xml";
+}
+
+std::string UpdateConfiguration::previousAppReleasesNotesUrl() const
+{
+    return !allowUpdateOnPreRelease() ? "https://updates.musescore.org/feed/all.xml"
+           : "https://updates.musescore.org/feed/all.test.xml";
+}
+
+std::string UpdateConfiguration::checkForMuseSamplerUpdateUrl() const
+{
+    return !allowUpdateOnPreRelease() ? "https://updates.musescore.org/feed/musesounds.latest.xml"
+           : "https://updates.musescore.org/feed/musesounds.latest.test.xml";
+}
+
+mu::network::RequestHeaders UpdateConfiguration::updateHeaders() const
 {
     network::RequestHeaders headers;
     headers.knownHeaders[QNetworkRequest::UserAgentHeader] = userAgent();

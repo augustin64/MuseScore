@@ -29,7 +29,7 @@
 #include "importxmlfirstpass.h"
 #include "musicxml.h" // a.o. for Slur
 
-#include "libmscore/types.h"
+#include "engraving/dom/types.h"
 
 namespace mu::engraving {
 class StringData;
@@ -44,6 +44,7 @@ using FiguredBassList = QVector<FiguredBass*>;
 //      typedef QList<Chord*> GraceChordList;
 //      typedef QVector<FiguredBass*> FiguredBassList;
 using Tuplets = std::map<QString, Tuplet*>;
+using Beams = QMap<QString, Beam*>;
 
 //---------------------------------------------------------
 //   MxmlStartStop
@@ -74,7 +75,7 @@ enum class MusicXmlSlash : char {
 struct MusicXmlTupletDesc {
     MusicXmlTupletDesc();
     MxmlStartStop type;
-    PlacementV placement;
+    DirectionV direction;
     TupletBracketType bracket;
     TupletNumberType shownumber;
 };
@@ -123,6 +124,15 @@ private:
     QSet<Lyrics*> _lyrics;
 };
 
+struct GraceNoteLyrics {
+    Lyrics* lyric = nullptr;
+    bool extend = false;
+    int no = 0;
+
+    GraceNoteLyrics(Lyrics* lyric, bool extend, int no)
+        : lyric(lyric), extend(extend), no(no) {}
+};
+
 //---------------------------------------------------------
 //   MusicXMLParserLyric
 //---------------------------------------------------------
@@ -136,12 +146,19 @@ public:
     void parse();
 private:
     void skipLogCurrElem();
+    void readElision(QString& formattedText);
     const LyricNumberHandler _lyricNumberHandler;
     QXmlStreamReader& _e;
     Score* const _score;                        // the score
     MxmlLogger* _logger;                        ///< Error logger
     QMap<int, Lyrics*> _numberedLyrics;   // lyrics with valid number
     QSet<Lyrics*> _extendedLyrics;        // lyrics with the extend flag set
+    double m_defaultY = 0.0;
+    double m_relativeY = 0.0;
+    String m_placement;
+    String placement() const;
+    double totalY() const { return m_defaultY + m_relativeY; }
+    bool hasTotalY() const { return !RealIsNull(m_defaultY) || !RealIsNull(m_relativeY); }
 };
 
 //---------------------------------------------------------
@@ -154,8 +171,10 @@ class Notation
 public:
     Notation(const QString& name, const QString& parent = "",
              const SymId& symId = SymId::noSym) { _name = name; _parent = parent; _symId = symId; }
+    void addAttribute(const QString& name, const QString& value);
     void addAttribute(const QStringRef name, const QStringRef value);
     QString attribute(const QString& name) const;
+    std::map<QString, QString> attributes() const { return _attributes; }
     QString name() const { return _name; }
     QString parent() const { return _parent; }
     void setSymId(const SymId& symId) { _symId = symId; }
@@ -180,20 +199,41 @@ private:
 //   forward references and defines
 //---------------------------------------------------------
 
+struct DelayedArpeggio
+{
+    QString _arpeggioType = "";
+    int _arpeggioNo = 0;
+
+    DelayedArpeggio(String arpType, int no)
+        : _arpeggioType(arpType), _arpeggioNo(no) {}
+
+    DelayedArpeggio()
+        : _arpeggioType(QString()), _arpeggioNo(0) {}
+
+    void clear() { _arpeggioType = ""; _arpeggioNo = 0; }
+};
+
 class FretDiagram;
 class FiguredBassItem;
 class Glissando;
 class Pedal;
 class Trill;
 class MxmlLogger;
+class MusicXMLDelayedDirectionElement;
+class MusicXMLInferredFingering;
 
+using DelayedDirectionsList = QList<MusicXMLDelayedDirectionElement*>;
+using InferredFingeringsList = std::vector<MusicXMLInferredFingering*>;
 using SlurStack = std::array<SlurDesc, MAX_NUMBER_LEVEL>;
 using TrillStack = std::array<Trill*, MAX_NUMBER_LEVEL>;
 using BracketsStack = std::array<MusicXmlExtendedSpannerDesc, MAX_NUMBER_LEVEL>;
 using OttavasStack = std::array<MusicXmlExtendedSpannerDesc, MAX_NUMBER_LEVEL>;
 using HairpinsStack = std::array<MusicXmlExtendedSpannerDesc, MAX_NUMBER_LEVEL>;
+using InferredHairpinsStack = std::vector<Hairpin*>;
 using SpannerStack = std::array<MusicXmlExtendedSpannerDesc, MAX_NUMBER_LEVEL>;
 using SpannerSet = std::set<Spanner*>;
+using DelayedArpMap = std::map<int, DelayedArpeggio>;
+using SegnoStack = std::map<int, Marker*>;
 
 //---------------------------------------------------------
 //   MusicXMLParserNotations
@@ -202,10 +242,11 @@ using SpannerSet = std::set<Spanner*>;
 class MusicXMLParserNotations
 {
 public:
-    MusicXMLParserNotations(QXmlStreamReader& e, Score* score, MxmlLogger* logger);
+    MusicXMLParserNotations(QXmlStreamReader& e, Score* score, MxmlLogger* logger, MusicXMLParserPass1& pass1);
     void parse();
     void addToScore(ChordRest* const cr, Note* const note, const int tick, SlurStack& slurs, Glissando* glissandi[MAX_NUMBER_LEVEL][2],
-                    MusicXmlSpannerMap& spanners, TrillStack& trills, Tie*& tie);
+                    MusicXmlSpannerMap& spanners, TrillStack& trills, std::map<int, Tie*>& ties, ArpeggioMap& arpMap,
+                    DelayedArpMap& delayedArps);
     QString errors() const { return _errors; }
     MusicXmlTupletDesc tupletDesc() const { return _tupletDesc; }
     QString tremoloType() const { return _tremoloType; }
@@ -215,6 +256,7 @@ private:
     void addError(const QString& error);      ///< Add an error to be shown in the GUI
     void addNotation(const Notation& notation, ChordRest* const cr, Note* const note);
     void addTechnical(const Notation& notation, Note* note);
+    void arpeggio();
     void harmonic();
     void articulations();
     void dynamics();
@@ -227,7 +269,9 @@ private:
     void technical();
     void tied();
     void tuplet();
+    void otherNotation();
     QXmlStreamReader& _e;
+    MusicXMLParserPass1& _pass1;
     Score* const _score;                        // the score
     MxmlLogger* _logger;                              // the error logger
     QString _errors;                    // errors to present to the user
@@ -241,7 +285,9 @@ private:
     QString _wavyLineType;
     int _wavyLineNo { 0 };
     QString _arpeggioType;
+    int _arpeggioNo = 0;
     bool _slurStop { false };
+    bool _slurStart { false };
     bool _wavyLineStop { false };
 };
 
@@ -260,6 +306,13 @@ public:
     void addSpanner(const MusicXmlSpannerDesc& desc);
     MusicXmlExtendedSpannerDesc& getSpanner(const MusicXmlSpannerDesc& desc);
     void clearSpanner(const MusicXmlSpannerDesc& desc);
+    void deleteHandledSpanner(SLine* const& spanner);
+    int divs() { return _divs; }
+    SLine* delayedOttava() { return _delayedOttava; }
+    void setDelayedOttava(SLine* ottava) { _delayedOttava = ottava; }
+
+    void addInferredHairpin(Hairpin* hp);
+    InferredHairpinsStack getInferredHairpins();
 
 private:
     void addError(const QString& error);      ///< Add an error to be shown in the GUI
@@ -283,22 +336,24 @@ private:
     void divisions();
     void transpose(const QString& partId, const Fraction& tick);
     Note* note(const QString& partId, Measure* measure, const Fraction sTime, const Fraction prevTime, Fraction& missingPrev,
-               Fraction& dura, Fraction& missingCurr, QString& currentVoice, GraceChordList& gcl, int& gac, Beam*& beam,
-               FiguredBassList& fbl, int& alt, MxmlTupletStates& tupletStates, Tuplets& tuplets);
+               Fraction& dura, Fraction& missingCurr, QString& currentVoice, GraceChordList& gcl, int& gac, Beams& currBeams,
+               FiguredBassList& fbl, int& alt, MxmlTupletStates& tupletStates, Tuplets& tuplets, ArpeggioMap& arpMap,
+               DelayedArpMap& delayedArps);
     void notePrintSpacingNo(Fraction& dura);
     FiguredBassItem* figure(const int idx, const bool paren, FiguredBass* parent);
     FiguredBass* figuredBass();
     FretDiagram* frame();
-    void harmony(const QString& partId, Measure* measure, const Fraction sTime);
+    void harmony(const QString& partId, Measure* measure, const Fraction& sTime, HarmonyMap& harmonyMap);
     Accidental* accidental();
-    void beam(BeamMode& beamMode);
+    void beam(QMap<int, QString>& beamTypes);
     void duration(Fraction& dura);
     void forward(Fraction& dura);
     void backup(Fraction& dura);
     void timeModification(Fraction& timeMod, TDuration& normalType);
     void stem(DirectionV& sd, bool& nost);
-    void doEnding(const QString& partId, Measure* measure, const QString& number, const QString& type, const QString& text);
-    void staffDetails(const QString& partId);
+    void doEnding(const QString& partId, Measure* measure, const QString& number, const QString& type, const QColor color,
+                  const QString& text, const bool print);
+    void staffDetails(const QString& partId, Measure* measure = nullptr);
     void staffTuning(StringData* t);
     void skipLogCurrElem();
 
@@ -327,11 +382,12 @@ private:
     BracketsStack _brackets;
     OttavasStack _ottavas;                ///< Current ottavas
     HairpinsStack _hairpins;              ///< Current hairpins
+    InferredHairpinsStack _inferredHairpins;
     MusicXmlExtendedSpannerDesc _dummyNewMusicXmlSpannerDesc;
 
     Glissando* _glissandi[MAX_NUMBER_LEVEL][2];     ///< Current slides ([0]) / glissandi ([1])
 
-    Tie* _tie;
+    std::map<int, Tie*> _ties;
     Volta* _lastVolta;
     bool _hasDrumset;                             ///< drumset defined TODO: move to pass 1
 
@@ -342,9 +398,12 @@ private:
     Harmony* _harmony;                            ///< Current harmony
     Chord* _tremStart;                            ///< Starting chord for current tremolo
     FiguredBass* _figBass;                        ///< Current figured bass element (to attach to next note)
+    SLine* _delayedOttava = nullptr;              // Current delayed ottava
+    SegnoStack _segnos;                           // List of segno markings
     int _multiMeasureRestCount;
     int _measureNumber;                           ///< Current measure number as written in the score
     MusicXmlLyricsExtend _extendedLyrics;         ///< Lyrics with "extend" requiring fixup
+    std::vector<GraceNoteLyrics> _graceNoteLyrics;   // Lyrics to be moved from grace note to main note
 
     MusicXmlSlash _measureStyleSlash;             ///< Are we inside a measure to be displayed as slashes?
 
@@ -360,17 +419,22 @@ private:
 class MusicXMLParserDirection
 {
 public:
-    MusicXMLParserDirection(QXmlStreamReader& e, Score* score, const MusicXMLParserPass1& pass1, MusicXMLParserPass2& pass2,
-                            MxmlLogger* logger);
-    void direction(const QString& partId, Measure* measure, const Fraction& tick, const int divisions, MusicXmlSpannerMap& spanners);
+    MusicXMLParserDirection(QXmlStreamReader& e, Score* score, MusicXMLParserPass1& pass1, MusicXMLParserPass2& pass2, MxmlLogger* logger);
+    void direction(const QString& partId, Measure* measure, const Fraction& tick, MusicXmlSpannerMap& spanners,
+                   DelayedDirectionsList& delayedDirections, InferredFingeringsList& inferredFingerings, HarmonyMap& harmonyMap,
+                   bool& measureHasCoda, SegnoStack& segnos);
+    qreal totalY() const { return _defaultY + _relativeY; }
+    QString placement() const;
 
 private:
     QXmlStreamReader& _e;
     Score* const _score;                        // the score
-    const MusicXMLParserPass1& _pass1;          // the pass1 results
+    MusicXMLParserPass1& _pass1;                // the pass1 results
     MusicXMLParserPass2& _pass2;                // the pass2 results
     MxmlLogger* _logger;                        ///< Error logger
 
+    QColor _color;
+    Hairpin* _inferredHairpinStart = nullptr;
     QStringList _dynamicsList;
     QString _enclosure;
     QString _wordsText;
@@ -378,16 +442,20 @@ private:
     QString _rehearsalText;
     QString _dynaVelocity;
     QString _tempo;
-    QString _sndCapo;
     QString _sndCoda;
     QString _sndDacapo;
     QString _sndDalsegno;
-    QString _sndSegno;
     QString _sndFine;
+    QString _sndSegno;
+    QString _sndToCoda;
+    QString _codaId;
+    QString _segnoId;
+    String _placement;
     bool _hasDefaultY;
     qreal _defaultY;
-    bool _coda;
-    bool _segno;
+    bool _hasRelativeY;
+    qreal _relativeY;
+    bool hasTotalY() const { return _hasRelativeY || _hasDefaultY; }
     double _tpoMetro;                   // tempo according to metronome
     double _tpoSound;                   // tempo according to sound
     QList<EngravingItem*> _elems;
@@ -402,8 +470,91 @@ private:
     QString metronome(double& r);
     void sound();
     void dynamics();
-    void handleRepeats(Measure* measure, const track_idx_t track);
+    void otherDirection();
+    void handleRepeats(Measure* measure, const track_idx_t track, const Fraction tick, bool& measureHasCoda, SegnoStack& segnos,
+                       DelayedDirectionsList& delayedDirections);
+    Marker* findMarker(const String& repeat) const;
+    Jump* findJump(const String& repeat) const;
+    void handleNmiCmi(Measure* measure, const track_idx_t track, const Fraction tick, DelayedDirectionsList& delayedDirections);
+    void handleChordSym(const track_idx_t track, const Fraction tick, HarmonyMap& harmonyMap);
+    void handleTempo();
+    QString matchRepeat(const QString& plainWords) const;
     void skipLogCurrElem();
+    bool isLikelyCredit(const Fraction& tick) const;
+    void textToDynamic(String& text);
+    void textToCrescLine(String& text);
+    void addInferredCrescLine(const track_idx_t track, const Fraction& tick, const bool isVocalStaff);
+    bool isLyricBracket() const;
+    bool isLikelySubtitle(const Fraction& tick) const;
+    bool isLikelyLegallyDownloaded(const Fraction& tick) const;
+    bool isLikelyTempoText() const;
+    Text* addTextToHeader(const TextStyleType textStyleType);
+    void hideRedundantHeaderText(const Text* inferredText, const std::vector<QString> metaTags);
+    bool isLikelyFingering() const;
+};
+
+//---------------------------------------------------------
+//   MusicXMLDelayedDirectionElement
+//---------------------------------------------------------
+/**
+ Helper class to allow Direction elements to be sorted by _totalY
+ before being added to the score.
+ */
+
+class MusicXMLDelayedDirectionElement
+{
+public:
+    MusicXMLDelayedDirectionElement(qreal totalY, EngravingItem* element, track_idx_t track,
+                                    QString placement, Measure* measure, Fraction tick)
+        : _totalY(totalY),  _element(element), _track(track), _placement(placement),
+        _measure(measure), _tick(tick) {}
+    void addElem();
+    qreal totalY() const { return _totalY; }
+    const EngravingItem* element() const { return _element; }
+    track_idx_t track() const { return _track; }
+    const Fraction& tick() const { return _tick; }
+    const QString& placement() const { return _placement; }
+
+private:
+    qreal _totalY;
+    EngravingItem* _element;
+    track_idx_t _track;
+    QString _placement;
+    Measure* _measure;
+    Fraction _tick;
+};
+
+//---------------------------------------------------------
+//   MusicXMLInferredFingering
+//---------------------------------------------------------
+/**
+ Helper class to allow Direction elements to be reinterpreted as fingerings
+ */
+
+class MusicXMLInferredFingering
+{
+public:
+    MusicXMLInferredFingering(double totalY, EngravingItem* element, QString& text, int track, QString placement, Measure* measure,
+                              Fraction tick);
+    double totalY() const { return m_totalY; }
+    Fraction tick() const { return m_tick; }
+    int track() const { return m_track; }
+    std::vector<String> fingerings() const { return m_fingerings; }
+    bool findAndAddToNotes(Measure* measure);
+    MusicXMLDelayedDirectionElement* toDelayedDirection();
+
+private:
+    double m_totalY;
+    EngravingItem* m_element;
+    String m_text;
+    std::vector<String> m_fingerings;
+    int m_track;
+    String m_placement;
+    Measure* m_measure;
+    Fraction m_tick;
+
+    void roundTick(Measure* measure);
+    void addToNotes(std::vector<Note*>& notes) const;
 };
 } // namespace Ms
 #endif

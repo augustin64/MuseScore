@@ -34,9 +34,9 @@
 #include "shortcuts/ishortcutsregister.h"
 #include "iinteractive.h"
 #include "ui/imainwindow.h"
+#include "global/iapplication.h"
 
 #include "scriptengine.h"
-#include "testcasecontext.h"
 #include "testcaserunner.h"
 #include "testcasereport.h"
 #include "autobotinteractive.h"
@@ -44,12 +44,13 @@
 namespace mu::autobot {
 class Autobot : public IAutobot, public async::Asyncable
 {
-    INJECT(autobot, IAutobotConfiguration, configuration)
-    INJECT(autobot, io::IFileSystem, fileSystem)
-    INJECT(autobot, ui::INavigationController, navigation)
-    INJECT(autobot, shortcuts::IShortcutsRegister, shortcutsRegister)
-    INJECT(autobot, framework::IInteractive, interactive)
-    INJECT(autobot, ui::IMainWindow, mainWindow)
+    INJECT(framework::IApplication, application)
+    INJECT(IAutobotConfiguration, configuration)
+    INJECT(io::IFileSystem, fileSystem)
+    INJECT(ui::INavigationController, navigation)
+    INJECT(shortcuts::IShortcutsRegister, shortcutsRegister)
+    INJECT(framework::IInteractive, interactive)
+    INJECT(ui::IMainWindow, mainWindow)
 
 public:
     Autobot() = default;
@@ -67,7 +68,8 @@ public:
     int defaultIntervalMsec() const override;
     int intervalMsec() const override;
 
-    void execScript(const io::path_t& path) override;
+    void execScript(const io::path_t& path, const Options& opt = Options()) override;
+
     void runTestCase(const TestCase& testCase) override;
     void sleep(int msec) override;
     void pause() override;
@@ -80,10 +82,17 @@ public:
 
 private:
 
+    void loadContext(ITestCaseContextPtr ctx, const io::path_t& context, const std::string& contextVal, ScriptEngine* e);
+    QJSValueList parseFuncArgs(const std::string& funcArgs, ScriptEngine* e) const;
+
     void affectOnServices();
     void restoreAffectOnServices();
 
     void setStatus(Status st);
+
+    struct AffectedServiceState {
+        bool fontDisabledMerging = false;
+    };
 
     Status m_status = Status::Undefined;
     async::Channel<io::path_t, Status> m_statusChanged;
@@ -93,6 +102,7 @@ private:
     TestCaseRunner m_runner;
     TestCaseReport m_report;
     AutobotInteractivePtr m_autobotInteractive = nullptr;
+    AffectedServiceState m_affectedServiceState;
 
     QEventLoop m_sleepLoop;
 };

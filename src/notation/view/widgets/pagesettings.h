@@ -25,6 +25,7 @@
 #include "ui_pagesettings.h"
 #include "modularity/ioc.h"
 #include "context/iglobalcontext.h"
+#include "framework/global/iglobalconfiguration.h"
 
 namespace mu::engraving {
 class Score;
@@ -35,7 +36,8 @@ class PageSettings : public QDialog, private Ui::PageSettingsBase
 {
     Q_OBJECT
 
-    INJECT(notation, mu::context::IGlobalContext, globalContext)
+    INJECT(mu::context::IGlobalContext, globalContext)
+    INJECT(mu::framework::IGlobalConfiguration, configuration)
 
 public:
     explicit PageSettings(QWidget* parent = 0);
@@ -48,6 +50,7 @@ public slots:
 private:
     void showEvent(QShowEvent*);
     void hideEvent(QHideEvent*);
+    void keyPressEvent(QKeyEvent* event);
 
     void updateValues();
     void blockSignals(bool);

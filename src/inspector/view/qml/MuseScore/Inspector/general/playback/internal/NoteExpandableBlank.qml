@@ -37,7 +37,6 @@ ExpandableBlank {
 
     title: model ? model.title : ""
 
-    height: implicitHeight
     width: parent.width
 
     contentItemComponent: Column {
@@ -68,7 +67,7 @@ ExpandableBlank {
                 step: 1
                 decimals: 0
                 maxValue: 127
-                minValue: -127
+                minValue: 0
             }
 
             SpinBoxPropertyView {

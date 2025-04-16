@@ -25,7 +25,6 @@
 #include "types/retval.h"
 #include "path.h"
 #include "ioenums.h"
-#include "types/string.h"
 
 #include "modularity/ioc.h"
 #include "ifilesystem.h"
@@ -34,7 +33,7 @@ namespace mu::io {
 class IFileSystem;
 class Dir
 {
-    INJECT_STATIC(io, IFileSystem, fileSystem)
+    INJECT_STATIC(IFileSystem, fileSystem)
 
 public:
     Dir() = default;
@@ -46,6 +45,7 @@ public:
     bool exists() const;
     Ret removeRecursively();
 
+    Ret mkpath();
     static Ret mkpath(const path_t& path);
 
     static RetVal<io::paths_t> scanFiles(const io::path_t& rootDir, const std::vector<std::string>& filters,

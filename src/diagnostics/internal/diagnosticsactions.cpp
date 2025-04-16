@@ -29,6 +29,11 @@ using namespace mu::actions;
 using namespace mu::diagnostics;
 
 const UiActionList DiagnosticsActions::m_actions = {
+    UiAction("diagnostic-save-diagnostic-files",
+             mu::context::UiCtxAny,
+             mu::context::CTX_ANY,
+             TranslatableString("action", "Save diagnostic files")
+             ),
     UiAction("diagnostic-show-paths",
              mu::context::UiCtxAny,
              mu::context::CTX_ANY,
@@ -47,17 +52,17 @@ const UiActionList DiagnosticsActions::m_actions = {
     UiAction("diagnostic-show-accessible-tree",
              mu::context::UiCtxAny,
              mu::context::CTX_ANY,
-             TranslatableString("action", "Show &accessible tree…")
+             TranslatableString("action", "Show &accessibility tree…")
              ),
     UiAction("diagnostic-accessible-tree-dump",
              mu::context::UiCtxAny,
              mu::context::CTX_ANY,
-             TranslatableString::untranslatable("Accessible &dump")
+             TranslatableString("action", "&Dump accessibility tree to console")
              ),
     UiAction("diagnostic-show-engraving-elements",
              mu::context::UiCtxAny,
              mu::context::CTX_ANY,
-             TranslatableString("action", "Engraving &elements")
+             TranslatableString("action", "Show engraving &elements")
              )
 };
 

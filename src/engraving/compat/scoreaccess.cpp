@@ -21,7 +21,7 @@
  */
 #include "scoreaccess.h"
 #include "style/defaultstyle.h"
-#include "libmscore/masterscore.h"
+#include "dom/masterscore.h"
 
 using namespace mu::engraving;
 using namespace mu::engraving::compat;
@@ -44,9 +44,4 @@ MasterScore* ScoreAccess::createMasterScoreWithDefaultStyle()
 MasterScore* ScoreAccess::createMasterScore(const MStyle& style)
 {
     return new MasterScore(style);
-}
-
-bool ScoreAccess::exportPart(MscWriter& mscWriter, Score* partScore)
-{
-    return partScore->masterScore()->exportPart(mscWriter, partScore);
 }

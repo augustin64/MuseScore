@@ -22,12 +22,14 @@
 #ifndef MU_FRAMEWORK_IINTERACTIVE_H
 #define MU_FRAMEWORK_IINTERACTIVE_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "io/path.h"
 #include "types/val.h"
 #include "types/retval.h"
 #include "types/uri.h"
 #include "types/flags.h"
+#include "progress.h"
+#include "async/promise.h"
 
 namespace mu::framework {
 class IInteractive : MODULE_EXPORT_INTERFACE
@@ -41,42 +43,63 @@ public:
     enum class Button {
         NoButton,
         Ok,
-        Save,
-        SaveAll,
-        DontSave,
-        Open,
-        Yes,
-        YesToAll,
-        No,
-        NoToAll,
-        Abort,
-        Retry,
-        Ignore,
-        Close,
-        Cancel,
-        Discard,
-        Help,
-        Apply,
-        Reset,
         Continue,
+        RestoreDefaults,
+        Reset,
+        Apply,
+        Help,
+        Discard,
+        Cancel,
+        Close,
+        Ignore,
+        Retry,
+        Abort,
+        NoToAll,
+        No,
+        YesToAll,
+        Yes,
+        Open,
+        DontSave,
+        SaveAll,
+        Save,
+        Next,
+        Back,
+        Select,
+        Clear,
+        Done,
 
-        CustomButton
+        CustomButton,
     };
     using Buttons = std::vector<Button>;
+
+    enum ButtonRole { // Keep updated with ButtonRole in buttonboxmodel.h
+        AcceptRole,
+        RejectRole,
+        DestructiveRole,
+        ResetRole,
+        ApplyRole,
+        RetryRole,
+        HelpRole,
+        ContinueRole,
+        BackRole,
+        CustomRole
+    };
 
     struct ButtonData {
         int btn = int(Button::CustomButton);
         std::string text;
         bool accent = false;
+        bool leftSide = false;
+        ButtonRole role = ButtonRole::CustomRole;
 
         ButtonData(int btn, const std::string& text)
             : btn(btn), text(text) {}
         ButtonData(Button btn, const std::string& text)
             : btn(int(btn)), text(text) {}
-        ButtonData(int btn, const std::string& text, bool accent)
-            : btn(btn), text(text), accent(accent) {}
-        ButtonData(Button btn, const std::string& text, bool accent)
-            : btn(int(btn)), text(text), accent(accent) {}
+        ButtonData(int btn, const std::string& text, bool accent, bool leftSide = false, ButtonRole role = ButtonRole::CustomRole)
+            : btn(btn), text(text), accent(accent), leftSide(leftSide), role(role) {}
+        ButtonData(Button btn, const std::string& text, bool accent, bool leftSide = false, ButtonRole role = ButtonRole::CustomRole)
+            : btn(int(btn)), text(text), accent(accent), leftSide(leftSide), role(role) {}
     };
     using ButtonDatas = std::vector<ButtonData>;
 
@@ -139,17 +162,26 @@ public:
 
     // warning
     virtual Result warning(const std::string& title, const std::string& text, const Buttons& buttons = {},
-                           const Button& def = Button::NoButton, const Options& options = {}) const = 0;
+                           const Button& def = Button::NoButton, const Options& options = { WithIcon }) const = 0;
 
     virtual Result warning(const std::string& title, const Text& text, const ButtonDatas& buttons = {}, int defBtn = int(Button::NoButton),
-                           const Options& options = {}) const = 0;
+                           const Options& options = { WithIcon }) const = 0;
+
+    virtual Result warning(const std::string& title, const Text& text, const std::string& detailedText, const ButtonDatas& buttons = {},
+                           int defBtn = int(Button::NoButton), const Options& options = { WithIcon }) const = 0;
 
     // error
     virtual Result error(const std::string& title, const std::string& text, const Buttons& buttons = {},
-                         const Button& def = Button::NoButton, const Options& options = {}) const = 0;
+                         const Button& def = Button::NoButton, const Options& options = { WithIcon }) const = 0;
 
     virtual Result error(const std::string& title, const Text& text, const ButtonDatas& buttons = {}, int defBtn = int(Button::NoButton),
-                         const Options& options = {}) const = 0;
+                         const Options& options = { WithIcon }) const = 0;
+
+    virtual Result error(const std::string& title, const Text& text, const std::string& detailedText, const ButtonDatas& buttons = {},
+                         int defBtn = int(Button::NoButton), const Options& options = { WithIcon }) const = 0;
+
+    // progress
+    virtual Ret showProgress(const std::string& title, framework::Progress* progress) const = 0;
 
     // files
     virtual io::path_t selectOpeningFile(const QString& title, const io::path_t& dir, const std::vector<std::string>& filter) = 0;
@@ -184,6 +216,10 @@ public:
 
     virtual Ret openUrl(const std::string& url) const = 0;
     virtual Ret openUrl(const QUrl& url) const = 0;
+
+    virtual Ret isAppExists(const std::string& appIdentifier) const = 0;
+    virtual Ret canOpenApp(const Uri& uri) const = 0;
+    virtual async::Promise<Ret> openApp(const Uri& uri) const = 0;
 
     /// Opens a file browser at the parent directory of filePath,
     /// and selects the file at filePath on OSs that support it

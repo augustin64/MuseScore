@@ -26,9 +26,9 @@
 #include <QObject>
 
 #include "engraving/types/types.h"
-#include "engraving/libmscore/types.h"
+#include "engraving/dom/types.h"
 
-namespace mu::engraving::PluginAPI::Enums {
+namespace mu::plugins::api::enums {
 Q_NAMESPACE;
 
 enum class AccidentalType {
@@ -343,24 +343,29 @@ enum class ElementType {
 Q_ENUM_NS(ElementType);
 
 enum class OrnamentStyle : char {
-    DEFAULT = int(mu::engraving::OrnamentStyle::DEFAULT),
-    BAROQUE = int(mu::engraving::OrnamentStyle::BAROQUE)
+    DEFAULT = char(mu::engraving::OrnamentStyle::DEFAULT),
+    BAROQUE = char(mu::engraving::OrnamentStyle::BAROQUE)
 };
 Q_ENUM_NS(OrnamentStyle);
 
 enum class Align : char {
-    LEFT     = char(mu::engraving::AlignH::LEFT),
-    RIGHT    = char(mu::engraving::AlignH::RIGHT),
-    HCENTER  = char(mu::engraving::AlignH::HCENTER),
-    TOP      = char(mu::engraving::AlignV::TOP),
-    BOTTOM   = char(mu::engraving::AlignV::BOTTOM),
-    VCENTER  = char(mu::engraving::AlignV::VCENTER),
-    BASELINE = char(mu::engraving::AlignV::BASELINE),
+    LEFT     = 0,
+    RIGHT    = 1,
+    HCENTER  = 2,
+    TOP      = 0,
+    BOTTOM   = 4,
+    VCENTER  = 8,
+    BASELINE = 16,
     CENTER = Align::HCENTER | Align::VCENTER,
     HMASK  = Align::LEFT | Align::RIGHT | Align::HCENTER,
     VMASK  = Align::TOP | Align::BOTTOM | Align::VCENTER | Align::BASELINE
 };
 Q_ENUM_NS(Align);
+
+constexpr Align operator &(Align a1, Align a2)
+{
+    return static_cast<Align>(static_cast<char>(a1) & static_cast<char>(a2));
+}
 
 //! NOTE just Placement for compatibility
 enum class Placement {
@@ -403,8 +408,8 @@ enum class BeamMode {
     MID = int(mu::engraving::BeamMode::MID),
     END = int(mu::engraving::BeamMode::END),
     NONE = int(mu::engraving::BeamMode::NONE),
-    BEGIN32 = int(mu::engraving::BeamMode::BEGIN32),
-    BEGIN64 = int(mu::engraving::BeamMode::BEGIN64),
+    BEGIN32 = int(mu::engraving::BeamMode::BEGIN16), // these names for the beam modes are deprecated! this beam mode begins a 16th beam
+    BEGIN64 = int(mu::engraving::BeamMode::BEGIN32), // this one begins a 32nd beam
     INVALID = int(mu::engraving::BeamMode::INVALID),
 };
 Q_ENUM_NS(BeamMode);
@@ -420,7 +425,7 @@ enum class GlissandoStyle {
     WHITE_KEYS = int(mu::engraving::GlissandoStyle::WHITE_KEYS),
     BLACK_KEYS = int(mu::engraving::GlissandoStyle::BLACK_KEYS),
     DIATONIC = int(mu::engraving::GlissandoStyle::DIATONIC),
-    PORTAMENTO = int(mu::engraving::GlissandoStyle::PORTAMENTO),
+    PORTAMENTO = int(mu::engraving::GlissandoStyle::PORTAMENTO)
 };
 Q_ENUM_NS(GlissandoStyle);
 
@@ -481,18 +486,18 @@ enum class NoteHeadGroup {
 };
 Q_ENUM_NS(NoteHeadGroup);
 
-enum class NoteType : char {
+enum class NoteType {
     ///.\{
-    NORMAL        = char(mu::engraving::NoteType::NORMAL),
-    ACCIACCATURA  = char(mu::engraving::NoteType::ACCIACCATURA),
-    APPOGGIATURA  = char(mu::engraving::NoteType::APPOGGIATURA),
-    GRACE4        = char(mu::engraving::NoteType::GRACE4),
-    GRACE16       = char(mu::engraving::NoteType::GRACE16),
-    GRACE32       = char(mu::engraving::NoteType::GRACE32),
-    GRACE8_AFTER  = char(mu::engraving::NoteType::GRACE8_AFTER),
-    GRACE16_AFTER = char(mu::engraving::NoteType::GRACE16_AFTER),
-    GRACE32_AFTER = char(mu::engraving::NoteType::GRACE32_AFTER),
-    INVALID       = char(mu::engraving::NoteType::INVALID)
+    NORMAL        = (int)(mu::engraving::NoteType::NORMAL),
+    ACCIACCATURA  = (int)(mu::engraving::NoteType::ACCIACCATURA),
+    APPOGGIATURA  = (int)(mu::engraving::NoteType::APPOGGIATURA),
+    GRACE4        = (int)(mu::engraving::NoteType::GRACE4),
+    GRACE16       = (int)(mu::engraving::NoteType::GRACE16),
+    GRACE32       = (int)(mu::engraving::NoteType::GRACE32),
+    GRACE8_AFTER  = (int)(mu::engraving::NoteType::GRACE8_AFTER),
+    GRACE16_AFTER = (int)(mu::engraving::NoteType::GRACE16_AFTER),
+    GRACE32_AFTER = (int)(mu::engraving::NoteType::GRACE32_AFTER),
+    INVALID       = (int)(mu::engraving::NoteType::INVALID)
                     ///\}
 };
 Q_ENUM_NS(NoteType);
@@ -542,7 +547,7 @@ enum class Tid {
     TITLE = int(mu::engraving::TextStyleType::TITLE),
     SUBTITLE = int(mu::engraving::TextStyleType::SUBTITLE),
     COMPOSER = int(mu::engraving::TextStyleType::COMPOSER),
-    POET = int(mu::engraving::TextStyleType::POET),
+    POET = int(mu::engraving::TextStyleType::LYRICIST),
     TRANSLATOR = int(mu::engraving::TextStyleType::TRANSLATOR),
     FRAME = int(mu::engraving::TextStyleType::FRAME),
     INSTRUMENT_EXCERPT = int(mu::engraving::TextStyleType::INSTRUMENT_EXCERPT),
@@ -3565,27 +3570,27 @@ enum class SymId {
 Q_ENUM_NS(SymId);
 }
 
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::AccidentalType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::ElementType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::OrnamentStyle);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::Align);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::Placement);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::Direction);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::DirectionH);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::LayoutBreakType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::VeloType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::BeamMode);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::GlissandoType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::GlissandoStyle);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::NoteHeadType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::NoteHeadScheme);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::NoteHeadGroup);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::NoteType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::PlayEventType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::SegmentType);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::Tid);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::Syllabic);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::Anchor);
-Q_DECLARE_METATYPE(mu::engraving::PluginAPI::Enums::SymId);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::AccidentalType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::ElementType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::OrnamentStyle);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::Align);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::Placement);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::Direction);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::DirectionH);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::LayoutBreakType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::VeloType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::BeamMode);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::GlissandoType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::GlissandoStyle);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::NoteHeadType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::NoteHeadScheme);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::NoteHeadGroup);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::NoteType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::PlayEventType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::SegmentType);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::Tid);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::Syllabic);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::Anchor);
+Q_DECLARE_METATYPE(mu::plugins::api::enums::SymId);
 
 #endif // MU_PLUGINS_APITYPES_H

@@ -4,8 +4,8 @@
 
 #include "global/log.h"
 
-namespace mu::engraving {
-std::pair<int, std::unique_ptr<GPTrack> > GP7DomBuilder::createGPTrack(XmlDomNode* trackNode)
+namespace mu::iex::guitarpro {
+std::pair<int, std::unique_ptr<GPTrack> > GP7DomBuilder::createGPTrack(XmlDomNode* trackNode, XmlDomNode* versionNode)
 {
     static const std::set<String> sUnused = {
         u"Color", u"SystemsDefautLayout", u"SystemsLayout", u"AutoBrush",
@@ -18,6 +18,7 @@ std::pair<int, std::unique_ptr<GPTrack> > GP7DomBuilder::createGPTrack(XmlDomNod
     int trackIdx = trackNode->attribute("id").toInt();
     auto track = std::make_unique<GPTrack>(trackIdx);
     XmlDomNode trackChildNode = trackNode->firstChild();
+    String version = versionNode->toElement().text();
 
     while (!trackChildNode.isNull()) {
         String nodeName = trackChildNode.nodeName();
@@ -46,11 +47,20 @@ std::pair<int, std::unique_ptr<GPTrack> > GP7DomBuilder::createGPTrack(XmlDomNod
             int staffCount = 0;
             while (!staffNode.isNull()) {
                 auto propertyNode = staffNode.firstChild();
-                readTrackProperties(&propertyNode, track.get());
+                // there is a bug in gp v 7.0.0
+                // All parts marked to use flat for tuning string,
+                // but in real world gp uses tuning presets
+                // sp we have to ignore <Flats/> and <TuningFlat> props
+                readTrackProperties(&propertyNode, track.get(), version == "7");
                 staffNode = staffNode.nextSibling();
                 staffCount++;
             }
             track->setStaffCount(staffCount);
+        } else if (nodeName == u"NotationPatch") {
+            auto innerNode = trackChildNode.firstChildElement("LineCount");
+            if (!innerNode.isNull()) {
+                track->setLineCount(innerNode.toElement().text().toInt());
+            }
         } else if (nodeName == u"Transpose") {
             auto octaveNode = trackChildNode.firstChildElement("Octave");
             int octave = octaveNode.toElement().text().toInt();
@@ -71,8 +81,6 @@ std::pair<int, std::unique_ptr<GPTrack> > GP7DomBuilder::createGPTrack(XmlDomNod
             }
         } else if (sUnused.find(nodeName) != sUnused.end()) {
             // Ignored nodes
-        } else {
-            //LOGD() << "unknown GP track tag: " << nodeName << "\n";
         }
 
         trackChildNode = trackChildNode.nextSibling();
@@ -128,7 +136,8 @@ GPTrack::SoundAutomation GP7DomBuilder::readTrackAutomation(XmlDomNode* automati
     result.linear = automationNode->firstChildElement("Linear").text() == u"true";
     result.bar = automationNode->firstChildElement("Bar").text().toInt();
     result.value = automationNode->firstChildElement("Value").text();
+    result.position = automationNode->firstChildElement("Position").text().toFloat();
 
     return result;
 }
-} //end Ms namespace
+} // namespace mu::iex::guitarpro

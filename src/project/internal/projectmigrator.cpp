@@ -21,11 +21,10 @@
  */
 #include "projectmigrator.h"
 
-#include "engraving/infrastructure/symbolfont.h"
-
-#include "engraving/libmscore/score.h"
-#include "engraving/libmscore/excerpt.h"
-#include "engraving/libmscore/undo.h"
+#include "engraving/types/constants.h"
+#include "engraving/dom/score.h"
+#include "engraving/dom/excerpt.h"
+#include "engraving/dom/undo.h"
 
 #include "rw/compat/readstyle.h"
 
@@ -104,7 +103,7 @@ Ret ProjectMigrator::askAboutMigration(MigrationOptions& out, const QString& app
     }
 
     QVariantMap vals = rv.val.toQVariant().toMap();
-    out.appVersion = mu::engraving::MSCVERSION;
+    out.appVersion = mu::engraving::Constants::MSC_VERSION;
     out.isApplyMigration = vals.value("isApplyMigration").toBool();
     out.isAskAgain = vals.value("isAskAgain").toBool();
     out.isApplyLeland = vals.value("isApplyLeland").toBool();
@@ -118,7 +117,7 @@ void ProjectMigrator::resetStyleSettings(mu::engraving::MasterScore* score)
     // there are a few things that need to be updated no matter which version the score is from (#10499)
     // primarily, the differences made concerning barline thickness and distance
     // these updates take place no matter whether or not the other migration options are checked
-    qreal sp = score->spatium();
+    qreal sp = score->style().spatium();
     mu::engraving::MStyle* style = &score->style();
     style->set(mu::engraving::Sid::dynamicsFontSize, 10.0);
     qreal doubleBarDistance = style->styleMM(mu::engraving::Sid::doubleBarDistance);
@@ -128,10 +127,16 @@ void ProjectMigrator::resetStyleSettings(mu::engraving::MasterScore* score)
     endBarDistance -= (style->styleMM(mu::engraving::Sid::barWidth) + style->styleMM(mu::engraving::Sid::endBarWidth)) / 2;
     style->set(mu::engraving::Sid::endBarDistance, endBarDistance / sp);
     qreal repeatBarlineDotSeparation = style->styleMM(mu::engraving::Sid::repeatBarlineDotSeparation);
-    qreal dotWidth = score->symbolFont()->width(mu::engraving::SymId::repeatDot, 1.0);
+    qreal dotWidth = score->engravingFont()->width(mu::engraving::SymId::repeatDot, 1.0);
     repeatBarlineDotSeparation -= (style->styleMM(mu::engraving::Sid::barWidth) + dotWidth) / 2;
     style->set(mu::engraving::Sid::repeatBarlineDotSeparation, repeatBarlineDotSeparation / sp);
     score->resetStyleValue(mu::engraving::Sid::measureSpacing);
+}
+
+bool ProjectMigrator::resetCrossBeams(engraving::MasterScore* score)
+{
+    score->setResetCrossBeams();
+    return true;
 }
 
 Ret ProjectMigrator::migrateProject(engraving::EngravingProjectPtr project, const MigrationOptions& opt)
@@ -160,14 +165,18 @@ Ret ProjectMigrator::migrateProject(engraving::EngravingProjectPtr project, cons
         ok = resetAllElementsPositions(score);
     }
 
-    if (ok && score->mscVersion() != mu::engraving::MSCVERSION) {
-        score->undo(new mu::engraving::ChangeMetaText(score, u"mscVersion", String::fromAscii(MSC_VERSION)));
+    if (ok && score->mscVersion() <= 206) {
+        ok = resetCrossBeams(score);
+    }
+
+    if (ok && score->mscVersion() != mu::engraving::Constants::MSC_VERSION) {
+        score->undo(new mu::engraving::ChangeMetaText(score, u"mscVersion", String::fromAscii(mu::engraving::Constants::MSC_VERSION_STR)));
     }
 
     if (ok && m_resetStyleSettings) {
         resetStyleSettings(score);
+        score->setLayoutAll();
     }
-    score->setResetDefaults(); // some defaults need to be reset on first layout
     score->endCmd();
 
     return ok ? make_ret(Ret::Code::Ok) : make_ret(Ret::Code::InternalError);

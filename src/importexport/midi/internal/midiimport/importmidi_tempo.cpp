@@ -23,11 +23,11 @@
 
 #include "importmidi_inner.h"
 #include "importmidi_beat.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/measure.h"
-#include "libmscore/tempo.h"
-#include "libmscore/tempotext.h"
-#include "libmscore/factory.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/tempo.h"
+#include "engraving/dom/tempotext.h"
+#include "engraving/dom/factory.h"
 #include "importmidi_operations.h"
 
 #include "log.h"
@@ -109,7 +109,7 @@ void applyAllTempoEvents(const std::multimap<int, MTrack>& tracks, Score* score)
 {
     for (const auto& track: tracks) {
         if (track.second.isDivisionInTps) {         // ticks per second
-            const double ticksPerBeat = Constants::division;
+            const double ticksPerBeat = Constants::DIVISION;
             const double beatsPerSecond = roundToBpm(track.second.division / ticksPerBeat);
             setTempoToScore(score, 0, beatsPerSecond);
         } else {        // beats per second
@@ -149,7 +149,7 @@ void setTempo(const std::multimap<int, MTrack>& tracks, Score* score)
         int counter = 0;
         auto it = beats.begin();
         auto beatStart = *it;
-        const auto newBeatLen = ReducedFraction::fromTicks(Constants::division);
+        const auto newBeatLen = ReducedFraction::fromTicks(Constants::DIVISION);
 
         for (++it; it != beats.end(); ++it) {
             const auto& beatEnd = *it;

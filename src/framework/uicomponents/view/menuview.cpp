@@ -65,7 +65,7 @@ void MenuView::componentComplete()
     PopupView::componentComplete();
 }
 
-void MenuView::updatePosition()
+void MenuView::updateGeometry()
 {
     const QQuickItem* parent = parentItem();
     IF_ASSERT_FAILED(parent) {
@@ -134,6 +134,15 @@ void MenuView::updatePosition()
 
     // remove padding for arrow
     movePos(m_globalPos.x() - padding(), m_globalPos.y());
+}
+
+void MenuView::updateContentPosition()
+{
+    if (opensUpward()) {
+        contentItem()->setY(padding());
+    } else {
+        contentItem()->setY(-padding());
+    }
 }
 
 QRect MenuView::viewGeometry() const

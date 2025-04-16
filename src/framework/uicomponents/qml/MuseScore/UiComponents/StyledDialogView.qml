@@ -38,12 +38,12 @@ DialogView {
 
     property int margins: 0
 
-    property int contentWidth: 240
-    property int contentHeight: contentBody.childrenRect.height
-
     property alias navigationSection: navSec
 
     property bool closeOnEscape : true
+
+    contentWidth: 240
+    contentHeight: contentBody.childrenRect.height
 
     onOpened: {
         navSec.requestActive()
@@ -92,10 +92,19 @@ DialogView {
             }
         }
 
+        StyledDropShadow {
+            anchors.fill: parent
+            source: contentBackground
+            visible: root.frameless
+        }
+
         Rectangle {
             id: contentBackground
             anchors.fill: parent
             color: ui.theme.backgroundPrimaryColor
+            radius: root.frameless ? 4 : 0
+            border.width: root.frameless ? 1 : 0
+            border.color: ui.theme.strokeColor
         }
 
         Item {

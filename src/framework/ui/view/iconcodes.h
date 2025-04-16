@@ -121,8 +121,8 @@ public:
         TEXT_SUBSCRIPT = 0xEF4C,
         TEXT_SUPERSCRIPT = 0xEF4D,
         AUDIO = 0xEF4E,
-        VISIBILITY_ON = 0xEF53,
-        VISIBILITY_OFF = 0xEF54,
+        EYE_OPEN = 0xEF53,
+        EYE_CLOSED = 0xEF54,
         SETTINGS_COG = 0xEF55,
         BEAM_FEATHERING_RIGHT_HEIGHT = 0xEF56,
         BEAM_FEATHERING_LEFT_HEIGHT = 0xEF57,
@@ -162,7 +162,6 @@ public:
         AMBITUS_LEANING_RIGHT = 0xEF7B,
         BRACKET_PARENTHESES = 0xEF7C,
         BRACKET_PARENTHESES_SQUARE = 0xEF7D,
-        STAFF_TYPE_CHANGE = 0xEF7E,
         SPLIT_VIEW_HORIZONTAL = 0xEF7F,
         SPLIT_VIEW_VERTICAL = 0xEF80,
         KEY_SIGNATURE = 0xEF81,
@@ -202,7 +201,7 @@ public:
         CLEF_TREBLE = 0xF31A,
 
         AUTO_TEXT = 0xF329,
-        NOTE_HEAD_EIGHTH = 0xF33A,
+        BEAM_NONE = 0xF33A,
         BEAM_BREAK_LEFT = 0xF33B,
         BEAM_JOIN = 0xF33D,
         BEAM_BREAK_INNER_8TH = 0xF33E,
@@ -304,12 +303,16 @@ public:
         NOTE_PLUS = 0xF39D,
         NOTE_TO_RIGHT = 0xF39E,
         RHYTHM_ONLY = 0xF39F,
-        RE_PITH = 0xF3A0,
+        RE_PITCH = 0xF3A0,
         FOOT_PEDAL = 0xF3A1,
 
         TOOLBAR_GRIP = 0xF3A2,
 
+        GRID = 0xF3A4,
+
         PAGE = 0xF3A5,
+
+        LIST = 0xF3AA,
 
         CAMERA = 0xF3AE,
 
@@ -318,6 +321,7 @@ public:
         PAN_SCORE = 0xF3B0,
         COUNT_IN = 0xF3B1,
 
+        GLOBE = 0xF3B6,
         PRINT = 0xF3B7,
 
         DOWN = 0xF3C1,
@@ -369,6 +373,7 @@ public:
         MEASURE_REPEAT = 0xF431,
 
         INSERT_ONE_MEASURE = 0xF432,
+        STAFF_TYPE_CHANGE = 0xF433,
 
         CLOUD = 0xF435,
 
@@ -378,6 +383,31 @@ public:
 
         PLUGIN = 0xF440,
         LYRICS = 0xF441,
+
+        STOP_FILL = 0xF447,
+
+        REST_8TH = 0xF44C,
+
+        SHARE_AUDIO = 0xF44F,
+
+        DYNAMIC_CENTER_1 = 0xF451,
+        DYNAMIC_CENTER_2 = 0xF452,
+        EXPRESSION = 0xF453,
+
+        CLOUD_FILL = 0xF454,
+        BRAILLE = 0xF455,
+
+        GUITAR_BEND_REGULAR = 0xF45F,
+        GUITAR_PRE_BEND = 0xF460,
+        GUITAR_GRACE_NOTE_BEND = 0xF461,
+        GUITAR_SLIGHT_BEND = 0xF462,
+        GUITAR_BEND_STYLE_1 = 0xF463,
+        GUITAR_BEND_STYLE_FULL = 0xF464,
+
+        TIE_OUTSIDE = 0xF45D,
+        TIE_INSIDE = 0xF45E,
+        TIE_CHORD_OUTSIDE = 0xF466,
+        TIE_CHORD_INSIDE = 0xF467,
 
         NONE = 0xFFFF
     };

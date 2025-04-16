@@ -23,9 +23,12 @@
 #ifndef MU_ACCESSIBILITY_ACCESSIBILITYMODULE_H
 #define MU_ACCESSIBILITY_ACCESSIBILITYMODULE_H
 
+#include <memory>
+
 #include "modularity/imodulesetup.h"
 
 namespace mu::accessibility {
+class AccessibilityConfiguration;
 class AccessibilityModule : public modularity::IModuleSetup
 {
 public:
@@ -35,6 +38,9 @@ public:
     void resolveImports() override;
 
     void onInit(const framework::IApplication::RunMode& mode) override;
+
+private:
+    std::shared_ptr<AccessibilityConfiguration> m_configuration;
 };
 }
 

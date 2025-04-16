@@ -29,7 +29,7 @@ namespace winrt {
 struct WasapiAudioClient : implements<WasapiAudioClient, IActivateAudioInterfaceCompletionHandler>
 {
 public:
-    WasapiAudioClient(HANDLE clientStartedEvent, HANDLE clientStoppedEvent);
+    WasapiAudioClient(HANDLE clientStartedEvent, HANDLE clientFailedToStartEvent, HANDLE clientStoppedEvent);
     ~WasapiAudioClient();
 
     void setHardWareOffload(bool value);
@@ -44,10 +44,9 @@ public:
     unsigned int sampleRate() const;
     unsigned int channelCount() const;
 
-    Windows::Devices::Enumeration::DeviceInformationCollection availableDevices() const;
-    hstring defaultDeviceId() const;
+    void setFallbackDevice(const hstring& deviceId);
 
-    void asyncInitializeAudioDevice(const hstring& deviceId) noexcept;
+    void asyncInitializeAudioDevice(const hstring& deviceId, bool useClosestSupportedFormat = false) noexcept;
     void startPlayback() noexcept;
     HRESULT stopPlaybackAsync() noexcept;
 
@@ -72,6 +71,7 @@ private:
     void setStateAndNotify(const DeviceState newState, hresult resultCode);
 
     hstring m_deviceIdString;
+    hstring m_fallbackDeviceIdString;
     uint32_t m_bufferFrames = 0;
 
     // Event for sample ready or user stop
@@ -99,7 +99,10 @@ private:
     DeviceState m_deviceState = DeviceState::Uninitialized;
     SampleRequestCallback m_sampleRequestCallback;
     HANDLE m_clientStartedEvent;
+    HANDLE m_clientFailedToStartEvent;
     HANDLE m_clientStoppedEvent;
+
+    bool m_useClosestSupportedFormat = false;
 };
 }
 

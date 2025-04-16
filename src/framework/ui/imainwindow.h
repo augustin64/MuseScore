@@ -22,12 +22,15 @@
 #ifndef MU_UI_IMAINWINDOW_H
 #define MU_UI_IMAINWINDOW_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
+#include "async/notification.h"
 
 class QWindow;
 class QScreen;
 
 namespace mu::ui {
+class MainWindowBridge;
+
 class IMainWindow : MODULE_EXPORT_INTERFACE
 {
     INTERFACE_ID(IMainWindow)
@@ -35,13 +38,18 @@ class IMainWindow : MODULE_EXPORT_INTERFACE
 public:
     virtual ~IMainWindow() = default;
 
+    virtual void init(MainWindowBridge* bridge) = 0;
+    virtual void deinit() = 0;
+
     virtual QWindow* qWindow() const = 0;
 
     virtual void requestShowOnBack() = 0;
     virtual void requestShowOnFront() = 0;
 
     virtual bool isFullScreen() const = 0;
+    virtual async::Notification isFullScreenChanged() const = 0;
     virtual void toggleFullScreen() = 0;
+
     virtual QScreen* screen() const = 0;
 };
 }

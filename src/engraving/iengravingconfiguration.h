@@ -24,7 +24,7 @@
 
 #include "types/string.h"
 #include "io/path.h"
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "async/channel.h"
 #include "async/notification.h"
 #include "engraving/types/types.h"
@@ -63,10 +63,11 @@ public:
     virtual draw::Color formattingMarksColor() const = 0;
     virtual draw::Color thumbnailBackgroundColor() const = 0;
     virtual draw::Color noteBackgroundColor() const = 0;
+    virtual draw::Color fontPrimaryColor() const = 0;
 
     virtual double guiScaling() const = 0;
 
-    virtual draw::Color selectionColor(voice_idx_t voiceIndex = 0, bool itemVisible = true) const = 0;
+    virtual draw::Color selectionColor(voice_idx_t voiceIndex = 0, bool itemVisible = true, bool itemIsUnlinkedFromScore = false) const = 0;
     virtual void setSelectionColor(voice_idx_t voiceIndex, draw::Color color) = 0;
     virtual async::Channel<voice_idx_t, draw::Color> selectionColorChanged() const = 0;
 
@@ -84,6 +85,20 @@ public:
         bool showSkylines = false;
         bool showSystemBoundingRects = false;
         bool showCorruptedMeasures = true;
+
+        bool anyEnabled() const
+        {
+            return showElementBoundingRects
+                   || colorElementShapes
+                   || showSegmentShapes
+                   || colorSegmentShapes
+                   || showSkylines
+                   || showSystemBoundingRects
+#ifndef NDEBUG
+                   || showCorruptedMeasures
+#endif
+            ;
+        }
     };
 
     virtual const DebuggingOptions& debuggingOptions() const = 0;
@@ -100,6 +115,7 @@ public:
     virtual bool enableExperimentalFretCircle() const = 0;
     virtual void setGuitarProMultivoiceEnabled(bool multiVoice) = 0;
     virtual bool guitarProMultivoiceEnabled() const = 0;
+    virtual bool minDistanceForPartialSkylineCalculated() const = 0;
 };
 }
 

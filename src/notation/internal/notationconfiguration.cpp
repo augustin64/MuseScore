@@ -21,7 +21,7 @@
  */
 #include "notationconfiguration.h"
 
-#include "libmscore/mscore.h"
+#include "engraving/dom/mscore.h"
 
 #include "log.h"
 #include "settings.h"
@@ -59,6 +59,7 @@ static const Settings::Key USER_STYLES_PATH(module_name, "application/paths/mySt
 
 static const Settings::Key IS_MIDI_INPUT_ENABLED(module_name, "io/midi/enableInput");
 static const Settings::Key IS_AUTOMATICALLY_PAN_ENABLED(module_name, "application/playback/panPlayback");
+static const Settings::Key PLAYBACK_SMOOTH_PANNING(module_name, "application/playback/smoothPan");
 static const Settings::Key IS_PLAY_REPEATS_ENABLED(module_name, "application/playback/playRepeats");
 static const Settings::Key IS_PLAY_CHORD_SYMBOLS_ENABLED(module_name, "application/playback/playChordSymbols");
 static const Settings::Key IS_METRONOME_ENABLED(module_name, "application/playback/metronomeEnabled");
@@ -70,6 +71,7 @@ static const Settings::Key IS_CANVAS_ORIENTATION_VERTICAL_KEY(module_name, "ui/c
 static const Settings::Key IS_LIMIT_CANVAS_SCROLL_AREA_KEY(module_name, "ui/canvas/scroll/limitScrollArea");
 
 static const Settings::Key COLOR_NOTES_OUTSIDE_OF_USABLE_PITCH_RANGE(module_name, "score/note/warnPitchRange");
+static const Settings::Key WARN_GUITAR_BENDS(module_name, "score/note/warnGuitarBends");
 static const Settings::Key REALTIME_DELAY(module_name, "io/midi/realtimeDelay");
 static const Settings::Key NOTE_DEFAULT_PLAY_DURATION(module_name, "score/note/defaultPlayDuration");
 
@@ -83,6 +85,7 @@ static const Settings::Key VERTICAL_GRID_SIZE_KEY(module_name,  "ui/application/
 
 static const Settings::Key NEED_TO_SHOW_ADD_TEXT_ERROR_MESSAGE_KEY(module_name,  "ui/dialogs/needToShowAddTextErrorMessage");
 static const Settings::Key NEED_TO_SHOW_ADD_FIGURED_BASS_ERROR_MESSAGE_KEY(module_name,  "ui/dialogs/needToShowAddFiguredBassErrorMessage");
+static const Settings::Key NEED_TO_SHOW_ADD_GUITAR_BEND_ERROR_MESSAGE_KEY(module_name,  "ui/dialogs/needToShowAddGuitarBendErrorMessage");
 
 static const Settings::Key PIANO_KEYBOARD_NUMBER_OF_KEYS(module_name,  "pianoKeyboard/numberOfKeys");
 
@@ -151,7 +154,10 @@ void NotationConfiguration::init()
     settings()->valueChanged(USER_STYLES_PATH).onReceive(nullptr, [this](const Val& val) {
         m_userStylesPathChanged.send(val.toPath());
     });
-    fileSystem()->makePath(userStylesPath());
+
+    if (!userStylesPath().empty()) {
+        fileSystem()->makePath(userStylesPath());
+    }
 
     settings()->setDefaultValue(SELECTION_PROXIMITY, Val(2));
     settings()->setDefaultValue(IS_MIDI_INPUT_ENABLED, Val(true));
@@ -160,6 +166,10 @@ void NotationConfiguration::init()
     settings()->setDefaultValue(IS_PLAY_CHORD_SYMBOLS_ENABLED, Val(true));
     settings()->setDefaultValue(IS_METRONOME_ENABLED, Val(false));
     settings()->setDefaultValue(IS_COUNT_IN_ENABLED, Val(false));
+
+    settings()->setDefaultValue(PLAYBACK_SMOOTH_PANNING, Val(false));
+    settings()->setDescription(PLAYBACK_SMOOTH_PANNING, trc("notation", "Smooth panning"));
+    settings()->setCanBeManuallyEdited(PLAYBACK_SMOOTH_PANNING, true);
 
     settings()->valueChanged(IS_PLAY_CHORD_SYMBOLS_ENABLED).onReceive(nullptr, [this](const Val&) {
         m_isPlayChordSymbolsChanged.notify();
@@ -176,6 +186,7 @@ void NotationConfiguration::init()
     });
 
     settings()->setDefaultValue(COLOR_NOTES_OUTSIDE_OF_USABLE_PITCH_RANGE, Val(true));
+    settings()->setDefaultValue(WARN_GUITAR_BENDS, Val(true));
     settings()->setDefaultValue(REALTIME_DELAY, Val(750));
     settings()->setDefaultValue(NOTE_DEFAULT_PLAY_DURATION, Val(500));
 
@@ -195,6 +206,7 @@ void NotationConfiguration::init()
 
     settings()->setDefaultValue(NEED_TO_SHOW_ADD_TEXT_ERROR_MESSAGE_KEY, Val(true));
     settings()->setDefaultValue(NEED_TO_SHOW_ADD_FIGURED_BASS_ERROR_MESSAGE_KEY, Val(true));
+    settings()->setDefaultValue(NEED_TO_SHOW_ADD_GUITAR_BEND_ERROR_MESSAGE_KEY, Val(true));
 
     settings()->setDefaultValue(PIANO_KEYBOARD_NUMBER_OF_KEYS, Val(88));
     m_pianoKeyboardNumberOfKeys.val = settings()->value(PIANO_KEYBOARD_NUMBER_OF_KEYS).toInt();
@@ -207,6 +219,7 @@ void NotationConfiguration::init()
     });
 
     mu::engraving::MScore::warnPitchRange = colorNotesOutsideOfUsablePitchRange();
+    mu::engraving::MScore::warnGuitarBends = warnGuitarBends();
     mu::engraving::MScore::defaultPlayDuration = notePlayDurationMilliseconds();
 
     mu::engraving::MScore::setHRaster(DEFAULT_GRID_SIZE_SPATIUM);
@@ -260,7 +273,7 @@ const QPixmap& NotationConfiguration::backgroundWallpaper() const
     io::path_t path = backgroundWallpaperPath();
 
     static QPixmap wallpaper;
-    static io::path_t lastPath = path;
+    static io::path_t lastPath;
 
     if (path.empty()) {
         wallpaper = QPixmap();
@@ -329,7 +342,7 @@ const QPixmap& NotationConfiguration::foregroundWallpaper() const
     io::path_t path = foregroundWallpaperPath();
 
     static QPixmap wallpaper;
-    static io::path_t lastPath = path;
+    static io::path_t lastPath;
 
     if (path.empty()) {
         wallpaper = QPixmap();
@@ -553,6 +566,16 @@ void NotationConfiguration::setIsAutomaticallyPanEnabled(bool enabled)
     settings()->setSharedValue(IS_AUTOMATICALLY_PAN_ENABLED, Val(enabled));
 }
 
+bool NotationConfiguration::isSmoothPanning() const
+{
+    return settings()->value(PLAYBACK_SMOOTH_PANNING).toBool();
+}
+
+void NotationConfiguration::setIsSmoothPanning(bool value)
+{
+    settings()->setSharedValue(PLAYBACK_SMOOTH_PANNING, Val(value));
+}
+
 bool NotationConfiguration::isPlayRepeatsEnabled() const
 {
     return settings()->value(IS_PLAY_REPEATS_ENABLED).toBool();
@@ -561,7 +584,6 @@ bool NotationConfiguration::isPlayRepeatsEnabled() const
 void NotationConfiguration::setIsPlayRepeatsEnabled(bool enabled)
 {
     settings()->setSharedValue(IS_PLAY_REPEATS_ENABLED, Val(enabled));
-    mu::engraving::MScore::playRepeats = enabled;
     m_isPlayRepeatsChanged.notify();
 }
 
@@ -661,6 +683,17 @@ void NotationConfiguration::setColorNotesOutsideOfUsablePitchRange(bool value)
     settings()->setSharedValue(COLOR_NOTES_OUTSIDE_OF_USABLE_PITCH_RANGE, Val(value));
 }
 
+bool NotationConfiguration::warnGuitarBends() const
+{
+    return settings()->value(WARN_GUITAR_BENDS).toBool();
+}
+
+void NotationConfiguration::setWarnGuitarBends(bool value)
+{
+    mu::engraving::MScore::warnGuitarBends = value;
+    settings()->setSharedValue(WARN_GUITAR_BENDS, Val(value));
+}
+
 int NotationConfiguration::delayBetweenNotesInRealTimeModeMilliseconds() const
 {
     return settings()->value(REALTIME_DELAY).toInt();
@@ -682,14 +715,14 @@ void NotationConfiguration::setNotePlayDurationMilliseconds(int durationMs)
     settings()->setSharedValue(NOTE_DEFAULT_PLAY_DURATION, Val(durationMs));
 }
 
-void NotationConfiguration::setTemplateModeEnabled(bool enabled)
+void NotationConfiguration::setTemplateModeEnabled(std::optional<bool> enabled)
 {
-    mu::engraving::MScore::saveTemplateMode = enabled;
+    mu::engraving::MScore::saveTemplateMode = enabled ? enabled.value() : false;
 }
 
-void NotationConfiguration::setTestModeEnabled(bool enabled)
+void NotationConfiguration::setTestModeEnabled(std::optional<bool> enabled)
 {
-    mu::engraving::MScore::testMode = enabled;
+    mu::engraving::MScore::testMode = enabled ? enabled.value() : false;
 }
 
 io::path_t NotationConfiguration::instrumentListPath() const
@@ -737,6 +770,11 @@ void NotationConfiguration::setUserScoreOrderListPaths(const io::paths_t& paths)
     if (paths.size() > 1) {
         setSecondScoreOrderListPath(paths[1]);
     }
+}
+
+io::path_t NotationConfiguration::stringTuningsPresetsPath() const
+{
+    return globalConfiguration()->appDataPath() + "instruments/string_tunings_presets.json";
 }
 
 bool NotationConfiguration::isSnappedToGrid(framework::Orientation gridOrientation) const
@@ -803,6 +841,16 @@ bool NotationConfiguration::needToShowAddFiguredBassErrorMessage() const
 void NotationConfiguration::setNeedToShowAddFiguredBassErrorMessage(bool show)
 {
     settings()->setSharedValue(NEED_TO_SHOW_ADD_FIGURED_BASS_ERROR_MESSAGE_KEY, Val(show));
+}
+
+bool NotationConfiguration::needToShowAddGuitarBendErrorMessage() const
+{
+    return settings()->value(NEED_TO_SHOW_ADD_GUITAR_BEND_ERROR_MESSAGE_KEY).toBool();
+}
+
+void NotationConfiguration::setNeedToShowAddGuitarBendErrorMessage(bool show)
+{
+    settings()->setSharedValue(NEED_TO_SHOW_ADD_GUITAR_BEND_ERROR_MESSAGE_KEY, Val(show));
 }
 
 bool NotationConfiguration::needToShowMScoreError(const std::string& errorKey) const

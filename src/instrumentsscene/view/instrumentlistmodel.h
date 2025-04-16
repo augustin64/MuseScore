@@ -36,7 +36,7 @@ class InstrumentListModel : public QAbstractListModel, public async::Asyncable
 {
     Q_OBJECT
 
-    INJECT(instruments, notation::IInstrumentsRepository, repository)
+    INJECT(notation::IInstrumentsRepository, repository)
 
     Q_PROPERTY(QStringList genres READ genres NOTIFY genresChanged)
     Q_PROPERTY(QStringList groups READ groups NOTIFY groupsChanged)
@@ -90,6 +90,7 @@ signals:
 private:
     enum Roles {
         RoleName = Qt::UserRole + 1,
+        RoleDescription,
         RoleIsSelected,
         RoleTraits,
         RoleCurrentTraitIndex
@@ -99,7 +100,7 @@ private:
     {
         QString name;
         notation::InstrumentTemplateList templates;
-        int currentTemplateIndex = 0;
+        size_t currentTemplateIndex = 0;
 
         bool operator==(const CombinedInstrument& instrument) const
         {
@@ -110,9 +111,6 @@ private:
     using Instruments = QList<CombinedInstrument>;
 
     void init(const QString& genreId, const QString& groupId);
-
-    QString resolveInstrumentGroupId(const String& instrumentId) const;
-    void focusOnInstrument(const String& instrumentId);
 
     void loadGenres();
     void loadGroups();
@@ -133,6 +131,7 @@ private:
     QString m_currentGenreId;
     QString m_savedGenreId;
     QString m_currentGroupId;
+    QString m_savedGroupId;
     QString m_searchText;
 
     Instruments m_instruments;

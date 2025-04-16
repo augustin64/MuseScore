@@ -35,10 +35,10 @@
 namespace mu::engraving {
 class EngravingConfiguration : public IEngravingConfiguration, public async::Asyncable
 {
-    INJECT(engraving, mu::framework::IGlobalConfiguration, globalConfiguration)
-    // INJECT(engraving, mu::ui::IUiConfiguration, uiConfiguration)
-    INJECT(engraving, mu::accessibility::IAccessibilityConfiguration, accessibilityConfiguration)
-    INJECT(engraving, iex::guitarpro::IGuitarProConfiguration, guitarProConfiguration);
+    INJECT(mu::framework::IGlobalConfiguration, globalConfiguration)
+    // INJECT(mu::ui::IUiConfiguration, uiConfiguration)
+    INJECT(mu::accessibility::IAccessibilityConfiguration, accessibilityConfiguration)
+    INJECT(iex::guitarpro::IGuitarProConfiguration, guitarProConfiguration);
 
 public:
     EngravingConfiguration() = default;
@@ -68,10 +68,11 @@ public:
     draw::Color formattingMarksColor() const override;
     draw::Color thumbnailBackgroundColor() const override;
     draw::Color noteBackgroundColor() const override;
+    draw::Color fontPrimaryColor() const override;
 
     double guiScaling() const override;
 
-    draw::Color selectionColor(voice_idx_t voiceIndex = 0, bool itemVisible = true) const override;
+    draw::Color selectionColor(voice_idx_t voiceIndex = 0, bool itemVisible = true, bool itemIsUnlinkedFromScore = false) const override;
     void setSelectionColor(voice_idx_t voiceIndex, draw::Color color) override;
     async::Channel<voice_idx_t, draw::Color> selectionColorChanged() const override;
 
@@ -95,6 +96,7 @@ public:
     bool enableExperimentalFretCircle() const override;
     void setGuitarProMultivoiceEnabled(bool multiVoice) override;
     bool guitarProMultivoiceEnabled() const override;
+    bool minDistanceForPartialSkylineCalculated() const override;
 
 private:
     async::Channel<voice_idx_t, draw::Color> m_voiceColorChanged;

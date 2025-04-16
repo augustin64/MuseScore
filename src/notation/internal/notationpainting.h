@@ -23,11 +23,11 @@
 #define MU_NOTATION_NOTATIONPAINTING_H
 
 #include "../inotationpainting.h"
-#include "igetscore.h"
 
 #include "modularity/ioc.h"
 #include "../inotationconfiguration.h"
 #include "engraving/iengravingconfiguration.h"
+#include "engraving/rendering/iscorerenderer.h"
 // #include "ui/iuiconfiguration.h"
 
 namespace mu::engraving {
@@ -39,18 +39,21 @@ namespace mu::notation {
 class Notation;
 class NotationPainting : public INotationPainting
 {
-    INJECT(notation, INotationConfiguration, configuration)
-    INJECT(notation, engraving::IEngravingConfiguration, engravingConfiguration)
-    // INJECT(notation, ui::IUiConfiguration, uiConfiguration)
+    INJECT(INotationConfiguration, configuration)
+    INJECT(engraving::IEngravingConfiguration, engravingConfiguration)
+    // INJECT(engraving::rendering::IScoreRenderer, scoreRenderer)
+    INJECT(ui::IUiConfiguration, uiConfiguration)
 
 public:
     NotationPainting(Notation* notation);
 
     void setViewMode(const ViewMode& viewMode) override;
     ViewMode viewMode() const override;
+    async::Notification viewModeChanged() const override;
 
     int pageCount() const override;
     SizeF pageSizeInch() const override;
+    SizeF pageSizeInch(const Options& opt) const override;
 
     void paintView(draw::Painter* painter, const RectF& frameRect, bool isPrinting) override;
     void paintPdf(draw::Painter* painter, const Options& opt) override;
@@ -63,10 +66,11 @@ private:
     bool isPaintPageBorder() const;
     void doPaint(draw::Painter* painter, const Options& opt);
     void paintPageBorder(draw::Painter* painter, const mu::engraving::Page* page) const;
-    void paintPageSheet(mu::draw::Painter* painter, const RectF& pageRect, const RectF& pageContentRect, bool isOdd,
-                        bool printPageBackground) const;
+    void paintPageSheet(mu::draw::Painter* painter, const engraving::Page* page, const RectF& pageRect, bool printPageBackground) const;
 
     Notation* m_notation = nullptr;
+
+    async::Notification m_viewModeChanged;
 };
 }
 

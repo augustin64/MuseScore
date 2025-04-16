@@ -40,8 +40,11 @@ QVariant AdvancedPreferencesModel::data(const QModelIndex& index, int role) cons
     const Settings::Item& item = m_items.at(index.row());
     switch (role) {
     case KeyRole: return QString::fromStdString(item.key.key);
+    case DescriptionRole: return QString::fromStdString(item.description);
     case TypeRole: return typeToString(item.value.type());
-    case ValRole: return item.value.toQVariant();
+    case ValueRole: return item.value.toQVariant();
+    case MinValueRole: return !item.minValue.isNull() ? item.minValue.toQVariant() : -1000;
+    case MaxValueRole: return !item.maxValue.isNull() ? item.maxValue.toQVariant() : 1000;
     }
     return QVariant();
 }
@@ -53,9 +56,9 @@ bool AdvancedPreferencesModel::setData(const QModelIndex& index, const QVariant&
     }
 
     switch (role) {
-    case ValRole:
+    case ValueRole:
         changeVal(index.row(), value);
-        emit dataChanged(index, index, { ValRole });
+        emit dataChanged(index, index, { ValueRole });
         return true;
     default:
         return false;
@@ -71,8 +74,11 @@ QHash<int, QByteArray> AdvancedPreferencesModel::roleNames() const
 {
     static const QHash<int, QByteArray> roles = {
         { KeyRole, "keyRole" },
+        { DescriptionRole, "descriptionRole" },
         { TypeRole, "typeRole" },
-        { ValRole, "valueRole" }
+        { ValueRole, "valueRole" },
+        { MinValueRole, "minValueRole" },
+        { MaxValueRole, "maxValueRole" }
     };
 
     return roles;

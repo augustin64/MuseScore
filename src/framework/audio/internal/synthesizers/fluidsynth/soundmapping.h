@@ -5,19 +5,19 @@
  * MuseScore
  * Music Composition & Notation
  *
- * Copyright (C) 2021 MuseScore BVBA and others
+ * Copyright (C) 2023 MuseScore BVBA and others
  *
- * This midi::Program is free software: you can redistribute it and/or modify
+ * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as
  * published by the Free Software Foundation.
  *
- * This midi::Program is distributed in the hope that it will be useful,
+ * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
  * You should have received a copy of the GNU General Public License
- * along with this midi::Program.  If not, see <https://www.gnu.org/licenses/>.
+ * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
 #ifndef MU_AUDIO_SOUNDMAPPING_H
@@ -96,7 +96,7 @@ static const auto& mappingByCategory(const mpe::SoundCategory category)
                                                                                     0, 101),
                                                                                 midi::Program(0, 96) } },
         { { mpe::SoundId::Synthesizer, { mpe::SoundSubCategory::Electric,
-                                         mpe::SoundSubCategory::Sine_Wave } }, { midi::Program(0, 79) } },
+                                         mpe::SoundSubCategory::Sine_Wave } }, { midi::Program(8, 80) } },
         { { mpe::SoundId::Synthesizer, { mpe::SoundSubCategory::Electric,
                                          mpe::SoundSubCategory::Square_Wave } }, { midi::Program(0, 80) } },
         { { mpe::SoundId::Synthesizer, { mpe::SoundSubCategory::Electric,
@@ -718,7 +718,7 @@ static const auto& mappingByCategory(const mpe::SoundCategory category)
 
         { { mpe::SoundId::Block,  { mpe::SoundSubCategory::Wooden,
                                     mpe::SoundSubCategory::Temple } }, { midi::Program(128, 0) } },
-        { { mpe::SoundId::Block,  { mpe::SoundSubCategory::Wooden } }, { midi::Program(0, 115) } },
+        { { mpe::SoundId::Block,  { mpe::SoundSubCategory::Wooden } }, { midi::Program(128, 0) } },
         { { mpe::SoundId::Block,  { mpe::SoundSubCategory::Sandpaper } }, { midi::Program(128, 0) } },
 
         { { mpe::SoundId::Cabasa,  {} }, { midi::Program(128, 0) } },
@@ -791,58 +791,65 @@ inline const midi::Programs& findPrograms(const mpe::PlaybackSetupData& setupDat
 {
     const std::map<SoundMappingKey, midi::Programs>& mapping = mappingByCategory(setupData.category);
 
-    mpe::SoundSubCategories subCategorySet = setupData.subCategorySet;
+    mpe::SoundSubCategories subCategorySet = setupData.soundSubCategories();
     mu::remove(subCategorySet, mpe::SoundSubCategory::Primary);
     mu::remove(subCategorySet, mpe::SoundSubCategory::Secondary);
 
-    auto search = mapping.find({ setupData.id, subCategorySet });
+    mpe::SoundId soundId = setupData.soundId();
+    auto search = mapping.find({ soundId, subCategorySet });
 
     if (search != mapping.cend()) {
         return search->second;
     }
 
-    static midi::Programs empty;
-    return empty;
+    static const midi::Programs fallback { midi::Program(0, 0) };
+    return fallback;
 }
 
 inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupData& setupData)
 {
-    static ArticulationMapping ELECTRIC_GUITAR = {
+    static const ArticulationMapping ELECTRIC_GUITAR = {
         { mpe::ArticulationType::JazzTone, midi::Program(0, 26) },
+        { mpe::ArticulationType::PalmMute, midi::Program(0, 28) },
         { mpe::ArticulationType::Mute, midi::Program(0, 28) },
         { mpe::ArticulationType::Harmonic, midi::Program(0, 31) },
         { mpe::ArticulationType::Distortion, midi::Program(0, 30) },
         { mpe::ArticulationType::Overdrive, midi::Program(0, 29) }
     };
 
-    static ArticulationMapping ACOUSTIC_GUITAR = {
+    static const ArticulationMapping ACOUSTIC_GUITAR = {
         { mpe::ArticulationType::JazzTone, midi::Program(0, 26) },
+        { mpe::ArticulationType::PalmMute, midi::Program(0, 28) },
         { mpe::ArticulationType::Mute, midi::Program(0, 28) },
         { mpe::ArticulationType::Harmonic, midi::Program(8, 31) }
     };
 
-    static ArticulationMapping ELECTRIC_BASS_GUITAR = {
+    static const ArticulationMapping ELECTRIC_BASS_GUITAR = {
         { mpe::ArticulationType::Slap, midi::Program(0, 36) },
         { mpe::ArticulationType::Pop, midi::Program(0, 37) },
+        { mpe::ArticulationType::PalmMute, midi::Program(0, 28) },
         { mpe::ArticulationType::Mute, midi::Program(0, 28) }
     };
 
-    static ArticulationMapping ACOUSTIC_BASS_GUITAR = {
+    static const ArticulationMapping ACOUSTIC_BASS_GUITAR = {
         { mpe::ArticulationType::Slap, midi::Program(0, 36) },
         { mpe::ArticulationType::Pop, midi::Program(0, 37) },
         { mpe::ArticulationType::Pizzicato, midi::Program(0, 32) },
+        { mpe::ArticulationType::PalmMute, midi::Program(0, 32) },
         { mpe::ArticulationType::Mute, midi::Program(0, 32) }
     };
 
-    static ArticulationMapping BASIC_STRING_SECTION = {
+    static const ArticulationMapping BASIC_STRING_SECTION = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(0, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(0, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(0, 45) },
         { mpe::ArticulationType::Mute, midi::Program(0, 45) }
     };
 
-    static ArticulationMapping BASIC_VIOL_SECTION = {
+    static const ArticulationMapping BASIC_VIOL_SECTION = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(0, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(0, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(0, 45) },
         { mpe::ArticulationType::Mute, midi::Program(0, 45) },
         { mpe::ArticulationType::Tremolo8th, midi::Program(0, 44) },
         { mpe::ArticulationType::Tremolo16th, midi::Program(0, 44) },
@@ -850,9 +857,10 @@ inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupDat
         { mpe::ArticulationType::Tremolo64th, midi::Program(0, 44) },
     };
 
-    static ArticulationMapping VIOLIN_SECTION = {
+    static const ArticulationMapping VIOLIN_SECTION = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(20, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(20, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(20, 45) },
         { mpe::ArticulationType::Mute, midi::Program(20, 45) },
         { mpe::ArticulationType::Tremolo8th, midi::Program(20, 44) },
         { mpe::ArticulationType::Tremolo16th, midi::Program(20, 44) },
@@ -860,15 +868,17 @@ inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupDat
         { mpe::ArticulationType::Tremolo64th, midi::Program(20, 44) },
     };
 
-    static ArticulationMapping VIOLIN = {
+    static const ArticulationMapping VIOLIN = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(20, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(20, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(20, 45) },
         { mpe::ArticulationType::Mute, midi::Program(20, 45) }
     };
 
-    static ArticulationMapping VIOLA_SECTION = {
+    static const ArticulationMapping VIOLA_SECTION = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(30, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(30, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(30, 45) },
         { mpe::ArticulationType::Mute, midi::Program(30, 45) },
         { mpe::ArticulationType::Tremolo8th, midi::Program(30, 44) },
         { mpe::ArticulationType::Tremolo16th, midi::Program(30, 44) },
@@ -876,15 +886,17 @@ inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupDat
         { mpe::ArticulationType::Tremolo64th, midi::Program(30, 44) },
     };
 
-    static ArticulationMapping VIOLA = {
+    static const ArticulationMapping VIOLA = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(30, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(30, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(30, 45) },
         { mpe::ArticulationType::Mute, midi::Program(30, 45) }
     };
 
-    static ArticulationMapping VIOLONCELLO_SECTION = {
+    static const ArticulationMapping VIOLONCELLO_SECTION = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(40, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(40, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(40, 45) },
         { mpe::ArticulationType::Mute, midi::Program(40, 45) },
         { mpe::ArticulationType::Tremolo8th, midi::Program(40, 44) },
         { mpe::ArticulationType::Tremolo16th, midi::Program(40, 44) },
@@ -892,15 +904,17 @@ inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupDat
         { mpe::ArticulationType::Tremolo64th, midi::Program(40, 44) },
     };
 
-    static ArticulationMapping VIOLONCELLO = {
+    static const ArticulationMapping VIOLONCELLO = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(40, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(40, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(40, 45) },
         { mpe::ArticulationType::Mute, midi::Program(40, 45) }
     };
 
-    static ArticulationMapping CONTRABASS_SECTION = {
+    static const ArticulationMapping CONTRABASS_SECTION = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(50, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(50, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(50, 45) },
         { mpe::ArticulationType::Mute, midi::Program(50, 45) },
         { mpe::ArticulationType::Tremolo8th, midi::Program(50, 44) },
         { mpe::ArticulationType::Tremolo16th, midi::Program(50, 44) },
@@ -908,17 +922,20 @@ inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupDat
         { mpe::ArticulationType::Tremolo64th, midi::Program(50, 44) },
     };
 
-    static ArticulationMapping CONTRABASS = {
+    static const ArticulationMapping CONTRABASS = {
         { mpe::ArticulationType::SnapPizzicato, midi::Program(50, 45) },
         { mpe::ArticulationType::Pizzicato, midi::Program(50, 45) },
+        { mpe::ArticulationType::PalmMute, midi::Program(50, 45) },
         { mpe::ArticulationType::Mute, midi::Program(50, 45) },
     };
 
-    static ArticulationMapping WINDS = {
+    static const ArticulationMapping WINDS = {
         { mpe::ArticulationType::Mute, midi::Program(0, 59) }
     };
 
-    if (setupData.id == mpe::SoundId::Guitar) {
+    mpe::SoundId soundId = setupData.soundId();
+
+    if (soundId == mpe::SoundId::Guitar) {
         if (setupData.contains(mpe::SoundSubCategory::Acoustic)) {
             return ACOUSTIC_GUITAR;
         }
@@ -928,7 +945,7 @@ inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupDat
         }
     }
 
-    if (setupData.id == mpe::SoundId::BassGuitar) {
+    if (soundId == mpe::SoundId::BassGuitar) {
         if (setupData.contains(mpe::SoundSubCategory::Acoustic)) {
             return ACOUSTIC_BASS_GUITAR;
         }
@@ -938,35 +955,35 @@ inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupDat
         }
     }
 
-    if (setupData.id == mpe::SoundId::Violin && setupData.contains(mpe::SoundSubCategory::Section)) {
+    if (soundId == mpe::SoundId::Violin && setupData.contains(mpe::SoundSubCategory::Section)) {
         return VIOLIN_SECTION;
     }
 
-    if (setupData.id == mpe::SoundId::Violin) {
+    if (soundId == mpe::SoundId::Violin) {
         return VIOLIN;
     }
 
-    if (setupData.id == mpe::SoundId::Viola && setupData.contains(mpe::SoundSubCategory::Section)) {
+    if (soundId == mpe::SoundId::Viola && setupData.contains(mpe::SoundSubCategory::Section)) {
         return VIOLA_SECTION;
     }
 
-    if (setupData.id == mpe::SoundId::Viola) {
+    if (soundId == mpe::SoundId::Viola) {
         return VIOLA;
     }
 
-    if (setupData.id == mpe::SoundId::Violoncello && setupData.contains(mpe::SoundSubCategory::Section)) {
+    if (soundId == mpe::SoundId::Violoncello && setupData.contains(mpe::SoundSubCategory::Section)) {
         return VIOLONCELLO_SECTION;
     }
 
-    if (setupData.id == mpe::SoundId::Violoncello) {
+    if (soundId == mpe::SoundId::Violoncello) {
         return VIOLONCELLO;
     }
 
-    if (setupData.id == mpe::SoundId::Contrabass && setupData.contains(mpe::SoundSubCategory::Section)) {
+    if (soundId == mpe::SoundId::Contrabass && setupData.contains(mpe::SoundSubCategory::Section)) {
         return CONTRABASS_SECTION;
     }
 
-    if (setupData.id == mpe::SoundId::Contrabass) {
+    if (soundId == mpe::SoundId::Contrabass) {
         return CONTRABASS;
     }
 
@@ -975,7 +992,7 @@ inline const ArticulationMapping& articulationSounds(const mpe::PlaybackSetupDat
             mpe::SoundId::Viol, mpe::SoundId::PardessusViol, mpe::SoundId::ViolaDaGamba, mpe::SoundId::Violone
         };
 
-        if (mu::contains(VIOL_SECTION, setupData.id)) {
+        if (mu::contains(VIOL_SECTION, soundId)) {
             return BASIC_VIOL_SECTION;
         }
 
@@ -1003,7 +1020,8 @@ static const mpe::ArticulationTypeSet PEDAL_CC_SUPPORTED_TYPES = {
 };
 
 static const mpe::ArticulationTypeSet BEND_SUPPORTED_TYPES = {
-    mpe::ArticulationType::Bend, mpe::ArticulationType::SlideOutUp, mpe::ArticulationType::ContinuousGlissando,
+    mpe::ArticulationType::BrassBend, mpe::ArticulationType::Multibend,
+    mpe::ArticulationType::SlideOutUp, mpe::ArticulationType::ContinuousGlissando,
     mpe::ArticulationType::Fall, mpe::ArticulationType::QuickFall, mpe::ArticulationType::Doit,
     mpe::ArticulationType::Plop, mpe::ArticulationType::Scoop, mpe::ArticulationType::SlideOutDown,
     mpe::ArticulationType::SlideInAbove, mpe::ArticulationType::SlideInBelow
@@ -1018,8 +1036,13 @@ struct ChannelMap {
     using ChannelMapping = std::pair<midi::channel_t, midi::Program>;
     using VoiceMappings = std::map<mpe::ArticulationType, ChannelMapping>;
 
-    void init(const mpe::PlaybackSetupData& setupData)
+    void init(const mpe::PlaybackSetupData& setupData, const std::optional<midi::Program>& programOverride)
     {
+        m_programOverride = programOverride;
+        if (m_programOverride.has_value()) {
+            resolveChannel(0, mpe::ArticulationType::Standard, m_programOverride.value());
+        }
+
         m_standardPrograms = findPrograms(setupData);
         m_articulationMapping = articulationSounds(setupData);
 
@@ -1034,6 +1057,10 @@ struct ChannelMap {
 
     midi::channel_t resolveChannelForEvent(const mpe::NoteEvent& event)
     {
+        if (m_programOverride.has_value()) {
+            return resolveChannel(event.arrangementCtx().voiceLayerIndex, mpe::ArticulationType::Standard, m_programOverride.value());
+        }
+
         if (m_standardPrograms.empty()) {
             return 0;
         }
@@ -1102,6 +1129,7 @@ private:
 
     mutable std::map<mpe::voice_layer_idx_t, VoiceMappings> m_data;
 
+    std::optional<midi::Program> m_programOverride;
     midi::Programs m_standardPrograms;
     ArticulationMapping m_articulationMapping;
 };

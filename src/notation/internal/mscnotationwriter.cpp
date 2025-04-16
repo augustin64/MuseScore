@@ -26,7 +26,7 @@
 #include "io/file.h"
 
 #include "engraving/engravingproject.h"
-#include "engraving/libmscore/masterscore.h"
+#include "engraving/dom/masterscore.h"
 
 #include "log.h"
 
@@ -80,16 +80,21 @@ mu::Ret MscNotationWriter::write(INotationPtr notation, QIODevice& destinationDe
         LOGE() << "MscWriter is not opened";
         return Ret(Ret::Code::UnknownError);
     }
+
     notation->elements()->msScore()->masterScore()->project().lock()->writeMscz(msczWriter, false, true);
 
-    if (m_mode != MscIoMode::Dir) {
-        // fix "ASSERT FAILED!" in isOpenModeReadable()
-        // `buf` opened as `IODevice::WriteOnly`, see src/engraving/infrastructure/mscwriter.cpp#L265
-        msczWriter.close(); // do some cleanups, e.g. add the end tag
-        buf.open(IODevice::ReadWrite);
+    msczWriter.close();
 
+    if (msczWriter.hasError()) {
+        LOGE() << "MscWriter has error";
+        return Ret(Ret::Code::UnknownError);
+    }
+
+    if (m_mode != MscIoMode::Dir) {
+        buf.open(io::IODevice::ReadOnly);
         ByteArray ba = buf.readAll();
         destinationDevice.write(reinterpret_cast<const char*>(ba.constData()), ba.size());
+        buf.close();
     }
 
     return Ret(Ret::Code::Ok);

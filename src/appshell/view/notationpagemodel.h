@@ -30,6 +30,7 @@
 #include "actions/iactionsdispatcher.h"
 #include "context/iglobalcontext.h"
 #include "iappshellconfiguration.h"
+#include "braille/ibrailleconfiguration.h"
 #include "dockwindow/idockwindowprovider.h"
 
 namespace mu::appshell {
@@ -37,17 +38,20 @@ class NotationPageModel : public QObject, public async::Asyncable, public action
 {
     Q_OBJECT
 
-    INJECT(appshell, actions::IActionsDispatcher, dispatcher)
-    INJECT(appshell, context::IGlobalContext, globalContext)
-    INJECT(appshell, IAppShellConfiguration, configuration)
-    INJECT(appshell, dock::IDockWindowProvider, dockWindowProvider)
+    INJECT(actions::IActionsDispatcher, dispatcher)
+    INJECT(context::IGlobalContext, globalContext)
+    INJECT(IAppShellConfiguration, configuration)
+    INJECT(braille::IBrailleConfiguration, brailleConfiguration)
+    INJECT(dock::IDockWindowProvider, dockWindowProvider)
 
     Q_PROPERTY(bool isNavigatorVisible READ isNavigatorVisible NOTIFY isNavigatorVisibleChanged)
+    Q_PROPERTY(bool isBraillePanelVisible READ isBraillePanelVisible NOTIFY isBraillePanelVisibleChanged)
 
 public:
     explicit NotationPageModel(QObject* parent = nullptr);
 
     bool isNavigatorVisible() const;
+    bool isBraillePanelVisible() const;
 
     Q_INVOKABLE void init();
 
@@ -70,6 +74,7 @@ public:
 
 signals:
     void isNavigatorVisibleChanged();
+    void isBraillePanelVisibleChanged();
 
 private:
     void onNotationChanged();

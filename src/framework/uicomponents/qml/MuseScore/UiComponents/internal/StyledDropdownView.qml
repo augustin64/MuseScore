@@ -68,7 +68,7 @@ DropdownView {
 
     showArrow: false
 
-    openPolicy: PopupView.NoActivateFocus
+    openPolicies: PopupView.NoActivateFocus
 
     signal handleItem(int index, var value)
 
@@ -269,6 +269,18 @@ DropdownView {
                 onClicked: {
                     var value = Utils.getItemValue(root.model, model.index, root.valueRole, undefined)
                     root.handleItem(model.index, value)
+                }
+
+                mouseArea.onContainsMouseChanged: {
+                    if (!label.truncated) {
+                        return
+                    }
+
+                    if (mouseArea.containsMouse) {
+                        ui.tooltip.show(item, label.text)
+                    } else {
+                        ui.tooltip.hide(item)
+                    }
                 }
             }
         }

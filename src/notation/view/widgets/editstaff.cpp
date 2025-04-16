@@ -32,16 +32,16 @@
 #include "editstafftype.h"
 #include "editstringdata.h"
 
-#include "libmscore/factory.h"
-#include "libmscore/part.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/staff.h"
-#include "libmscore/stringdata.h"
-#include "libmscore/text.h"
-#include "libmscore/utils.h"
-#include "libmscore/undo.h"
-#include "libmscore/instrumentname.h"
-#include "libmscore/system.h"
+#include "engraving/dom/factory.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/stringdata.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/utils.h"
+#include "engraving/dom/undo.h"
+#include "engraving/dom/instrumentname.h"
+#include "engraving/dom/system.h"
 
 #include "log.h"
 
@@ -148,16 +148,15 @@ void EditStaff::setStaff(Staff* s, const Fraction& tick)
 
     m_staff = engraving::Factory::createStaff(part);
     mu::engraving::StaffType* stt = m_staff->setStaffType(Fraction(0, 1), *m_orgStaff->staffType(Fraction(0, 1)));
-    stt->setInvisible(m_orgStaff->staffType(Fraction(0, 1))->invisible());
-    stt->setColor(m_orgStaff->staffType(Fraction(0, 1))->color());
-    stt->setUserMag(m_orgStaff->staffType(Fraction(0, 1))->userMag());
 
     m_staff->setUserDist(m_orgStaff->userDist());
     m_staff->setPart(part);
+    m_staff->setCutaway(m_orgStaff->cutaway());
     m_staff->setHideWhenEmpty(m_orgStaff->hideWhenEmpty());
     m_staff->setShowIfEmpty(m_orgStaff->showIfEmpty());
     m_staff->setHideSystemBarLine(m_orgStaff->hideSystemBarLine());
     m_staff->setMergeMatchingRests(m_orgStaff->mergeMatchingRests());
+    m_staff->setReflectTranspositionInLinkedTab(m_orgStaff->reflectTranspositionInLinkedTab());
 
     // get tick range for instrument
     auto i = part->instruments().upper_bound(tick.ticks());
@@ -174,19 +173,20 @@ void EditStaff::setStaff(Staff* s, const Fraction& tick)
     }
 
     // set dlg controls
-    spinExtraDistance->setValue(s->userDist() / score->spatium());
-    invisible->setChecked(m_staff->isLinesInvisible(Fraction(0, 1)));
+    spinExtraDistance->setValue(s->userDist() / score->style().spatium());
+    invisible->setChecked(stt->invisible());
     isSmallCheckbox->setChecked(stt->isSmall());
     color->setColor(stt->color().toQColor());
-    cutaway->setChecked(m_staff->cutaway());
+    mag->setValue(stt->userMag() * 100.0);
 
+    cutaway->setChecked(m_staff->cutaway());
     hideMode->setCurrentIndex(int(m_staff->hideWhenEmpty()));
     showIfEmpty->setChecked(m_staff->showIfEmpty());
     hideSystemBarLine->setChecked(m_staff->hideSystemBarLine());
     mergeMatchingRests->setChecked(m_staff->mergeMatchingRests());
-    mag->setValue(stt->userMag() * 100.0);
+    noReflectTranspositionInLinkedTab->setChecked(!m_staff->reflectTranspositionInLinkedTab());
 
-    updateStaffType(*m_staff->staffType(mu::engraving::Fraction(0, 1)));
+    updateStaffType(*stt);
     updateInstrument();
     updateNextPreviousButtons();
 }
@@ -215,7 +215,12 @@ void EditStaff::updateInstrument()
 
     longName->setPlainText(m_instrument.nameAsPlainText());
     shortName->setPlainText(m_instrument.abbreviatureAsPlainText());
-    instrumentName->setText(m_instrument.nameAsPlainText());
+    const InstrumentTemplate* templ = mu::engraving::searchTemplate(m_instrument.id());
+    if (templ) {
+        instrumentName->setText(formatInstrumentTitle(templ->trackName, templ->trait));
+    } else {
+        instrumentName->setText(qtrc("notation/editstaff", "Unknown"));
+    }
 
     m_minPitchA = m_instrument.minPitchA();
     m_maxPitchA = m_instrument.maxPitchA();
@@ -455,7 +460,16 @@ void EditStaff::initStaff()
     const EngravingItem* element = context.element;
     Staff* staff = context.staff;
 
-    if (!element) {
+    if (interaction && !element) {
+        INotationSelectionPtr selection = interaction->selection();
+        if (selection->isRange()) {
+            INotationSelectionRangePtr range = selection->range();
+            element = range->measureRange().endMeasure;
+            staff = element->score()->staff(range->endStaffIndex() - 1);
+        }
+    }
+
+    IF_ASSERT_FAILED(element) {
         return;
     }
 
@@ -474,6 +488,10 @@ void EditStaff::initStaff()
         if (measure) {
             tick = measure->tick();
         }
+    }
+
+    IF_ASSERT_FAILED(staff) {
+        return;
     }
 
     setStaff(staff, tick);
@@ -495,7 +513,7 @@ void EditStaff::applyStaffProperties()
     StaffConfig config;
     config.visible = m_orgStaff->visible();
 
-    config.userDistance = spinExtraDistance->value() * m_orgStaff->score()->spatium();
+    config.userDistance = spinExtraDistance->value() * m_orgStaff->style().spatium();
     config.cutaway = cutaway->isChecked();
     config.showIfEmpty = showIfEmpty->isChecked();
     config.hideSystemBarline = hideSystemBarLine->isChecked();
@@ -503,6 +521,7 @@ void EditStaff::applyStaffProperties()
     config.hideMode = Staff::HideMode(hideMode->currentIndex());
     config.clefTypeList = m_instrument.clefType(m_orgStaff->rstaff());
     config.staffType = *m_staff->staffType(mu::engraving::Fraction(0, 1));
+    config.reflectTranspositionInLinkedTab = !noReflectTranspositionInLinkedTab->isChecked();
 
     notationParts()->setStaffConfig(m_orgStaff->id(), config);
 }
@@ -540,15 +559,17 @@ void EditStaff::applyPartProperties()
     m_instrument.setMinPitchP(m_minPitchP);
     m_instrument.setMaxPitchP(m_maxPitchP);
 
-    m_instrument.shortNames().clear();
+    StaffNameList shortNames;
     if (sn.length() > 0) {
-        m_instrument.shortNames().push_back(mu::engraving::StaffName(sn, 0));
+        shortNames.push_back(mu::engraving::StaffName(sn, 0));
     }
+    m_instrument.setShortNames(shortNames);
 
-    m_instrument.longNames().clear();
+    StaffNameList longNames;
     if (ln.length() > 0) {
-        m_instrument.longNames().push_back(mu::engraving::StaffName(ln, 0));
+        longNames.push_back(mu::engraving::StaffName(ln, 0));
     }
+    m_instrument.setLongNames(longNames);
 
     if (m_instrument.id() != m_orgInstrument.id()) {
         masterNotationParts()->replaceInstrument(m_instrumentKey, m_instrument);
@@ -559,7 +580,7 @@ void EditStaff::applyPartProperties()
     SharpFlat newSharpFlat = SharpFlat(preferSharpFlat->currentIndex());
     if ((iList->currentIndex() == 0) || (iList->currentIndex() == 25)) {
         // instrument becomes non/octave-transposing, preferSharpFlat isn't useful anymore
-        newSharpFlat = SharpFlat::DEFAULT;
+        newSharpFlat = SharpFlat::NONE;
     }
 
     if (part->preferSharpFlat() != newSharpFlat) {
@@ -584,9 +605,12 @@ void EditStaff::editStringDataClicked()
     int frets = m_instrument.stringData()->frets();
     std::vector<mu::engraving::instrString> stringList = m_instrument.stringData()->stringList();
 
-    EditStringData* esd = new EditStringData(this, &stringList, &frets);
-    esd->setWindowModality(Qt::WindowModal);
+    EditStringData* esd = new EditStringData(this, stringList, frets);
+
     if (esd->exec()) {
+        frets = esd->frets();
+        stringList = esd->strings();
+
         mu::engraving::StringData stringData(frets, stringList);
 
         // update instrument pitch ranges as necessary

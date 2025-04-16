@@ -23,7 +23,7 @@
 #ifndef MU_ACCESSIBILITY_IACCESSIBILITYCONTROLLER_H
 #define MU_ACCESSIBILITY_IACCESSIBILITYCONTROLLER_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "iaccessible.h"
 
 namespace mu::accessibility {
@@ -42,6 +42,8 @@ public:
 
     virtual bool needToVoicePanelInfo() const = 0;
     virtual QString currentPanelAccessibleName() const = 0;
+
+    virtual void setIgnoreQtAccessibilityEvents(bool ignore) = 0;
 };
 }
 

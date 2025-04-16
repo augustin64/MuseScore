@@ -28,21 +28,37 @@ namespace mu::audio {
 class AudioConfigurationStub : public IAudioConfiguration
 {
 public:
-
     std::vector<std::string> availableAudioApiList() const override;
 
     std::string currentAudioApi() const override;
     void setCurrentAudioApi(const std::string& name) override;
 
-    int audioChannelsCount() const override;
-    unsigned int driverBufferSize() const override;  // samples
+    std::string audioOutputDeviceId() const override;
+    void setAudioOutputDeviceId(const std::string& deviceId) override;
+    async::Notification audioOutputDeviceIdChanged() const override;
+
+    audioch_t audioChannelsCount() const override;
+
+    unsigned int driverBufferSize() const override; // samples
+    void setDriverBufferSize(unsigned int size) override;
+    async::Notification driverBufferSizeChanged() const override;
+    samples_t renderStep() const override;
+
+    unsigned int sampleRate() const override;
+    void setSampleRate(unsigned int sampleRate) override;
+    async::Notification sampleRateChanged() const override;
+
+    size_t minTrackCountForMultithreading() const override;
 
     // synthesizers
-    std::vector<io::path_t> soundFontPaths() const override;
-    const synth::SynthesizerState& synthesizerState() const override;
-    Ret saveSynthesizerState(const synth::SynthesizerState& state) override;
-    async::Notification synthesizerStateChanged() const override;
-    async::Notification synthesizerStateGroupChanged(const std::string& groupName) const override;
+    AudioInputParams defaultAudioInputParams() const override;
+
+    io::paths_t soundFontDirectories() const override;
+    io::paths_t userSoundFontDirectories() const override;
+    void setUserSoundFontDirectories(const io::paths_t& paths) override;
+    async::Channel<io::paths_t> soundFontDirectoriesChanged() const override;
+
+    io::path_t knownAudioPluginsFilePath() const override;
 };
 }
 

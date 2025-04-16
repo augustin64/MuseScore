@@ -26,7 +26,7 @@
 
 #include "accessibility/internal/accessibilitycontroller.h"
 
-#include "ui/tests/mocks/mainwindowprovidermock.h"
+#include "ui/tests/mocks/mainwindowmock.h"
 #include "global/tests/mocks/applicationmock.h"
 #include "mocks/accessibilityconfigurationmock.h"
 
@@ -46,7 +46,7 @@ public:
     {
         m_controller = std::make_shared<AccessibilityController>();
 
-        m_mainWindow = std::make_shared<ui::MainWindowProviderMock>();
+        m_mainWindow = std::make_shared<ui::MainWindowMock>();
         m_controller->setmainWindow(m_mainWindow);
 
         m_application = std::make_shared<framework::ApplicationMock>();
@@ -88,6 +88,8 @@ public:
         QString accessibleTextAfterOffset(int, TextBoundaryType, int*, int*) const override { return QString(); }
         QString accessibleTextAtOffset(int, TextBoundaryType, int*, int*) const override { return QString(); }
         int accessibleCharacterCount() const override { return 0; }
+
+        int accessibleRowIndex() const override { return 0; }
 
         async::Channel<IAccessible::Property, Val> accessiblePropertyChanged() const override
         {
@@ -149,7 +151,7 @@ public:
 #endif
 
     std::shared_ptr<AccessibilityController> m_controller;
-    std::shared_ptr<ui::MainWindowProviderMock> m_mainWindow;
+    std::shared_ptr<ui::MainWindowMock> m_mainWindow;
     std::shared_ptr<AccessibilityConfigurationMock> m_configuration;
     std::shared_ptr<framework::ApplicationMock> m_application;
 };

@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<museScore version="4.00">
+<museScore version="4.30">
   <Score>
-    <LayerTag id="0" tag="default"></LayerTag>
-    <currentLayer>0</currentLayer>
     <Division>480</Division>
     <Style>
       <concertPitch>1</concertPitch>
@@ -18,12 +16,11 @@
     <metaTag name="lyricist"></metaTag>
     <metaTag name="movementNumber"></metaTag>
     <metaTag name="movementTitle"></metaTag>
-    <metaTag name="poet"></metaTag>
     <metaTag name="source"></metaTag>
     <metaTag name="translator"></metaTag>
     <metaTag name="workNumber"></metaTag>
     <metaTag name="workTitle">Pickup-bug</metaTag>
-    <Part>
+    <Part id="1">
       <Staff id="1">
         <StaffType group="pitched">
           <name>stdNormal</name>
@@ -77,7 +74,7 @@
           </Channel>
         </Instrument>
       </Part>
-    <Part>
+    <Part id="2">
       <Staff id="2">
         <StaffType group="pitched">
           <name>stdNormal</name>
@@ -142,6 +139,10 @@
       <Measure len="1/4">
         <irregular>1</irregular>
         <voice>
+          <KeySig>
+            <linkedMain/>
+            <concertKey>0</concertKey>
+            </KeySig>
           <TimeSig>
             <linkedMain/>
             <sigN>4</sigN>
@@ -152,9 +153,9 @@
             <durationType>eighth</durationType>
             </Rest>
           <SystemText>
-            <swing unit="eighth" ratio= "60"/>
+            <swing unit="eighth" ratio="60"/>
             <linkedMain/>
-            <style>Tempo</style>
+            <style>tempo</style>
             <text>Swing</text>
             </SystemText>
           <Chord>
@@ -270,11 +271,9 @@
         </Measure>
       </Staff>
     <Score>
-      <LayerTag id="0" tag="default"></LayerTag>
-      <currentLayer>0</currentLayer>
+      <name>B♭ Trumpet</name>
       <Division>480</Division>
       <Style>
-        <createMultiMeasureRests>1</createMultiMeasureRests>
         <Spatium>1.74978</Spatium>
         </Style>
       <showInvisible>1</showInvisible>
@@ -282,7 +281,7 @@
       <showFrames>1</showFrames>
       <showMargins>0</showMargins>
       <metaTag name="partName">B♭ Trumpet</metaTag>
-      <Part>
+      <Part id="1">
         <Staff id="1">
           <linkedTo>1</linkedTo>
           <StaffType group="pitched">
@@ -357,7 +356,10 @@
           <irregular>1</irregular>
           <voice>
             <KeySig>
-              <accidental>2</accidental>
+              <linked>
+                </linked>
+              <concertKey>0</concertKey>
+              <actualKey>2</actualKey>
               </KeySig>
             <TimeSig>
               <linked>
@@ -371,10 +373,10 @@
               <durationType>eighth</durationType>
               </Rest>
             <SystemText>
-              <swing unit="eighth" ratio= "60"/>
+              <swing unit="eighth" ratio="60"/>
               <linked>
                 </linked>
-              <style>Tempo</style>
+              <style>tempo</style>
               <text>Swing</text>
               </SystemText>
             <Chord>
@@ -444,14 +446,11 @@
             </voice>
           </Measure>
         </Staff>
-      <name>B♭ Trumpet</name>
       </Score>
     <Score>
-      <LayerTag id="0" tag="default"></LayerTag>
-      <currentLayer>0</currentLayer>
+      <name>C Trumpet</name>
       <Division>480</Division>
       <Style>
-        <createMultiMeasureRests>1</createMultiMeasureRests>
         <Spatium>1.74978</Spatium>
         </Style>
       <showInvisible>1</showInvisible>
@@ -459,7 +458,7 @@
       <showFrames>1</showFrames>
       <showMargins>0</showMargins>
       <metaTag name="partName">C Trumpet</metaTag>
-      <Part>
+      <Part id="2">
         <Staff id="1">
           <linkedTo>2</linkedTo>
           <StaffType group="pitched">
@@ -552,13 +551,13 @@
               <fractions>-1/8</fractions>
               </location>
             <SystemText>
-              <swing unit="eighth" ratio= "60"/>
+              <swing unit="eighth" ratio="60"/>
               <linked>
                 <location>
                   <staves>-1</staves>
                   </location>
                 </linked>
-              <style>Tempo</style>
+              <style>tempo</style>
               <text>Swing</text>
               </SystemText>
             </voice>
@@ -612,7 +611,6 @@
             </voice>
           </Measure>
         </Staff>
-      <name>C Trumpet</name>
       </Score>
     </Score>
   </museScore>

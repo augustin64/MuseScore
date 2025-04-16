@@ -87,6 +87,7 @@ PreferencesPage {
             importLayout: importPreferencesModel.importLayout
             importBreaks: importPreferencesModel.importBreaks
             needUseDefaultFont: importPreferencesModel.needUseDefaultFont
+            inferTextType: importPreferencesModel.inferTextType
 
             navigation.section: root.navigationSection
             navigation.order: root.navigationOrderStart + 3
@@ -101,6 +102,10 @@ PreferencesPage {
 
             onUseDefaultFontChangeRequested: function(use) {
                 importPreferencesModel.needUseDefaultFont = use
+            }
+
+            onInferTextTypeChangeRequested: function (inferTextType) {
+                importPreferencesModel.inferTextType = inferTextType
             }
 
             onFocusChanged: {
@@ -127,6 +132,16 @@ PreferencesPage {
                 if (activeFocus) {
                     root.ensureContentVisibleRequested(Qt.rect(x, y, width, height))
                 }
+            }
+        }
+
+        SeparatorLine { }
+
+        MeiSection {
+            meiImportLayout: importPreferencesModel.meiImportLayout
+
+            onMeiImportLayoutChangeRequested: function(meiImportLayout) {
+                importPreferencesModel.meiImportLayout = meiImportLayout
             }
         }
     }

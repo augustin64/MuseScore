@@ -32,6 +32,7 @@ namespace mu::mpe {
 enum class SoundId
 {
     Undefined = -1,
+    Unknown,
 
     Accordion,
     Bandoneon,
@@ -240,6 +241,7 @@ enum class SoundCategory
 enum class SoundSubCategory
 {
     Undefined = -1,
+    Unknown,
 
     English,
     Armenian,
@@ -315,6 +317,7 @@ enum class SoundSubCategory
     Secunda,
 
     Electric,
+    Electronic,
     Acoustic,
     Fretless,
     Pedal,
@@ -398,8 +401,10 @@ enum class SoundSubCategory
     Last
 };
 
-static const std::unordered_map<SoundId, String> ID_STRINGS
+inline const std::unordered_map<SoundId, String> ID_STRINGS
 {
+    { SoundId::Undefined, String(u"undefined") },
+    { SoundId::Unknown, String(u"unknown") },
     { SoundId::Accordion, String(u"accordion") },
     { SoundId::Bandoneon, String(u"bandoneon") },
     { SoundId::Concertina, String(u"concertina") },
@@ -595,8 +600,7 @@ inline const String& soundIdToString(const SoundId id)
 {
     auto search = ID_STRINGS.find(id);
     if (search == ID_STRINGS.cend()) {
-        static const String UNDEFINED_ID_STR(u"undefined_id");
-        return UNDEFINED_ID_STR;
+        return ID_STRINGS.at(SoundId::Unknown);
     }
 
     return search->second;
@@ -604,18 +608,22 @@ inline const String& soundIdToString(const SoundId id)
 
 inline SoundId soundIdFromString(const String& str)
 {
+    if (str.empty()) {
+        return SoundId::Undefined;
+    }
+
     auto search = std::find_if(ID_STRINGS.cbegin(),
                                ID_STRINGS.cend(),
                                [str](const auto& pair) { return pair.second == str; });
 
     if (search == ID_STRINGS.cend()) {
-        return SoundId::Undefined;
+        return SoundId::Unknown;
     }
 
     return search->first;
 }
 
-static const std::unordered_map<SoundCategory, String> CATEGORY_STRINGS
+inline const std::unordered_map<SoundCategory, String> CATEGORY_STRINGS
 {
     { SoundCategory::Keyboards, String(u"keyboards") },
     { SoundCategory::Strings, String(u"strings") },
@@ -649,8 +657,10 @@ inline SoundCategory soundCategoryFromString(const String& str)
     return search->first;
 }
 
-static const std::unordered_map<SoundSubCategory, String> SUBCATEGORY_STRINGS
+inline const std::unordered_map<SoundSubCategory, String> SUBCATEGORY_STRINGS
 {
+    { SoundSubCategory::Undefined, String(u"undefined") },
+    { SoundSubCategory::Unknown, String(u"unknown") },
     { SoundSubCategory::English, String(u"english") },
     { SoundSubCategory::Armenian, String(u"armenian") },
     { SoundSubCategory::Alpine, String(u"alpine") },
@@ -715,6 +725,7 @@ static const std::unordered_map<SoundSubCategory, String> SUBCATEGORY_STRINGS
     { SoundSubCategory::Pocket, String(u"pocket") },
     { SoundSubCategory::Garklein, String(u"garklein") },
     { SoundSubCategory::Toy, String(u"toy") },
+    { SoundSubCategory::String, String(u"string") },
     { SoundSubCategory::TwelveString, String(u"twelve_string") },
 
     { SoundSubCategory::Grand, String(u"grand") },
@@ -724,6 +735,7 @@ static const std::unordered_map<SoundSubCategory, String> SUBCATEGORY_STRINGS
     { SoundSubCategory::Secunda, String(u"secunda") },
 
     { SoundSubCategory::Electric, String(u"electric") },
+    { SoundSubCategory::Electronic, String(u"electronic") },
     { SoundSubCategory::Acoustic, String(u"acoustic") },
     { SoundSubCategory::Fretless, String(u"fretless") },
     { SoundSubCategory::Pedal, String(u"pedal") },
@@ -761,9 +773,35 @@ static const std::unordered_map<SoundSubCategory, String> SUBCATEGORY_STRINGS
     { SoundSubCategory::Sub_Contra_Bass, String(u"sub_contra_bass") },
     { SoundSubCategory::Double_Contra_Bass, String(u"double_contra_bass") },
     { SoundSubCategory::Bass, String(u"bass") },
+    { SoundSubCategory::Bowed, String(u"bowed") },
     { SoundSubCategory::Great_Bass, String(u"great_bass") },
     { SoundSubCategory::Hyper_Bass, String(u"hyper_bass") },
     { SoundSubCategory::Melody, String(u"melody") },
+
+    { SoundSubCategory::FX_Goblins, String(u"fx_goblins") },
+    { SoundSubCategory::FX_Atmosphere, String(u"fx_atmosphere") },
+    { SoundSubCategory::FX_Brightness, String(u"fx_brightness") },
+    { SoundSubCategory::FX_Crystal, String(u"fx_crystal") },
+    { SoundSubCategory::FX_Echoes, String(u"fx_echoes") },
+    { SoundSubCategory::FX_Rain, String(u"fx_rain") },
+    { SoundSubCategory::FX_SciFi, String(u"fx_scifi") },
+    { SoundSubCategory::FX_SoundTrack, String(u"fx_soundtrack") },
+
+    { SoundSubCategory::Sweep, String(u"sweep") },
+    { SoundSubCategory::Warm, String(u"warm") },
+    { SoundSubCategory::NewAge, String(u"new_age") },
+    { SoundSubCategory::Polysynth, String(u"polysynth") },
+    { SoundSubCategory::Halo, String(u"halo") },
+    { SoundSubCategory::Metallic, String(u"metallic") },
+    { SoundSubCategory::Choir, String(u"choir") },
+
+    { SoundSubCategory::Sine_Wave, String(u"sine_wave") },
+    { SoundSubCategory::Square_Wave, String(u"square_wave") },
+    { SoundSubCategory::Sawtooth_Wave, String(u"sawtooth_wave") },
+
+    { SoundSubCategory::Primary, String(u"primary") },
+    { SoundSubCategory::Secondary, String(u"secondary") },
+    { SoundSubCategory::Section, String(u"section") },
 
     { SoundSubCategory::In_C, String(u"in_c") },
     { SoundSubCategory::In_D, String(u"in_d") },
@@ -778,26 +816,16 @@ static const std::unordered_map<SoundSubCategory, String> SUBCATEGORY_STRINGS
     { SoundSubCategory::In_B, String(u"in_b") },
     { SoundSubCategory::In_B_flat, String(u"in_b_flat") },
 
-    { SoundSubCategory::FX_Goblins, String(u"fx_goblins") },
-    { SoundSubCategory::FX_Atmosphere, String(u"fx_atmosphere") },
-    { SoundSubCategory::FX_Brightness, String(u"fx_brightness") },
-    { SoundSubCategory::FX_Crystal, String(u"fx_crystal") },
-    { SoundSubCategory::FX_Echoes, String(u"fx_echoes") },
-    { SoundSubCategory::FX_Rain, String(u"fx_rain") },
-    { SoundSubCategory::FX_SciFi, String(u"fx_scifi") },
-    { SoundSubCategory::FX_SoundTrack, String(u"fx_soundtrack") },
-    { SoundSubCategory::Primary, String(u"primary") },
-    { SoundSubCategory::Secondary, String(u"secondary") },
-    { SoundSubCategory::Section, String(u"section") },
     { SoundSubCategory::Last, String(u"last") }
 };
+
+using SoundSubCategories = std::set<SoundSubCategory>;
 
 inline const String& soundSubCategoryToString(const SoundSubCategory& subCategory)
 {
     auto search = SUBCATEGORY_STRINGS.find(subCategory);
     if (search == SUBCATEGORY_STRINGS.cend()) {
-        static const String UNDEFINED_SUBCATEGORY_STR(u"undefined");
-        return UNDEFINED_SUBCATEGORY_STR;
+        return SUBCATEGORY_STRINGS.at(SoundSubCategory::Unknown);
     }
 
     return search->second;
@@ -805,48 +833,20 @@ inline const String& soundSubCategoryToString(const SoundSubCategory& subCategor
 
 inline SoundSubCategory soundSubCategoryFromString(const String& str)
 {
+    if (str.empty()) {
+        return SoundSubCategory::Undefined;
+    }
+
     auto search = std::find_if(SUBCATEGORY_STRINGS.cbegin(),
                                SUBCATEGORY_STRINGS.cend(),
                                [str](const auto& pair) { return pair.second == str; });
 
     if (search == SUBCATEGORY_STRINGS.cend()) {
-        return SoundSubCategory::Undefined;
+        return SoundSubCategory::Unknown;
     }
 
     return search->first;
 }
-
-using SoundCategories = std::set<SoundCategory>;
-struct SoundSubCategories : public std::set<SoundSubCategory>
-{
-    SoundSubCategories() = default;
-    SoundSubCategories(std::initializer_list<SoundSubCategory> initList)
-        : std::set<SoundSubCategory>(std::move(initList))
-    {
-    }
-
-    String toString() const
-    {
-        StringList subCategoryStrList;
-        for (const auto& subCategory : *this) {
-            subCategoryStrList.push_back(soundSubCategoryToString(subCategory));
-        }
-
-        return subCategoryStrList.join(u":");
-    }
-
-    static SoundSubCategories fromString(const String& str)
-    {
-        SoundSubCategories result;
-
-        StringList subCategoryStrList = str.split(u":");
-        for (const String& subStr : subCategoryStrList) {
-            result.insert(soundSubCategoryFromString(subStr));
-        }
-
-        return result;
-    }
-};
 }
 
 #endif // MU_MPE_SOUNDID_H

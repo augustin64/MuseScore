@@ -57,12 +57,21 @@ public:
     Result warning(const std::string& title, const Text& text, const ButtonDatas& buttons = {}, int defBtn = int(Button::NoButton),
                    const Options& options = {}) const override;
 
+    Result warning(const std::string& title, const Text& text, const std::string& detailedText, const ButtonDatas& buttons = {},
+                   int defBtn = int(Button::NoButton), const Options& options = {}) const override;
+
     // error
     Result error(const std::string& title, const std::string& text, const Buttons& buttons = {}, const Button& def = Button::NoButton,
                  const Options& options = {}) const override;
 
     Result error(const std::string& title, const Text& text, const ButtonDatas& buttons = {}, int defBtn = int(Button::NoButton),
                  const Options& options = {}) const override;
+
+    Result error(const std::string& title, const Text& text, const std::string& detailedText, const ButtonDatas& buttons = {},
+                 int defBtn = int(Button::NoButton), const Options& options = {}) const override;
+
+    // progress
+    Ret showProgress(const std::string& title, framework::Progress* progress) const override;
 
     // files
     io::path_t selectOpeningFile(const QString& title, const io::path_t& dir, const std::vector<std::string>& filter) override;
@@ -97,6 +106,10 @@ public:
 
     Ret openUrl(const std::string& url) const override;
     Ret openUrl(const QUrl& url) const override;
+
+    Ret isAppExists(const std::string& appIdentifier) const override;
+    Ret canOpenApp(const Uri& uri) const override;
+    async::Promise<Ret> openApp(const Uri& uri) const override;
 
     Ret revealInFileBrowser(const io::path_t& filePath) const override;
 

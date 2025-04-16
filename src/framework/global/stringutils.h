@@ -26,6 +26,8 @@
 #include <vector>
 #include <sstream>
 
+#include "types/string.h"
+
 namespace mu::strings {
 bool replace(std::string& source, const std::string& what, const std::string& to);
 void split(const std::string& str, std::vector<std::string>& out, const std::string& delim);
@@ -36,6 +38,7 @@ void rtrim(std::string& s);
 void trim(std::string& s);
 
 std::string toLower(const std::string& source);
+bool startsWith(const std::string& str, const std::string& start);
 bool endsWith(const std::string& str, const std::string& end);
 std::string leftJustified(const std::string& val, size_t width);
 
@@ -50,6 +53,7 @@ std::string toString(const T& t)
 }
 
 bool lessThanCaseInsensitive(const std::string& lhs, const std::string& rhs);
+bool lessThanCaseInsensitive(const String& lhs, const String& rhs);
 }
 
 #endif // MU_FRAMEWORK_STRINGUTILS_H

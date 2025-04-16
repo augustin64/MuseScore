@@ -22,9 +22,10 @@
 #ifndef MU_CLOUD_IAUTHORIZATIONSERVICE_H
 #define MU_CLOUD_IAUTHORIZATIONSERVICE_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "cloudtypes.h"
 
+#include "types/val.h"
 #include "types/retval.h"
 
 namespace mu::cloud {
@@ -39,13 +40,16 @@ public:
     virtual void signIn() = 0;
     virtual void signOut() = 0;
 
-    virtual Ret ensureAuthorization(const std::string& text = {}) = 0;
+    virtual RetVal<Val> ensureAuthorization(bool publishingScore, const std::string& text = {}) = 0;
 
     virtual ValCh<bool> userAuthorized() const = 0;
     virtual ValCh<AccountInfo> accountInfo() const = 0;
 
+    virtual CloudInfo cloudInfo() const = 0;
+
     virtual Ret checkCloudIsAvailable() const = 0;
 };
+using IAuthorizationServicePtr = std::shared_ptr<IAuthorizationService>;
 }
 
 #endif // MU_CLOUD_IAUTHORIZATIONSERVICE_H

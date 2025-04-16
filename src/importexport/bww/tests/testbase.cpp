@@ -27,12 +27,13 @@
 
 #include "io/file.h"
 
-#include "libmscore/masterscore.h"
+#include "engraving/dom/masterscore.h"
 #include "engraving/infrastructure/localfileinfoprovider.h"
-
+#include "engraving/engravingerrors.h"
 #include "engraving/compat/mscxcompat.h"
 #include "engraving/compat/scoreaccess.h"
 #include "engraving/compat/writescorehook.h"
+#include "engraving/rw/rwregister.h"
 
 #include "log.h"
 
@@ -49,15 +50,15 @@ MasterScore* MTest::readScore(const QString& name)
     std::string suffix = io::suffix(path);
 
     ScoreLoad sl;
-    Err rv;
+    Ret ret;
     if (suffix == "mscz" || suffix == "mscx") {
-        rv = compat::loadMsczOrMscx(score, path.toQString(), false);
+        ret = compat::loadMsczOrMscx(score, path.toQString(), false);
     } else {
-        rv = Err::FileUnknownType;
+        ret = make_ret(Err::FileUnknownType, path);
     }
 
-    if (rv != Err::NoError) {
-        LOGE() << "cannot load file at " << path;
+    if (!ret) {
+        LOGE() << ret.text();
         delete score;
         score = nullptr;
     } else {
@@ -79,8 +80,8 @@ bool MTest::saveScore(Score* score, const QString& name) const
     if (!file.open(IODevice::ReadWrite)) {
         return false;
     }
-    compat::WriteScoreHook hook;
-    return score->writeScore(&file, false, false, hook);
+
+    return rw::RWRegister::writer()->writeScore(score, &file, false);
 }
 
 bool MTest::compareFilesFromPaths(const QString& f1, const QString& f2)

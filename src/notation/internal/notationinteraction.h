@@ -28,14 +28,15 @@
 #include "modularity/ioc.h"
 #include "async/asyncable.h"
 #include "iinteractive.h"
+#include "engraving/rendering/isinglerenderer.h"
 
-#include "inotationinteraction.h"
-#include "inotationconfiguration.h"
+#include "../inotationinteraction.h"
+#include "../inotationconfiguration.h"
+#include "../iselectinstrumentscenario.h"
 #include "inotationundostack.h"
-#include "iselectinstrumentscenario.h"
 
-#include "libmscore/engravingitem.h"
-#include "libmscore/elementgroup.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/elementgroup.h"
 #include "scorecallbacks.h"
 
 namespace mu::engraving {
@@ -49,9 +50,10 @@ class Notation;
 class NotationSelection;
 class NotationInteraction : public INotationInteraction, public async::Asyncable
 {
-    INJECT(notation, INotationConfiguration, configuration)
-    INJECT(notation, ISelectInstrumentsScenario, selectInstrumentScenario)
-    INJECT(notation, framework::IInteractive, interactive)
+    INJECT(INotationConfiguration, configuration)
+    INJECT(ISelectInstrumentsScenario, selectInstrumentScenario)
+    INJECT(framework::IInteractive, interactive)
+    INJECT(engraving::rendering::ISingleRenderer, engravingRenderer)
 
 public:
     NotationInteraction(Notation* notation, INotationUndoStackPtr undoStack);
@@ -62,8 +64,9 @@ public:
     INotationNoteInputPtr noteInput() const override;
 
     // Shadow note
-    void showShadowNote(const PointF& pos) override;
+    bool showShadowNote(const PointF& pos) override;
     void hideShadowNote() override;
+    RectF shadowNoteRect() const override;
 
     // Visibility
     void toggleVisible() override;
@@ -100,6 +103,7 @@ public:
     async::Notification dragChanged() const override;
 
     bool isDragCopyStarted() const override;
+    bool dragCopyAllowed(const EngravingItem* element) const override;
     void startDragCopy(const EngravingItem* element, QObject* dragSource) override;
     void endDragCopy() override;
 
@@ -166,7 +170,7 @@ public:
 
     Ret canAddBoxes() const override;
     void addBoxes(BoxType boxType, int count, AddBoxesTarget target) override;
-    void addBoxes(BoxType boxType, int count, int beforeBoxIndex) override;
+    void addBoxes(BoxType boxType, int count, int beforeBoxIndex, bool moveSignaturesClef = true) override;
 
     void copySelection() override;
     void copyLyrics() override;
@@ -237,6 +241,7 @@ public:
     void resetTextStyleOverrides() override;
     void resetBeamMode() override;
     void resetShapesAndPosition() override;
+    void resetToDefaultLayout() override;
 
     ScoreConfig scoreConfig() const override;
     void setScoreConfig(const ScoreConfig& config) override;
@@ -260,18 +265,24 @@ public:
     void addMelisma() override;
     void addLyricsVerse() override;
 
+    Ret canAddGuitarBend() const override;
+    void addGuitarBend(GuitarBendType bendType) override;
+
     void toggleBold() override;
     void toggleItalic() override;
     void toggleUnderline() override;
     void toggleStrike() override;
+    void toggleSubScript() override;
+    void toggleSuperScript() override;
     void toggleArticulation(mu::engraving::SymId) override;
     void toggleAutoplace(bool) override;
 
+    bool canInsertClef(mu::engraving::ClefType) const override;
     void insertClef(mu::engraving::ClefType) override;
+
     void changeAccidental(mu::engraving::AccidentalType) override;
     void transposeSemitone(int) override;
     void transposeDiatonicAlterations(mu::engraving::TransposeDirection) override;
-    void toggleGlobalOrLocalInsert() override;
     void getLocation() override;
     void execute(void (mu::engraving::Score::*)()) override;
 
@@ -312,6 +323,7 @@ private:
     void doDragLasso(const PointF& p);
     void endLasso();
     void toggleFontStyle(mu::engraving::FontStyle);
+    void toggleVerticalAlignment(mu::engraving::VerticalAlignment);
     void navigateToLyrics(bool, bool, bool);
 
     mu::engraving::Harmony* editedHarmony() const;
@@ -355,6 +367,8 @@ private:
 
     void applyDropPaletteElement(mu::engraving::Score* score, mu::engraving::EngravingItem* target, mu::engraving::EngravingItem* e,
                                  Qt::KeyboardModifiers modifiers, PointF pt = PointF(), bool pasteMode = false);
+
+    void applyLineNoteToNote(engraving::Score* score, Note* note1, Note* note2, EngravingItem* line);
 
     void doAddSlur(const mu::engraving::Slur* slurTemplate = nullptr);
     void doAddSlur(ChordRest* firstChordRest, ChordRest* secondChordRest, const mu::engraving::Slur* slurTemplate);
@@ -418,6 +432,7 @@ private:
     async::Notification m_textEditingStarted;
     async::Notification m_textEditingChanged;
     async::Channel<TextBase*> m_textEditingEnded;
+    async::Channel<TextBase*> m_textAdded;
 
     DropData m_dropData;
     async::Notification m_dropChanged;

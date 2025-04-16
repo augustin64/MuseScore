@@ -23,13 +23,15 @@
 #ifndef __PLUGIN_API_INSTRUMENT_H__
 #define __PLUGIN_API_INSTRUMENT_H__
 
+#include "log.h"
 #include "scoreelement.h"
-#include "libmscore/instrument.h"
+#include "engraving/dom/instrument.h"
 
 namespace mu::engraving {
 class Instrument;
+}
 
-namespace PluginAPI {
+namespace mu::plugins::api {
 class Instrument;
 
 //---------------------------------------------------------
@@ -142,8 +144,18 @@ public:
     int reverb() const { return _channel->reverb(); }
     void setReverb(int val) { activeChannel()->setReverb(qBound(0, val, 127)); }
 
-    bool mute() const { return _channel->mute(); }
-    void setMute(bool val) { activeChannel()->setMute(val); }
+    bool mute() const
+    {
+        DEPRECATED;
+        //!@NOTE since MuseScore 4.0 mixer doen/t work via Channel
+        return false;
+    }
+
+    void setMute(bool)
+    {
+        DEPRECATED;
+        //!@NOTE since MuseScore 4.0 mixer doen/t work via Channel
+    }
 
     int midiProgram() const { return _channel->program(); }
     void setMidiProgram(int prog);
@@ -216,7 +228,7 @@ class Instrument : public QObject
      * The string identifier
      * ([MusicXML Sound ID](https://www.musicxml.com/for-developers/standard-sounds/))
      * for this instrument.
-     * \see \ref mu::engraving::PluginAPI::Part::instrumentId "Part.instrumentId"
+     * \see \ref mu::plugins::api::Part::instrumentId "Part.instrumentId"
      */
     Q_PROPERTY(QString instrumentId READ instrumentId)
     // mu::engraving::Instrument supports multiple short/long names (for aeolus instruments?)
@@ -231,11 +243,11 @@ class Instrument : public QObject
      * For fretted instruments, an information about this
      * instrument's strings.
      */
-    Q_PROPERTY(mu::engraving::PluginAPI::StringData * stringData READ stringData)
+    Q_PROPERTY(mu::plugins::api::StringData * stringData READ stringData)
 
     // TODO: a property for drumset?
 
-    Q_PROPERTY(QQmlListProperty<mu::engraving::PluginAPI::Channel> channels READ channels)
+    Q_PROPERTY(QQmlListProperty<mu::plugins::api::Channel> channels READ channels)
 
     mu::engraving::Instrument* _instrument;
     mu::engraving::Part* _part;
@@ -260,9 +272,8 @@ public:
     /// \endcond
 
     /** Checks whether two variables represent the same object. */
-    Q_INVOKABLE bool is(mu::engraving::PluginAPI::Instrument* other) { return other && instrument() == other->instrument(); }
+    Q_INVOKABLE bool is(mu::plugins::api::Instrument* other) { return other && instrument() == other->instrument(); }
 };
-} // namespace PluginAPI
-} // namespace Ms
+} // namespace mu::plugins::api
 
 #endif

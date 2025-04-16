@@ -110,6 +110,8 @@ using MxmlTupletStates = std::map<QString, MxmlTupletState>;
 
 void determineTupletFractionAndFullDuration(const Fraction duration, Fraction& fraction, Fraction& fullDuration);
 Fraction missingTupletDuration(const Fraction duration);
+bool isLikelyCreditText(const QString& text, const bool caseInsensitive);
+bool isLikelySubtitleText(const QString& text, const bool caseInsensitive);
 
 //---------------------------------------------------------
 //   MusicXMLParserPass1
@@ -134,6 +136,7 @@ public:
     void partGroup(const int scoreParts, MusicXmlPartGroupList& partGroupList, MusicXmlPartGroupMap& partGroups);
     void scorePart();
     void scoreInstrument(const QString& partId);
+    void setStyle(const QString& type, const double val);
     void midiInstrument(const QString& partId);
     void part();
     void measure(const QString& partId, const Fraction cTime, Fraction& mdur, VoiceOverlapDetector& vod, const int measureNr);
@@ -143,7 +146,6 @@ public:
     void time(const Fraction cTime);
     void transpose(const QString& partId, const Fraction& tick);
     void divisions();
-    void staves(const QString& partId);
     void direction(const QString& partId, const Fraction cTime);
     void directionType(const Fraction cTime, QList<MxmlOctaveShiftDesc>& starts, QList<MxmlOctaveShiftDesc>& stops);
     void handleOctaveShift(const Fraction cTime, const QString& type, short size, MxmlOctaveShiftDesc& desc);
@@ -151,7 +153,10 @@ public:
     void note(const QString& partId, const Fraction cTime, Fraction& missingPrev, Fraction& dura, Fraction& missingCurr,
               VoiceOverlapDetector& vod, MxmlTupletStates& tupletStates);
     void notePrintSpacingNo(Fraction& dura);
-    void duration(Fraction& dura);
+    Fraction calcTicks(const int& intTicks, const int& _divisions, const QXmlStreamReader* const xmlReader);
+    Fraction calcTicks(const int& intTicks) { return calcTicks(intTicks, _divs, &_e); }
+    void duration(Fraction& dura, QXmlStreamReader& e);
+    void duration(Fraction& dura) { duration(dura, _e); }
     void forward(Fraction& dura);
     void backup(Fraction& dura);
     void timeModification(Fraction& timeMod);
@@ -160,8 +165,8 @@ public:
     void skipLogCurrElem();
     bool determineMeasureLength(QVector<Fraction>& ml) const;
     VoiceList getVoiceList(const QString id) const;
-    bool determineStaffMoveVoice(const QString& id, const int mxStaff, const QString& mxVoice, int& msMove, int& msTrack,
-                                 int& msVoice) const;
+    bool determineStaffMoveVoice(const QString& id, const int mxStaff, const int& mxVoice, int& msMove, int& msTrack, int& msVoice) const;
+    int voiceToInt(const QString& voice);
     track_idx_t trackForPart(const QString& id) const;
     bool hasPart(const QString& id) const;
     Part* getPart(const QString& id) const { return _partMap.value(id); }
@@ -174,6 +179,20 @@ public:
     int octaveShift(const QString& id, const staff_idx_t staff, const Fraction f) const;
     const CreditWordsList& credits() const { return _credits; }
     bool hasBeamingInfo() const { return _hasBeamingInfo; }
+    bool isVocalStaff(const QString& id) const { return _parts[id].isVocalStaff(); }
+    static VBox* createAndAddVBoxForCreditWords(Score* const score, const int miny = 0, const int maxy = 75);
+    static void reformatHeaderVBox(MeasureBase* mb);
+    void createDefaultHeader(Score* const score);
+    void createMeasuresAndVboxes(Score* const score, const QVector<Fraction>& ml, const QVector<Fraction>& ms,
+                                 const std::set<int>& systemStartMeasureNrs, const std::set<int>& pageStartMeasureNrs,
+                                 const CreditWordsList& crWords, const QSize pageSize);
+    void setHasInferredHeaderText(bool b) { _hasInferredHeaderText = b; }
+    bool hasInferredHeaderText() const { return _hasInferredHeaderText; }
+    int maxDiff() const { return _maxDiff; }
+    void insertAdjustedDuration(Fraction key, Fraction value) { _adjustedDurations.insert(key, value); }
+    QMap<Fraction, Fraction>& adjustedDurations() { return _adjustedDurations; }
+    void insertSeenDenominator(int val) { _seenDenominators.emplace(val); }
+    String exporterString() const { return _exporterString; }
 
 private:
     // functions
@@ -181,6 +200,7 @@ private:
 
     // generic pass 1 data
     QXmlStreamReader _e;
+    String _exporterString;                    // Name of the software which exported the file
     int _divs;                                  ///< Current MusicXML divisions value
     QMap<QString, MusicXmlPart> _parts;         ///< Parts data, mapped on part id
     std::set<int> _systemStartMeasureNrs;       ///< Measure numbers of measures starting a page
@@ -194,11 +214,16 @@ private:
     MxmlLogger* _logger;                        ///< Error logger
     QString _errors;                            ///< Errors to present to the user
     bool _hasBeamingInfo;                       ///< Whether the score supports or contains beaming info
+    bool _hasInferredHeaderText = false;
 
     // part specific data (TODO: move to part-specific class)
     Fraction _timeSigDura;                      ///< Measure duration according to last timesig read
     QMap<int, MxmlOctaveShiftDesc> _octaveShifts;   ///< Pending octave-shifts
     QSize _pageSize;                            ///< Page width read from defaults
+
+    const int _maxDiff = 5;                   ///< Duration rounding tick threshold;
+    QMap<Fraction, Fraction> _adjustedDurations;  ///< Rounded durations
+    std::set<int> _seenDenominators;          ///< Denominators seen. Used for rounding errors.
 };
 } // namespace Ms
 #endif

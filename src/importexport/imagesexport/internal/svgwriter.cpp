@@ -22,18 +22,17 @@
 
 #include "svgwriter.h"
 
+#include "draw/painter.h"
+
+#include "engraving/dom/measure.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/score.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/stafflines.h"
+#include "engraving/dom/system.h"
+#include "engraving/dom/repeatlist.h"
+
 #include "svggenerator.h"
-
-#include "engraving/infrastructure/paint.h"
-
-#include "libmscore/measure.h"
-#include "libmscore/note.h"
-#include "libmscore/page.h"
-#include "libmscore/repeatlist.h"
-#include "libmscore/score.h"
-#include "libmscore/staff.h"
-#include "libmscore/stafflines.h"
-#include "libmscore/system.h"
 
 #include "log.h"
 
@@ -49,6 +48,8 @@ std::vector<INotationWriter::UnitType> SvgWriter::supportedUnitTypes() const
 
 mu::Ret SvgWriter::write(INotationPtr notation, QIODevice& destinationDevice, const Options& options)
 {
+    TRACEFUNC;
+
     IF_ASSERT_FAILED(notation) {
         return make_ret(Ret::Code::UnknownError);
     }
@@ -98,8 +99,10 @@ mu::Ret SvgWriter::write(INotationPtr notation, QIODevice& destinationDevice, co
 
     mu::engraving::MScore::pixelRatio = mu::engraving::DPI / printer.logicalDpiX();
 
-    if (!options[OptionKey::TRANSPARENT_BACKGROUND].toBool()) {
-        painter.fillRect(pageRect, mu::draw::Color::white);
+    const bool TRANSPARENT_BACKGROUND = options.value(OptionKey::TRANSPARENT_BACKGROUND,
+                                                      Val(configuration()->exportSvgWithTransparentBackground())).toBool();
+    if (!TRANSPARENT_BACKGROUND) {
+        painter.fillRect(pageRect, mu::draw::Color::WHITE);
     }
 
     // 1st pass: StaffLines
@@ -145,23 +148,24 @@ mu::Ret SvgWriter::write(INotationPtr notation, QIODevice& destinationDevice, co
                     if (measure->isMeasure() && mu::engraving::toMeasure(measure)->visible(staffIndex)) {
                         mu::engraving::StaffLines* sl = mu::engraving::toMeasure(measure)->staffLines(static_cast<int>(staffIndex));
                         printer.setElement(sl);
-                        engraving::Paint::paintElement(painter, sl);
+                        scoreRenderer()->paintItem(painter, sl);
                     }
                 }
             } else {   // Draw staff lines once per system
                 mu::engraving::StaffLines* firstSL = system->firstMeasure()->staffLines(static_cast<int>(staffIndex))->clone();
                 mu::engraving::StaffLines* lastSL =  system->lastMeasure()->staffLines(static_cast<int>(staffIndex));
 
-                qreal lastX =  lastSL->bbox().right()
+                qreal lastX =  lastSL->ldata()->bbox().right()
                               + lastSL->pagePos().x()
                               - firstSL->pagePos().x();
-                std::vector<mu::LineF>& lines = firstSL->getLines();
+                std::vector<mu::LineF> lines = firstSL->lines();
                 for (size_t l = 0, c = lines.size(); l < c; l++) {
                     lines[l].setP2(mu::PointF(lastX, lines[l].p2().y()));
                 }
+                firstSL->setLines(lines);
 
                 printer.setElement(firstSL);
-                engraving::Paint::paintElement(painter, firstSL);
+                scoreRenderer()->paintItem(painter, firstSL);
             }
         }
     }
@@ -221,7 +225,7 @@ mu::Ret SvgWriter::write(INotationPtr notation, QIODevice& destinationDevice, co
         printer.setElement(element);
 
         // Paint it
-        engraving::Paint::paintElement(painter, element);
+        scoreRenderer()->paintItem(painter, element);
     }
 
     painter.endDraw(); // Writes MuseScore SVG file to disk, finally

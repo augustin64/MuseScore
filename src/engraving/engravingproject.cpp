@@ -24,9 +24,10 @@
 #include "global/allocator.h"
 
 #include "style/defaultstyle.h"
-#include "rw/scorereader.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/part.h"
+#include "rw/mscloader.h"
+#include "rw/mscsaver.h"
+#include "dom/masterscore.h"
+#include "dom/part.h"
 
 #include "log.h"
 
@@ -57,14 +58,14 @@ std::shared_ptr<EngravingProject> EngravingProject::create(const MStyle& style)
 
 EngravingProject::EngravingProject()
 {
-    ObjectAllocator::used++;
+    ObjectAllocator::used();
 }
 
 EngravingProject::~EngravingProject()
 {
     delete m_masterScore;
 
-    ObjectAllocator::used--;
+    ObjectAllocator::unused();
 
     AllocatorsRegister::instance()->printStatistic("=== Destroy engraving project ===");
     //! NOTE At the moment, the allocator is working as leak detector. No need to do cleanup, at the moment it can lead to crashes
@@ -101,43 +102,37 @@ bool EngravingProject::readOnly() const
     return m_masterScore->readOnly();
 }
 
-Err EngravingProject::setupMasterScore(bool forceMode)
+Ret EngravingProject::setupMasterScore(bool forceMode)
 {
-    TRACEFUNC;
-    Err err = doSetupMasterScore(m_masterScore, forceMode);
-    return err;
+    return doSetupMasterScore(forceMode);
 }
 
-Err EngravingProject::doSetupMasterScore(MasterScore* score, bool forceMode)
+Ret EngravingProject::doSetupMasterScore(bool forceMode)
 {
     TRACEFUNC;
 
-    score->createPaddingTable();
-    score->connectTies();
+    m_masterScore->createPaddingTable();
+    m_masterScore->connectTies();
 
-    for (Part* p : score->parts()) {
+    for (Part* p : m_masterScore->parts()) {
         p->updateHarmonyChannels(false);
     }
 
-    score->rebuildMidiMapping();
-    score->setSoloMute();
+    m_masterScore->rebuildMidiMapping();
 
-    for (Score* s : score->scoreList()) {
+    for (Score* s : m_masterScore->scoreList()) {
         s->setPlaylistDirty();
         s->addLayoutFlags(LayoutFlag::FIX_PITCH_VELO);
         s->setLayoutAll();
     }
 
-    score->updateChannel();
-    score->update();
+    m_masterScore->updateChannel();
+    m_masterScore->update();
 
-    if (!forceMode) {
-        if (!score->sanityCheck()) {
-            return Err::FileCorrupted;
-        }
-    }
+    Ret ret = checkCorrupted();
+    m_isCorruptedUponLoading = !ret;
 
-    return Err::NoError;
+    return forceMode ? make_ok() : ret;
 }
 
 MasterScore* EngravingProject::masterScore() const
@@ -145,22 +140,31 @@ MasterScore* EngravingProject::masterScore() const
     return m_masterScore;
 }
 
-Err EngravingProject::loadMscz(const MscReader& msc, bool ignoreVersionError)
+Ret EngravingProject::loadMscz(const MscReader& msc, SettingsCompat& settingsCompat, bool ignoreVersionError)
 {
     TRACEFUNC;
+
     MScore::setError(MsError::MS_NO_ERROR);
-    ScoreReader scoreReader;
-    Err err = scoreReader.loadMscz(m_masterScore, msc, ignoreVersionError);
-    return err;
+    MscLoader loader;
+    return loader.loadMscz(m_masterScore, msc, settingsCompat, ignoreVersionError);
 }
 
 bool EngravingProject::writeMscz(MscWriter& writer, bool onlySelection, bool createThumbnail)
 {
     TRACEFUNC;
-    bool ok = m_masterScore->writeMscz(writer, onlySelection, createThumbnail);
-    if (ok && !onlySelection) {
-        m_masterScore->update();
-    }
 
-    return ok;
+    MscSaver saver;
+    return saver.writeMscz(m_masterScore, writer, onlySelection, createThumbnail);
+}
+
+bool EngravingProject::isCorruptedUponLoading() const
+{
+    return m_isCorruptedUponLoading;
+}
+
+Ret EngravingProject::checkCorrupted() const
+{
+    TRACEFUNC;
+
+    return m_masterScore->sanityCheck();
 }

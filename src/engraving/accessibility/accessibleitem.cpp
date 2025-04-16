@@ -22,8 +22,8 @@
 #include "accessibleitem.h"
 
 #include "accessibleroot.h"
-#include "../libmscore/score.h"
-#include "../libmscore/measure.h"
+#include "../dom/score.h"
+#include "../dom/measure.h"
 
 #include "translation.h"
 #include "log.h"
@@ -84,6 +84,10 @@ AccessibleRoot* AccessibleItem::accessibleRoot() const
 {
     if (!m_element) {
         return nullptr;
+    }
+
+    if (m_element->isType(ElementType::ROOT_ITEM)) {
+        return dynamic_cast<AccessibleRoot*>(m_element->accessible().get());
     }
 
     Score* score = m_element->score();
@@ -366,6 +370,12 @@ int AccessibleItem::accessibleCharacterCount() const
 
     TextBase* text = toTextBase(m_element);
     return static_cast<int>(text->plainText().size());
+}
+
+int AccessibleItem::accessibleRowIndex() const
+{
+    NOT_IMPLEMENTED;
+    return 0;
 }
 
 bool AccessibleItem::accessibleState(State st) const

@@ -28,7 +28,7 @@
 #include "types/retval.h"
 #include "async/notification.h"
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 
 #include "uitypes.h"
 
@@ -95,6 +95,8 @@ public:
     virtual QByteArray windowGeometry() const = 0;
     virtual void setWindowGeometry(const QByteArray& state) = 0;
     virtual async::Notification windowGeometryChanged() const = 0;
+
+    virtual bool isGlobalMenuAvailable() const = 0;
 
     virtual void applyPlatformStyle(QWindow* window) = 0;
 

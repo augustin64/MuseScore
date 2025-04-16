@@ -27,8 +27,10 @@
 #include <QJsonArray>
 #include <QJsonParseError>
 
-#include "convertercodes.h"
+#include "io/dir.h"
 #include "stringutils.h"
+
+#include "convertercodes.h"
 #include "compat/backendapi.h"
 
 #include "log.h"
@@ -39,8 +41,10 @@ using namespace mu::notation;
 
 static const std::string PDF_SUFFIX = "pdf";
 static const std::string PNG_SUFFIX = "png";
+static const std::string SVG_SUFFIX = "svg";
 
-mu::Ret ConverterController::batchConvert(const io::path_t& batchJobFile, const io::path_t& stylePath, bool forceMode)
+mu::Ret ConverterController::batchConvert(const io::path_t& batchJobFile, const io::path_t& stylePath, bool forceMode,
+                                          const String& soundProfile)
 {
     TRACEFUNC;
 
@@ -50,19 +54,25 @@ mu::Ret ConverterController::batchConvert(const io::path_t& batchJobFile, const 
         return batchJob.ret;
     }
 
-    Ret ret = make_ret(Ret::Code::Ok);
+    StringList errors;
+
     for (const Job& job : batchJob.val) {
-        ret = fileConvert(job.in, job.out, stylePath, forceMode);
+        Ret ret = fileConvert(job.in, job.out, stylePath, forceMode, soundProfile);
         if (!ret) {
-            LOGE() << "failed convert, err: " << ret.toString() << ", in: " << job.in << ", out: " << job.out;
-            break;
+            errors.emplace_back(String(u"failed convert, err: %1, in: %2, out: %3")
+                                .arg(String::fromStdString(ret.toString())).arg(job.in.toString()).arg(job.out.toString()));
         }
     }
 
-    return ret;
+    if (!errors.empty()) {
+        return make_ret(Err::ConvertFailed, errors.join(u"\n").toStdString());
+    }
+
+    return make_ret(Ret::Code::Ok);
 }
 
-mu::Ret ConverterController::fileConvert(const io::path_t& in, const io::path_t& out, const io::path_t& stylePath, bool forceMode)
+mu::Ret ConverterController::fileConvert(const io::path_t& in, const io::path_t& out, const io::path_t& stylePath, bool forceMode,
+                                         const String& soundProfile)
 {
     TRACEFUNC;
 
@@ -84,15 +94,32 @@ mu::Ret ConverterController::fileConvert(const io::path_t& in, const io::path_t&
         return make_ret(Err::InFileFailedLoad);
     }
 
+    if (!soundProfile.isEmpty()) {
+        notationProject->audioSettings()->clearTrackInputParams();
+        notationProject->audioSettings()->setActiveSoundProfile(soundProfile);
+    }
+
     globalContext()->setCurrentProject(notationProject);
+
+    if (suffix == engraving::MSCZ || suffix == engraving::MSCX || suffix == engraving::MSCS) {
+        return notationProject->save(out);
+    }
 
     if (isConvertPageByPage(suffix)) {
         ret = convertPageByPage(writer, notationProject->masterNotation()->notation(), out);
+        if (!ret) {
+            LOGE() << "Failed to convert page by page, err: " << ret.toString();
+        }
     } else {
         ret = convertFullNotation(writer, notationProject->masterNotation()->notation(), out);
+        if (!ret) {
+            LOGE() << "Failed to convert full notation, err: " << ret.toString();
+        }
     }
 
-    return make_ret(Ret::Code::Ok);
+    globalContext()->setCurrentProject(nullptr);
+
+    return ret;
 }
 
 mu::Ret ConverterController::convertScoreParts(const mu::io::path_t& in, const mu::io::path_t& out, const mu::io::path_t& stylePath,
@@ -149,12 +176,16 @@ mu::RetVal<ConverterController::BatchJob> ConverterController::parseBatchJob(con
 
     QJsonArray arr = doc.array();
 
+    auto correctUserInputPath = [](const QString& path) -> QString {
+        return io::Dir::fromNativeSeparators(path).toQString();
+    };
+
     for (const QJsonValue v : arr) {
         QJsonObject obj = v.toObject();
 
         Job job;
-        job.in = obj["in"].toString();
-        job.out = obj["out"].toString();
+        job.in = correctUserInputPath(obj["in"].toString());
+        job.out = correctUserInputPath(obj["out"].toString());
 
         if (!job.in.empty() && !job.out.empty()) {
             rv.val.push_back(std::move(job));
@@ -168,7 +199,8 @@ mu::RetVal<ConverterController::BatchJob> ConverterController::parseBatchJob(con
 bool ConverterController::isConvertPageByPage(const std::string& suffix) const
 {
     QList<std::string> types {
-        PNG_SUFFIX
+        PNG_SUFFIX,
+        SVG_SUFFIX
     };
 
     return types.contains(suffix);
@@ -179,7 +211,8 @@ mu::Ret ConverterController::convertPageByPage(INotationWriterPtr writer, INotat
     TRACEFUNC;
 
     for (size_t i = 0; i < notation->elements()->pages().size(); i++) {
-        const QString filePath = io::path_t(io::dirpath(out) + "/" + io::basename(out) + "-%1." + io::suffix(out)).toQString().arg(i + 1);
+        const QString filePath
+            = io::path_t(io::dirpath(out) + "/" + io::completeBasename(out) + "-%1." + io::suffix(out)).toQString().arg(i + 1);
 
         QFile file(filePath);
         if (!file.open(QFile::WriteOnly)) {
@@ -231,7 +264,7 @@ mu::Ret ConverterController::convertScorePartsToPdf(INotationWriterPtr writer, I
     INotationPtrList notations;
     notations.push_back(masterNotation->notation());
 
-    for (IExcerptNotationPtr e : masterNotation->excerpts().val) {
+    for (IExcerptNotationPtr e : masterNotation->excerpts()) {
         notations.push_back(e->notation());
     }
 
@@ -266,16 +299,16 @@ mu::Ret ConverterController::convertScorePartsToPngs(INotationWriterPtr writer, 
     }
 
     INotationPtrList excerpts;
-    for (IExcerptNotationPtr e : masterNotation->excerpts().val) {
+    for (IExcerptNotationPtr e : masterNotation->excerpts()) {
         excerpts.push_back(e->notation());
     }
 
-    io::path_t pngFilePath = io::dirpath(out) + "/" + io::path_t(io::basename(out) + "-excerpt.png");
+    io::path_t pngFilePath = io::dirpath(out) + "/" + io::path_t(io::completeBasename(out) + "-excerpt.png");
 
     for (size_t i = 0; i < excerpts.size(); i++) {
-        Ret ret = convertPageByPage(writer, excerpts[i], pngFilePath);
-        if (!ret) {
-            return ret;
+        Ret ret2 = convertPageByPage(writer, excerpts[i], pngFilePath);
+        if (!ret2) {
+            return ret2;
         }
     }
 

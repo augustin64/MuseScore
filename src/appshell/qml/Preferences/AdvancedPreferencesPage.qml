@@ -63,11 +63,13 @@ PreferencesPage {
             Layout.fillWidth: true
             Layout.fillHeight: true
 
-            keyRoleName: "keyRole"
+            keyRoleName: "descriptionRole"
             keyTitle: qsTrc("appshell/preferences", "Preference")
             valueRoleName: "valueRole"
             valueTitle: qsTrc("appshell/preferences", "Value")
             valueTypeRole: "typeRole"
+            minValueRoleName: "minValueRole"
+            maxValueRoleName: "maxValueRole"
 
             navigationSection: root.navigationSection
             navigationOrderStart: root.navigationOrderStart + 2
@@ -77,7 +79,7 @@ PreferencesPage {
 
                 filters: [
                     FilterValue {
-                        roleName: "keyRole"
+                        roleName: "descriptionRole"
                         roleValue: topSection.searchText
                         compareType: CompareType.Contains
                     }

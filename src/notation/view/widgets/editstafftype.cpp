@@ -21,11 +21,11 @@
  */
 
 #include "editstafftype.h"
-#include "libmscore/part.h"
-#include "libmscore/mscore.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/staff.h"
-#include "libmscore/stringdata.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/stringdata.h"
 
 #include "engraving/types/typesconv.h"
 #include "engraving/compat/scoreaccess.h"
@@ -145,7 +145,6 @@ EditStaffType::EditStaffType(QWidget* parent)
     connect(showTabFingering,  &QCheckBox::toggled, this, &EditStaffType::updatePreview);
     connect(upsideDown,        &QCheckBox::toggled, this, &EditStaffType::updatePreview);
     connect(numbersRadio,      &QCheckBox::toggled, this, &EditStaffType::updatePreview);
-    connect(showBackTied,      &QCheckBox::toggled, this, &EditStaffType::updatePreview);
 
     connect(templateReset,  &QPushButton::clicked, this, &EditStaffType::resetToTemplateClicked);
     connect(addToTemplates, &QPushButton::clicked, this, &EditStaffType::addToTemplatesClicked);
@@ -192,8 +191,9 @@ mu::Ret EditStaffType::loadScore(mu::engraving::MasterScore* score, const mu::io
 {
     mu::engraving::ScoreLoad sl;
 
-    if (compat::loadMsczOrMscx(score, path.toQString()) != engraving::Err::NoError) {
-        return make_ret(Ret::Code::UnknownError);
+    Ret ret = compat::loadMsczOrMscx(score, path.toQString());
+    if (!ret) {
+        return ret;
     }
 
     score->connectTies();
@@ -202,22 +202,16 @@ mu::Ret EditStaffType::loadScore(mu::engraving::MasterScore* score, const mu::io
         p->updateHarmonyChannels(false);
     }
     score->rebuildMidiMapping();
-    score->setSoloMute();
     for (mu::engraving::Score* s : score->scoreList()) {
         s->setPlaylistDirty();
         s->addLayoutFlags(mu::engraving::LayoutFlag::FIX_PITCH_VELO);
         s->setLayoutAll();
     }
     score->updateChannel();
-    //score->updateExpressive(MuseScore::synthesizer("Fluid"));
     score->setSaved(true);
     score->update();
 
-    if (!score->sanityCheck()) {
-        return make_ret(engraving::Err::FileCorrupted, path);
-    }
-
-    return make_ret(Ret::Code::Ok);
+    return score->sanityCheck();
 }
 
 //---------------------------------------------------------
@@ -289,7 +283,6 @@ void EditStaffType::setValues()
         aboveLinesRadio->setChecked(!staffType.onLines());
         linesThroughRadio->setChecked(staffType.linesThrough());
         linesBrokenRadio->setChecked(!staffType.linesThrough());
-        showBackTied->setChecked(staffType.showBackTied());
 
         idx = durFontName->findText(staffType.durationFontName(), Qt::MatchFixedString);
         if (idx == -1) {
@@ -456,7 +449,6 @@ void EditStaffType::setFromDlg()
     staffType.setFretFontSize(fretFontSize->value());
     staffType.setFretFontUserY(fretY->value());
     staffType.setLinesThrough(linesThroughRadio->isChecked());
-    staffType.setShowBackTied(showBackTied->isChecked());
     staffType.setMinimStyle(minimNoneRadio->isChecked() ? mu::engraving::TablatureMinimStyle::NONE
                             : (minimShortRadio->isChecked() ? mu::engraving::TablatureMinimStyle::SHORTER : mu::engraving::
                                TablatureMinimStyle::
@@ -518,7 +510,6 @@ void EditStaffType::blockSignals(bool block)
     aboveLinesRadio->blockSignals(block);
     linesThroughRadio->blockSignals(block);
     linesBrokenRadio->blockSignals(block);
-    showBackTied->blockSignals(block);
 
     durFontName->blockSignals(block);
     durFontSize->blockSignals(block);

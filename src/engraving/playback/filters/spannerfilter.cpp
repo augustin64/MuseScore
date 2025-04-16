@@ -22,9 +22,9 @@
 
 #include "spannerfilter.h"
 
-#include "libmscore/spanner.h"
-#include "libmscore/pedal.h"
-#include "libmscore/segment.h"
+#include "dom/spanner.h"
+#include "dom/pedal.h"
+#include "dom/segment.h"
 
 using namespace mu;
 using namespace mu::engraving;
@@ -42,7 +42,7 @@ bool SpannerFilter::isPlayable(const EngravingItem* item, const RenderingContext
     int spannerTo = spannerFrom + spannerDurationTicks;
 
     if (spannerDurationTicks == 0
-        || spannerTo < ctx.nominalPositionStartTick
+        || spannerTo <= ctx.nominalPositionStartTick
         || spannerFrom >= ctx.nominalPositionEndTick) {
         return false;
     }
@@ -52,17 +52,6 @@ bool SpannerFilter::isPlayable(const EngravingItem* item, const RenderingContext
 
 int SpannerFilter::spannerActualDurationTicks(const Spanner* spanner, const int nominalDurationTicks)
 {
-    if (spanner->type() == ElementType::TRILL) {
-        return spanner->endSegment()->tick().ticks() - spanner->tick().ticks() - 1;
-    }
-
-    if (spanner->type() == ElementType::PEDAL) {
-        const Pedal* pedal = toPedal(spanner);
-        if (pedal->endHookType() == HookType::HOOK_45) {
-            return nominalDurationTicks - Constants::division / 4;
-        }
-    }
-
     if (spanner->type() == ElementType::SLUR) {
         EngravingItem* startItem = spanner->startElement();
         EngravingItem* endItem = spanner->endElement();

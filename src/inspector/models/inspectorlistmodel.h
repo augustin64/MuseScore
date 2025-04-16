@@ -24,7 +24,7 @@
 
 #include <QAbstractListModel>
 
-#include "libmscore/engravingitem.h"
+#include "engraving/dom/engravingitem.h"
 
 #include "modularity/ioc.h"
 #include "async/asyncable.h"
@@ -37,7 +37,7 @@ class InspectorListModel : public QAbstractListModel, public mu::async::Asyncabl
 {
     Q_OBJECT
 
-    INJECT(inspector, context::IGlobalContext, context)
+    INJECT(context::IGlobalContext, context)
 
 public:
     explicit InspectorListModel(QObject* parent = nullptr);
@@ -47,21 +47,26 @@ public:
     QHash<int, QByteArray> roleNames() const override;
     int columnCount(const QModelIndex& parent = QModelIndex()) const override;
 
+    Q_INVOKABLE void setInspectorVisible(bool visible);
+
 private:
     enum RoleNames {
         InspectorSectionModelRole = Qt::UserRole + 1
     };
 
     void listenSelectionChanged();
+    void updateElementList();
 
     void setElementList(const QList<mu::engraving::EngravingItem*>& selectedElementList,
                         notation::SelectionState selectionState = notation::SelectionState::NONE);
 
     void buildModelsForEmptySelection();
-    void buildModelsForSelectedElements(const ElementKeySet& selectedElementKeySet, bool isRangeSelection);
+    void buildModelsForSelectedElements(const ElementKeySet& selectedElementKeySet, bool isRangeSelection,
+                                        const QList<engraving::EngravingItem*>& selectedElementList);
 
     void createModelsBySectionType(const QList<InspectorSectionType>& sectionTypeList, const ElementKeySet& selectedElementKeySet = {});
     void removeUnusedModels(const ElementKeySet& newElementKeySet, bool isRangeSelection,
+                            const QList<mu::engraving::EngravingItem*>& selectedElementList,
                             const QList<InspectorSectionType>& exclusions = QList<InspectorSectionType>());
 
     bool isModelAllowed(const AbstractInspectorModel* model, const InspectorModelTypeSet& allowedModelTypes,
@@ -71,9 +76,13 @@ private:
 
     AbstractInspectorModel* modelBySectionType(InspectorSectionType sectionType) const;
 
+    void notifyModelsAboutNotationChanged();
+
     QList<AbstractInspectorModel*> m_modelList;
 
     IElementRepositoryService* m_repository = nullptr;
+
+    bool m_inspectorVisible = true;
 };
 }
 

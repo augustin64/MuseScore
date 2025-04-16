@@ -24,7 +24,8 @@
 #define MU_UI_IUIENGINE_H
 
 #include <QString>
-#include "modularity/imoduleexport.h"
+
+#include "modularity/imoduleinterface.h"
 
 class QQmlEngine;
 

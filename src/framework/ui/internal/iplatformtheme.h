@@ -23,7 +23,7 @@
 #ifndef MU_UI_IPLATFORMTHEME_H
 #define MU_UI_IPLATFORMTHEME_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "async/notification.h"
 #include "uitypes.h"
 
@@ -44,6 +44,8 @@ public:
 
     virtual bool isSystemThemeDark() const = 0;
     virtual async::Notification platformThemeChanged() const = 0;
+
+    virtual bool isGlobalMenuAvailable() const = 0;
 
     virtual void applyPlatformStyleOnAppForTheme(const ThemeCode& themeCode) = 0;
     virtual void applyPlatformStyleOnWindowForTheme(QWindow* window, const ThemeCode& themeCode) = 0;

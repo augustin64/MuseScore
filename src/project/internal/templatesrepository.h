@@ -33,16 +33,18 @@
 namespace mu::project {
 class TemplatesRepository : public ITemplatesRepository
 {
-    INJECT(project, IProjectConfiguration, configuration)
-    INJECT(project, IMscMetaReader, mscReader)
-    INJECT(project, io::IFileSystem, fileSystem)
+    INJECT(IProjectConfiguration, configuration)
+    INJECT(IMscMetaReader, mscReader)
+    INJECT(io::IFileSystem, fileSystem)
 
 public:
     RetVal<Templates> templates() const override;
 
 private:
     Templates readTemplates(const io::path_t& dirPath) const;
-    Templates readTemplates(const io::paths_t& files, const QString& category, const io::path_t& dirPath = io::path_t()) const;
+
+    Templates readTemplates(const io::paths_t& files, const QString& category, bool isCustom,
+                            const io::path_t& dirPath = io::path_t()) const;
 };
 }
 

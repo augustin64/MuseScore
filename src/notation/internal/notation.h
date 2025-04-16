@@ -39,8 +39,8 @@ class NotationInteraction;
 class NotationPlayback;
 class Notation : virtual public INotation, public IGetScore, public async::Asyncable
 {
-    INJECT_STATIC(notation, INotationConfiguration, configuration)
-    INJECT(notation, engraving::IEngravingConfiguration, engravingConfiguration)
+    INJECT_STATIC(INotationConfiguration, configuration)
+    INJECT(engraving::IEngravingConfiguration, engravingConfiguration)
 
 public:
     explicit Notation(engraving::Score* score = nullptr);
@@ -60,8 +60,11 @@ public:
     void setIsOpen(bool open) override;
     async::Notification openChanged() const override;
 
+    bool hasVisibleParts() const override;
+
     ViewMode viewMode() const override;
     void setViewMode(const ViewMode& viewMode) override;
+    async::Notification viewModeChanged() const override;
 
     INotationPaintingPtr painting() const override;
     INotationViewStatePtr viewState() const override;

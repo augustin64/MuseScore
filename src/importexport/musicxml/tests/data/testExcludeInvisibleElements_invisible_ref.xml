@@ -16,9 +16,6 @@
       </encoding>
     </identification>
   <part-list>
-    <part-group type="start" number="1">
-      <group-symbol>brace</group-symbol>
-      </part-group>
     <score-part id="P1">
       <part-name>Piano</part-name>
       <part-abbreviation>Pno.</part-abbreviation>
@@ -244,7 +241,7 @@
         <voice>1</voice>
         <type>quarter</type>
         <stem>up</stem>
-        <notations print-object="no">
+        <notations>
           <ornaments>
             <turn/>
             </ornaments>
@@ -412,7 +409,7 @@
     <measure number="7">
       <direction placement="below">
         <direction-type>
-          <pedal type="start" line="yes"/>
+          <pedal type="resume" line="yes" sign="yes"/>
           </direction-type>
         </direction>
       <note>
@@ -425,7 +422,7 @@
         <type>quarter</type>
         <stem>up</stem>
         <notations>
-          <slur type="start" placement="below" number="1"/>
+          <slur type="start" number="1"/>
           </notations>
         </note>
       <note>
@@ -463,14 +460,14 @@
         </note>
       <direction placement="below">
         <direction-type>
-          <pedal type="stop" line="yes"/>
+          <pedal type="stop" line="yes" sign="no"/>
           </direction-type>
         </direction>
       </measure>
     <measure number="8">
       <direction placement="below">
         <direction-type>
-          <pedal type="start" line="yes"/>
+          <pedal type="resume" line="yes" sign="yes"/>
           </direction-type>
         </direction>
       <note>
@@ -483,7 +480,7 @@
         <type>quarter</type>
         <stem>up</stem>
         <notations print-object="no">
-          <slur type="start" placement="below" number="1"/>
+          <slur type="start" number="1"/>
           </notations>
         </note>
       <note>
@@ -521,7 +518,7 @@
         </note>
       <direction placement="below">
         <direction-type>
-          <pedal type="stop" line="yes"/>
+          <pedal type="stop" line="yes" sign="no"/>
           </direction-type>
         </direction>
       </measure>
@@ -695,7 +692,7 @@
         <type>quarter</type>
         <stem>up</stem>
         <notations>
-          <arpeggiate/>
+          <arpeggiate number="1"/>
           </notations>
         </note>
       <note>
@@ -709,7 +706,7 @@
         <type>quarter</type>
         <stem>up</stem>
         <notations>
-          <arpeggiate/>
+          <arpeggiate number="1"/>
           </notations>
         </note>
       <note>
@@ -723,7 +720,7 @@
         <type>quarter</type>
         <stem>up</stem>
         <notations>
-          <arpeggiate/>
+          <arpeggiate number="1"/>
           </notations>
         </note>
       <note>
@@ -736,7 +733,7 @@
         <type>quarter</type>
         <stem>up</stem>
         <notations print-object="no">
-          <arpeggiate/>
+          <arpeggiate number="1"/>
           </notations>
         </note>
       <note>
@@ -750,7 +747,7 @@
         <type>quarter</type>
         <stem>up</stem>
         <notations print-object="no">
-          <arpeggiate/>
+          <arpeggiate number="1"/>
           </notations>
         </note>
       <note>
@@ -764,7 +761,7 @@
         <type>quarter</type>
         <stem>up</stem>
         <notations print-object="no">
-          <arpeggiate/>
+          <arpeggiate number="1"/>
           </notations>
         </note>
       <note>

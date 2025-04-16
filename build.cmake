@@ -143,7 +143,7 @@ endif()
 
 fn__get_option(GENERATOR -G ${CONFIGURE_ARGS})
 if(WIN32)
-    fn__set_default(GENERATOR "Visual Studio 16 2019")
+    fn__set_default(GENERATOR "Visual Studio 17 2022")
 else()
     fn__set_default(GENERATOR "Unix Makefiles")
 endif()
@@ -186,9 +186,9 @@ list(APPEND CONFIGURE_ARGS "-DCMAKE_INSTALL_PREFIX=${INSTALL_PATH}")
 list(APPEND CONFIGURE_ARGS "-DCMAKE_BUILD_TYPE=${BUILD_TYPE}")
 
 if(QT_COMPILER MATCHES "_64$" OR QT_COMPILER MATCHES "mingw64")
-    list(APPEND CONFIGURE_ARGS "-DBUILD_64=ON")
+    list(APPEND CONFIGURE_ARGS "-DMUE_COMPILE_BUILD_64=ON")
 else()
-    list(APPEND CONFIGURE_ARGS "-DBUILD_64=OFF")
+    list(APPEND CONFIGURE_ARGS "-DMUE_COMPILE_BUILD_64=OFF")
 endif()
 
 #### ACTUAL BUILD STEPS START HERE ####

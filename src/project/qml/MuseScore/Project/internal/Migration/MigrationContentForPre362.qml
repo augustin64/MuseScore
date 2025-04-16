@@ -169,7 +169,7 @@ Item {
             horizontalAlignment: Qt.AlignLeft
             verticalAlignment: Qt.AlignVCenter
 
-            text: qsTrc("project/migration", "Please note: score layouts will be affected by improvements to MuseScore 4")
+            text: qsTrc("project/migration", "Please note: score layouts will be affected by improvements to MuseScore Studio")
         }
 
         FlatButton {
@@ -215,7 +215,7 @@ Item {
             id: askAgain
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
-            text: qsTrc("global", "Don't ask again")
+            text: qsTrc("global", "Don’t ask again")
             checked: !root.isAskAgain
 
             navigation.panel: footer.navigationPanel

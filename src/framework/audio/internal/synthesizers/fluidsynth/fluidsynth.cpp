@@ -48,7 +48,8 @@ static constexpr msecs_t MIN_NOTE_LENGTH = 10;
 /// @note
 ///  Fluid does not support MONO, so they start counting audio channels from 1, which means "1 pair of audio channels"
 /// @see https://www.fluidsynth.org/api/settings_synth.html
-static const audioch_t FLUID_AUDIO_CHANNELS_PAIR = 1;
+static constexpr unsigned int FLUID_AUDIO_CHANNELS_PAIR = 1;
+static constexpr unsigned int FLUID_AUDIO_CHANNELS_COUNT = FLUID_AUDIO_CHANNELS_PAIR * 2;
 
 struct mu::audio::synth::Fluid {
     fluid_settings_t* settings = nullptr;
@@ -72,11 +73,6 @@ FluidSynth::FluidSynth(const AudioSourceParams& params)
 bool FluidSynth::isValid() const
 {
     return m_fluid->synth != nullptr;
-}
-
-SoundFontFormats FluidSynth::soundFontFormats() const
-{
-    return { SoundFontFormat::SF2, SoundFontFormat::SF3 };
 }
 
 Ret FluidSynth::init()
@@ -126,22 +122,13 @@ Ret FluidSynth::init()
     fluid_settings_setint(m_fluid->settings, "synth.min-note-length", MIN_NOTE_LENGTH);
 
     fluid_settings_setint(m_fluid->settings, "synth.chorus.active", 0);
-    fluid_settings_setnum(m_fluid->settings, "synth.chorus.depth", 8);
-    fluid_settings_setnum(m_fluid->settings, "synth.chorus.level", 10);
-    fluid_settings_setint(m_fluid->settings, "synth.chorus.nr", 4);
-    fluid_settings_setnum(m_fluid->settings, "synth.chorus.speed", 1);
-
-    fluid_settings_setint(m_fluid->settings, "synth.reverb.active", 1);
-    fluid_settings_setnum(m_fluid->settings, "synth.reverb.room-size", 0.6);
-    fluid_settings_setnum(m_fluid->settings, "synth.reverb.damp", 0.8);
-    fluid_settings_setnum(m_fluid->settings, "synth.reverb.width", 10.0);
-    fluid_settings_setnum(m_fluid->settings, "synth.reverb.level", 0.5);
+    fluid_settings_setint(m_fluid->settings, "synth.reverb.active", 0);
 
     fluid_settings_setstr(m_fluid->settings, "audio.sample-format", "float");
 
     createFluidInstance();
 
-    m_sequencer.flushedOffStreamEvents().onNotify(this, [this]() {
+    m_sequencer.setOnOffStreamFlushed([this]() {
         revokePlayingNotes();
     });
 
@@ -212,7 +199,10 @@ void FluidSynth::setSampleRate(unsigned int sampleRate)
 
     createFluidInstance();
     addSoundFonts(std::vector<io::path_t>(m_sfontPaths.cbegin(), m_sfontPaths.cend()));
-    setupSound(m_setupData);
+
+    if (m_setupData.isValid()) {
+        setupSound(m_setupData);
+    }
 }
 
 Ret FluidSynth::addSoundFonts(const std::vector<io::path_t>& sfonts)
@@ -234,6 +224,11 @@ Ret FluidSynth::addSoundFonts(const std::vector<io::path_t>& sfonts)
     }
 
     return ok ? make_ret(Err::NoError) : make_ret(Err::SoundFontFailedLoad);
+}
+
+void FluidSynth::setPreset(const std::optional<midi::Program>& preset)
+{
+    m_preset = preset;
 }
 
 std::string FluidSynth::name() const
@@ -267,7 +262,7 @@ void FluidSynth::setupSound(const PlaybackSetupData& setupData)
     };
 
     m_sequencer.channelAdded().onReceive(this, setupChannel);
-    m_sequencer.init(setupData);
+    m_sequencer.init(setupData, m_preset);
 
     for (const auto& voice : m_sequencer.channels().data()) {
         for (const auto& pair : voice.second) {
@@ -330,7 +325,7 @@ void FluidSynth::setPlaybackPosition(const msecs_t newPosition)
 
 unsigned int FluidSynth::audioChannelsCount() const
 {
-    return FLUID_AUDIO_CHANNELS_PAIR * 2;
+    return FLUID_AUDIO_CHANNELS_COUNT;
 }
 
 samples_t FluidSynth::process(float* buffer, samples_t samplesPerChannel)
@@ -340,9 +335,7 @@ samples_t FluidSynth::process(float* buffer, samples_t samplesPerChannel)
     }
 
     msecs_t nextMsecs = samplesToMsecs(samplesPerChannel, m_sampleRate);
-
-    const FluidSequencer::EventSequence& sequence = m_sequencer.eventsToBePlayed(nextMsecs);
-    LOGD() << "sequence isEmpty " << sequence.empty() << ", size " << sequence.size();
+    FluidSequencer::EventSequence sequence = m_sequencer.eventsToBePlayed(nextMsecs);
 
     if (!sequence.empty()) {
         m_tuning.reset();
@@ -354,11 +347,9 @@ samples_t FluidSynth::process(float* buffer, samples_t samplesPerChannel)
 
     fluid_synth_tune_notes(m_fluid->synth, 0, 0, m_tuning.size(), m_tuning.keys.data(), m_tuning.pitches.data(), true);
 
-    unsigned int channelCount = audioChannelsCount();
-
     int result = fluid_synth_write_float(m_fluid->synth, samplesPerChannel,
-                                         buffer, 0, channelCount,
-                                         buffer, 1, channelCount);
+                                         buffer, 0, FLUID_AUDIO_CHANNELS_COUNT,
+                                         buffer, 1, FLUID_AUDIO_CHANNELS_COUNT);
 
     if (result != FLUID_OK) {
         return 0;
@@ -374,13 +365,11 @@ async::Channel<unsigned int> FluidSynth::audioChannelsCountChanged() const
 
 void FluidSynth::toggleExpressionController()
 {
-    int volume = DEFAULT_MIDI_VOLUME;
-
     if (isActive()) {
-        volume = m_sequencer.currentExpressionLevel();
+        setExpressionLevel(m_sequencer.currentExpressionLevel());
+    } else {
+        setExpressionLevel(m_sequencer.naturalExpressionLevel());
     }
-
-    setExpressionLevel(volume);
 }
 
 int FluidSynth::setExpressionLevel(int level)

@@ -27,8 +27,9 @@
 
 #include "updateerrors.h"
 
+#include "types/val.h"
+
 #include "translation.h"
-#include "config.h"
 #include "defer.h"
 #include "log.h"
 
@@ -38,32 +39,9 @@ using namespace mu;
 using namespace mu::update;
 using namespace mu::framework;
 
-static ValMap releaseInfoToValMap(const ReleaseInfo& info)
-{
-    return {
-        { "title", Val(info.title) },
-        { "notes", Val(info.notes) },
-        { "fileName", Val(info.fileName) },
-        { "fileUrl", Val(info.fileUrl) },
-        { "version", Val(info.version) }
-    };
-}
-
-static ReleaseInfo releaseInfoFromValMap(const ValMap& map)
-{
-    ReleaseInfo info;
-    info.title = map.at("title").toString();
-    info.notes = map.at("notes").toString();
-    info.fileName = map.at("fileName").toString();
-    info.fileUrl = map.at("fileUrl").toString();
-    info.version = map.at("version").toString();
-
-    return info;
-}
-
 void UpdateScenario::delayedInit()
 {
-    if (configuration()->needCheckForUpdate()) {
+    if (configuration()->needCheckForUpdate() && multiInstancesProvider()->instances().size() == 1) {
         QTimer::singleShot(AUTO_CHECK_UPDATE_INTERVAL, [this]() {
             doCheckForUpdate(false);
         });
@@ -81,19 +59,19 @@ void UpdateScenario::checkForUpdate()
 
 bool UpdateScenario::isCheckStarted() const
 {
-    return m_progress;
+    return m_checkProgress;
 }
 
 void UpdateScenario::doCheckForUpdate(bool manual)
 {
-    m_progressChannel = std::make_shared<framework::Progress>();
-    m_progressChannel->started.onNotify(this, [this]() {
-        m_progress = true;
+    m_checkProgressChannel = std::make_shared<Progress>();
+    m_checkProgressChannel->started.onNotify(this, [this]() {
+        m_checkProgress = true;
     });
 
-    m_progressChannel->finished.onReceive(this, [this, manual](const ProgressResult& res) {
+    m_checkProgressChannel->finished.onReceive(this, [this, manual](const ProgressResult& res) {
         DEFER {
-            m_progress = false;
+            m_checkProgress = false;
         };
 
         if (!res.ret) {
@@ -121,19 +99,20 @@ void UpdateScenario::doCheckForUpdate(bool manual)
         showReleaseInfo(info);
     });
 
-    QtConcurrent::run(this, &UpdateScenario::th_heckForUpdate);
+    QtConcurrent::run(this, &UpdateScenario::th_checkForUpdate);
 }
 
-void UpdateScenario::th_heckForUpdate()
+void UpdateScenario::th_checkForUpdate()
 {
-    m_progressChannel->started.notify();
+    m_checkProgressChannel->started.notify();
 
-    RetVal<ReleaseInfo> retVal = updateService()->checkForUpdate();
+    RetVal<ReleaseInfo> retVal = service()->checkForUpdate();
 
     RetVal<Val> result;
     result.ret = retVal.ret;
     result.val = Val(releaseInfoToValMap(retVal.val));
-    m_progressChannel->finished.send(result);
+
+    m_checkProgressChannel->finished.send(result);
 }
 
 void UpdateScenario::processUpdateResult(int errorCode)
@@ -159,26 +138,24 @@ void UpdateScenario::processUpdateResult(int errorCode)
 
 void UpdateScenario::showNoUpdateMsg()
 {
-    QString str = qtrc("update", "You already have the latest version of MuseScore. "
-                                 "Please visit <a href=\"%1\">musescore.org</a> for news on what's coming next.")
+    QString str = qtrc("update", "You already have the latest version of MuseScore Studio. "
+                                 "Please visit <a href=\"%1\">musescore.org</a> for news on what’s coming next.")
                   .arg(QString::fromStdString(configuration()->museScoreUrl()));
 
     IInteractive::Text text(str.toStdString(), IInteractive::TextFormat::RichText);
     IInteractive::ButtonData okBtn = interactive()->buttonData(IInteractive::Button::Ok);
-    okBtn.accent = true;
 
-    interactive()->info(trc("update", "You’re up to date!"), text, { okBtn }, (int)IInteractive::Button::Ok,
+    interactive()->info(trc("update", "You’re up to date!"), text, { okBtn }, okBtn.btn,
                         IInteractive::Option::WithIcon);
 }
 
 void UpdateScenario::showReleaseInfo(const ReleaseInfo& info)
 {
-    QStringList params = {
-        "title=" + QString::fromStdString(info.title),
-        "notes=" + QString::fromStdString(info.notes)
-    };
+    UriQuery query("musescore://update/releaseinfo");
+    query.addParam("notes", Val(info.notes));
+    query.addParam("previousReleasesNotes", Val(releasesNotesToValList(info.previousReleasesNotes)));
 
-    RetVal<Val> rv = interactive()->open(QString("musescore://update/releaseinfo?%1").arg(params.join('&')).toStdString());
+    RetVal<Val> rv = interactive()->open(query);
     if (!rv.ret) {
         LOGD() << rv.ret.toString();
         return;
@@ -198,8 +175,7 @@ void UpdateScenario::showReleaseInfo(const ReleaseInfo& info)
 void UpdateScenario::showServerErrorMsg()
 {
     interactive()->error(trc("update", "Cannot connect to server"),
-                         trc("update", "Sorry - please try again later"),  {}, 0,
-                         IInteractive::Option::WithIcon);
+                         trc("update", "Sorry - please try again later"));
 }
 
 void UpdateScenario::downloadRelease()
@@ -215,8 +191,8 @@ void UpdateScenario::downloadRelease()
 
 void UpdateScenario::closeAppAndStartInstallation(const io::path_t& installerPath)
 {
-    std::string info = trc("update", "MuseScore needs to close to complete the installation. "
-                                     "If you have any unsaved changes, you will be prompted to save them before MuseScore closes.");
+    std::string info = trc("update", "MuseScore Studio needs to close to complete the installation. "
+                                     "If you have any unsaved changes, you will be prompted to save them before MuseScore Studio closes.");
 
     int closeBtn = int(IInteractive::Button::CustomButton) + 1;
     IInteractive::Result result = interactive()->info("", info,

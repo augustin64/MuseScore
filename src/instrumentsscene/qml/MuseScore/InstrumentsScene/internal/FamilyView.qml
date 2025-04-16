@@ -36,54 +36,27 @@ Item {
     property int currentGenreIndex: -1
     property int currentGroupIndex: -1
 
-    property alias navigation: navPanel
+    property alias navigation: groupsView.navigation
 
     signal genreSelected(int newIndex)
     signal groupSelected(int newIndex)
 
-    function focusGroup(groupIndex) {
+    function scrollToGroup(groupIndex) {
         groupsView.positionViewAtIndex(groupIndex, ListView.Beginning)
     }
 
     function focusOnFirst() {
-        root.groupSelected(0)
-    }
-
-    function groupName(index) {
-        var item = groupsView.itemAtIndex(index)
-        if (item) {
-            return item.groupName
-        }
-
-        return undefined
-    }
-
-    function restoreGroupNavigationActive(groupName) {
-        for (var i = 0; i < groupsView.count; ++i) {
-            var item = groupsView.itemAtIndex(i)
-             if (item.groupName === groupName && navigation.active) {
-                 item.navigation.requestActive()
-                 return
-            }
+        if (root.currentGroupIndex !== -1) {
+            focusGroupNavigation(root.currentGroupIndex)
+        } else {
+            root.groupSelected(0)
         }
     }
 
-    NavigationPanel {
-        id: navPanel
-        name: "FamilyView"
-        direction: NavigationPanel.Vertical
-        enabled: root.enabled && root.visible
-
-        onNavigationEvent: function(event) {
-            if (event.type === NavigationEvent.AboutActive) {
-                for (var i = 0; i < groupsView.count; ++i) {
-                    var item = groupsView.itemAtIndex(i)
-                    if (item.isSelected) {
-                        event.setData("controlIndex", [item.navigation.row, item.navigation.column])
-                        return
-                    }
-                }
-            }
+    function focusGroupNavigation(groupIndex: int) {
+        var item = groupsView.itemAtIndex(groupIndex)
+        if (item && item.navigation) {
+            item.navigation.requestActive()
         }
     }
 
@@ -106,7 +79,7 @@ Item {
         anchors.right: parent.right
 
         navigation.name: "genreBox"
-        navigation.panel: navPanel
+        navigation.panel: groupsView.navigation
         navigation.row: 1
 
         currentIndex: root.currentGenreIndex
@@ -125,6 +98,8 @@ Item {
         anchors.left: parent.left
         anchors.right: parent.right
 
+        accessible.name: titleLabel.text
+
         onModelChanged: {
             groupsView.currentIndex = Qt.binding(() => (root.currentGroupIndex))
         }
@@ -137,9 +112,10 @@ Item {
             isSelected: groupsView.currentIndex === model.index
 
             navigation.name: modelData
-            navigation.panel: navPanel
+            navigation.panel: groupsView.navigation
             navigation.row: 2 + model.index
             navigation.accessible.name: itemTitleLabel.text
+            navigation.accessible.row: model.index
 
             StyledTextLabel {
                 id: itemTitleLabel

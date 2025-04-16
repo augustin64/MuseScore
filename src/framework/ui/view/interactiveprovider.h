@@ -52,8 +52,8 @@ class InteractiveProvider : public QObject, public IInteractiveProvider
 {
     Q_OBJECT
 
-    INJECT(ui, IInteractiveUriRegister, uriRegister)
-    INJECT(ui, IMainWindow, mainWindow)
+    INJECT(IInteractiveUriRegister, uriRegister)
+    INJECT(IMainWindow, mainWindow)
 
 public:
     explicit InteractiveProvider();
@@ -66,13 +66,16 @@ public:
                      const framework::IInteractive::ButtonDatas& buttons, int defBtn = int(framework::IInteractive::Button::NoButton),
                      const framework::IInteractive::Options& options = {}) override;
 
-    RetVal<Val> warning(const std::string& title, const framework::IInteractive::Text& text,
-                        const framework::IInteractive::ButtonDatas& buttons, int defBtn = int(framework::IInteractive::Button::NoButton),
+    RetVal<Val> warning(const std::string& title, const framework::IInteractive::Text& text, const std::string& detailedText = {},
+                        const framework::IInteractive::ButtonDatas& buttons = {},
+                        int defBtn = int(framework::IInteractive::Button::NoButton),
                         const framework::IInteractive::Options& options = {}) override;
 
-    RetVal<Val> error(const std::string& title, const framework::IInteractive::Text& text,
-                      const framework::IInteractive::ButtonDatas& buttons, int defBtn = int(framework::IInteractive::Button::NoButton),
+    RetVal<Val> error(const std::string& title, const framework::IInteractive::Text& text, const std::string& detailedText = {},
+                      const framework::IInteractive::ButtonDatas& buttons = {}, int defBtn = int(framework::IInteractive::Button::NoButton),
                       const framework::IInteractive::Options& options = {}) override;
+
+    Ret showProgress(const std::string& title, framework::Progress* progress) override;
 
     RetVal<io::path_t> selectOpeningFile(const std::string& title, const io::path_t& dir, const std::vector<std::string>& filter) override;
     RetVal<io::path_t> selectSavingFile(const std::string& title, const io::path_t& path, const std::vector<std::string>& filter,
@@ -91,6 +94,7 @@ public:
     void closeAllDialogs() override;
 
     ValCh<Uri> currentUri() const override;
+    async::Notification currentUriAboutToBeChanged() const override;
     std::vector<Uri> stack() const override;
 
     Q_INVOKABLE QWindow* topWindow() const override;
@@ -108,6 +112,7 @@ signals:
 
     void fireOpenStandardDialog(mu::ui::QmlLaunchData* data);
     void fireOpenFileDialog(mu::ui::QmlLaunchData* data);
+    void fireOpenProgressDialog(mu::ui::QmlLaunchData* data);
 
 private:
     struct OpenData
@@ -133,7 +138,8 @@ private:
 
     void fillData(QmlLaunchData* data, const UriQuery& q) const;
     void fillData(QObject* object, const UriQuery& q) const;
-    void fillStandardDialogData(QmlLaunchData* data, const QString& type, const QString& title, const framework::IInteractive::Text& text,
+    void fillStandardDialogData(QmlLaunchData* data, const QString& type, const std::string& title,
+                                const framework::IInteractive::Text& text, const std::string& detailedText,
                                 const framework::IInteractive::ButtonDatas& buttons, int defBtn,
                                 const framework::IInteractive::Options& options) const;
     void fillFileDialogData(QmlLaunchData* data, FileDialogType type, const std::string& title, const io::path_t& path,
@@ -144,8 +150,8 @@ private:
 
     RetVal<OpenData> openWidgetDialog(const UriQuery& q);
     RetVal<OpenData> openQml(const UriQuery& q);
-    RetVal<Val> openStandardDialog(const QString& type, const QString& title, const framework::IInteractive::Text& text,
-                                   const framework::IInteractive::ButtonDatas& buttons,
+    RetVal<Val> openStandardDialog(const QString& type, const std::string& title, const framework::IInteractive::Text& text,
+                                   const std::string& detailedText = {}, const framework::IInteractive::ButtonDatas& buttons = {},
                                    int defBtn = int(framework::IInteractive::Button::NoButton),
                                    const framework::IInteractive::Options& options = {});
 
@@ -160,6 +166,7 @@ private:
     std::vector<ObjectInfo> allOpenObjects() const;
 
     void notifyAboutCurrentUriChanged();
+    void notifyAboutCurrentUriWillBeChanged();
 
     UriQuery m_openingUriQuery;
 
@@ -167,6 +174,7 @@ private:
     std::vector<ObjectInfo> m_floatingObjects;
 
     async::Channel<Uri> m_currentUriChanged;
+    async::Notification m_currentUriAboutToBeChanged;
     QMap<QString, RetVal<Val> > m_retvals;
     async::Channel<Uri> m_opened;
 

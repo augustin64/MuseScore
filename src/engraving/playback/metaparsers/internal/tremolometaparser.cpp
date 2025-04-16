@@ -22,8 +22,8 @@
 
 #include "tremolometaparser.h"
 
-#include "libmscore/tremolo.h"
-#include "libmscore/chord.h"
+#include "dom/tremolo.h"
+#include "dom/chord.h"
 
 using namespace mu::engraving;
 
@@ -51,25 +51,24 @@ void TremoloMetaParser::doParse(const EngravingItem* item, const RenderingContex
     switch (tremolo->tremoloType()) {
     case TremoloType::R8:
     case TremoloType::C8:
-        type = mpe::ArticulationType::Tremolo8th;
+        type = mu::mpe::ArticulationType::Tremolo8th;
         break;
-
     case TremoloType::R16:
     case TremoloType::C16:
-        type = mpe::ArticulationType::Tremolo16th;
+        type = mu::mpe::ArticulationType::Tremolo16th;
         break;
-
     case TremoloType::R32:
     case TremoloType::C32:
-        type = mpe::ArticulationType::Tremolo32nd;
+        type = mu::mpe::ArticulationType::Tremolo32nd;
         break;
-
     case TremoloType::R64:
     case TremoloType::C64:
-        type = mpe::ArticulationType::Tremolo64th;
+        type = mu::mpe::ArticulationType::Tremolo64th;
         break;
-
-    default:
+    case TremoloType::BUZZ_ROLL:
+        type = mu::mpe::ArticulationType::TremoloBuzz;
+        break;
+    case TremoloType::INVALID_TREMOLO:
         break;
     }
 
@@ -82,11 +81,17 @@ void TremoloMetaParser::doParse(const EngravingItem* item, const RenderingContex
         overallDurationTicks = tremolo->chord1()->actualTicks().ticks() + tremolo->chord2()->actualTicks().ticks();
     }
 
+    const mpe::ArticulationPattern& pattern = ctx.profile->pattern(type);
+    if (pattern.empty()) {
+        return;
+    }
+
     mpe::ArticulationMeta articulationMeta;
     articulationMeta.type = type;
-    articulationMeta.pattern = ctx.profile->pattern(type);
+    articulationMeta.pattern = pattern;
     articulationMeta.timestamp = ctx.nominalTimestamp;
-    articulationMeta.overallDuration = durationFromTicks(ctx.beatsPerSecond.val, overallDurationTicks);
+    articulationMeta.overallDuration
+        = timestampFromTicks(tremolo->score(), ctx.nominalPositionStartTick + overallDurationTicks) - ctx.nominalTimestamp;
 
     appendArticulationData(std::move(articulationMeta), result);
 }

@@ -31,7 +31,7 @@ import MuseScore.Mpe 1.0
 import "./Gallery"
 import "./Interactive"
 import "./CrashHandler"
-import "./VST"
+import "./CorruptScore"
 import "./KeyNav"
 import "./Preferences"
 
@@ -49,12 +49,8 @@ DockPage {
         case "gallery": root.central = galleryComp; break
         case "interactive": root.central = interactiveComp; break
         case "crashhandler": root.central = crashhandlerComp; break
-        case "audio": root.central = audioComp; break
-        case "synth": root.central = synthSettingsComp; break
-        case "midiports": root.central = midiPortsComp; break
-        case "vst": root.central = vstComponent; break
+        case "corruptscore": root.central = corruptScoreComp; break
         case "mpe": root.central = mpeComponent; break
-        case "autobot": root.central = autobotComp; break
         case "navigation": root.central = keynavComp; break
         }
     }
@@ -84,12 +80,8 @@ DockPage {
                         { "name": "gallery", "title": "UI Gallery" },
                         { "name": "interactive", "title": "Interactive" },
                         { "name": "crashhandler", "title": "Crash handler" },
-                        { "name": "audio", "title": "Audio" },
-                        { "name": "synth", "title": "Synth" },
-                        { "name": "midiports", "title": "MIDI ports" },
-                        { "name": "vst", "title": "VST" },
+                        { "name": "corruptscore", "title": "Corrupt score" },
                         { "name": "mpe", "title": "MPE" },
-                        { "name": "autobot", "title": "Autobot" },
                         { "name": "navigation", "title": "KeyNav" }
                     ]
 
@@ -128,30 +120,9 @@ DockPage {
     }
 
     Component {
-        id: audioComp
+        id: corruptScoreComp
 
-        Playback {}
-    }
-
-    Component {
-        id: synthSettingsComp
-
-        SynthSettings {}
-    }
-
-    Component {
-        id: midiPortsComp
-
-        MidiPorts {}
-    }
-
-    Component {
-        id: vstComponent
-
-        //safe if VST is not available
-        Loader {
-            source: "qrc:/qml/DevTools/VST/VSTTests.qml"
-        }
+        CorruptScoreDevTools {}
     }
 
     Component {
@@ -159,14 +130,6 @@ DockPage {
 
         Loader {
             source: "qrc:/qml/DevTools/MPE/ArticulationsProfileEditorView.qml"
-        }
-    }
-
-    Component {
-        id: autobotComp
-
-        Loader {
-            source: "qrc:/qml/DevTools/Autobot/AutobotControl.qml"
         }
     }
 

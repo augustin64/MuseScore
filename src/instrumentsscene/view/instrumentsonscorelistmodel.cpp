@@ -65,6 +65,8 @@ QVariant InstrumentsOnScoreListModel::data(const QModelIndex& index, int role) c
     switch (role) {
     case RoleName:
         return instrument->name;
+    case RoleDescription:
+        return instrument->instrumentTemplate.description.toQString();
     case RoleIsSoloist:
         return instrument->isSoloist;
     default:
@@ -93,6 +95,7 @@ bool InstrumentsOnScoreListModel::setData(const QModelIndex& index, const QVaria
         verifyScoreOrder();
         return true;
     case RoleName:
+    case RoleDescription:
         break;
     default:
         return SelectableItemListModel::setData(index, role);
@@ -105,6 +108,7 @@ QHash<int, QByteArray> InstrumentsOnScoreListModel::roleNames() const
 {
     QHash<int, QByteArray> roles = SelectableItemListModel::roleNames();
     roles[RoleName] = "name";
+    roles[RoleDescription] = "description";
     roles[RoleIsSoloist] = "isSoloist";
 
     return roles;
@@ -189,13 +193,13 @@ void InstrumentsOnScoreListModel::loadOrders()
 
 int InstrumentsOnScoreListModel::resolveInstrumentSequenceNumber(const String& instrumentId) const
 {
-    const InstrumentTemplateList& templates = repository()->instrumentTemplates();
-    for (const InstrumentTemplate* templ : templates) {
-        if (templ->id == instrumentId) {
-            return templ->sequenceOrder;
-        }
+    const InstrumentTemplate& templ = repository()->instrumentTemplate(instrumentId);
+    if (templ.isValid()) {
+        return templ.sequenceOrder;
     }
-    return templates.size();
+
+    const InstrumentTemplateList& allTemplates = repository()->instrumentTemplates();
+    return allTemplates.size();
 }
 
 void InstrumentsOnScoreListModel::addInstruments(const QStringList& instrumentIdList)
@@ -205,7 +209,7 @@ void InstrumentsOnScoreListModel::addInstruments(const QStringList& instrumentId
     ItemList items = this->items();
 
     for (const QString& id : instrumentIdList) {
-        const InstrumentTemplate& templ = repository()->instrumentTemplate(id.toStdString());
+        const InstrumentTemplate& templ = repository()->instrumentTemplate(id);
         if (!templ.isValid()) {
             continue;
         }

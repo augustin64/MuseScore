@@ -24,8 +24,8 @@
 #include <QQueue>
 
 #include "importmidi_fraction.h"
-#include "libmscore/durationtype.h"
-#include "libmscore/mscore.h"
+#include "engraving/dom/durationtype.h"
+#include "engraving/dom/mscore.h"
 #include "importmidi_tuplet.h"
 #include "importmidi_chord.h"
 #include "importmidi_inner.h"
@@ -313,7 +313,7 @@ bool isPowerOfTwo(unsigned int x)
 
 bool isSimpleNoteDuration(const ReducedFraction& duration)
 {
-    const auto division = ReducedFraction::fromTicks(engraving::Constants::division);
+    const auto division = ReducedFraction::fromTicks(engraving::Constants::DIVISION);
     auto div = (duration > division) ? duration / division : division / duration;
     if (div > ReducedFraction(0, 1)) {
         div.reduce();

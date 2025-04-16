@@ -22,7 +22,7 @@
 
 #include "chordlinemetaparser.h"
 
-#include "libmscore/chordline.h"
+#include "dom/chordline.h"
 
 using namespace mu::engraving;
 using namespace mu::mpe;
@@ -45,7 +45,12 @@ void ChordLineMetaParser::doParse(const EngravingItem* item, const RenderingCont
         return;
     }
 
-    appendArticulationData(mpe::ArticulationMeta(type, ctx.profile->pattern(type), ctx.nominalTimestamp, ctx.nominalDuration), result);
+    const mpe::ArticulationPattern& pattern = ctx.profile->pattern(type);
+    if (pattern.empty()) {
+        return;
+    }
+
+    appendArticulationData(mpe::ArticulationMeta(type, pattern, ctx.nominalTimestamp, ctx.nominalDuration), result);
 }
 
 ArticulationType ChordLineMetaParser::chordLineArticulationType(const ChordLineType chordLineType)

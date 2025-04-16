@@ -21,7 +21,7 @@
  */
 #include "hairpinsettingsmodel.h"
 
-#include "libmscore/hairpin.h"
+#include "engraving/dom/hairpin.h"
 
 #include "types/commontypes.h"
 #include "types/hairpintypes.h"
@@ -109,11 +109,6 @@ void HairpinSettingsModel::onNotationChanged(const PropertyIdSet& changedPropert
 {
     TextLineSettingsModel::onNotationChanged(changedPropertyIdSet, changedStyleIdSet);
     loadProperties(changedPropertyIdSet);
-}
-
-bool HairpinSettingsModel::isTextVisible(TextType) const
-{
-    return true;
 }
 
 void HairpinSettingsModel::loadProperties(const PropertyIdSet& propertyIdSet)

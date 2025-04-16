@@ -530,6 +530,15 @@ void UiTheme::drawPrimitive(QStyle::PrimitiveElement element, const QStyleOption
 
         drawButtonBackground(painter, option->rect, styleState, accentButton, flat, background);
     } break;
+    case QStyle::PE_FrameDefaultButton: {
+        auto buttonOption = qstyleoption_cast<const QStyleOptionButton*>(option);
+        const bool flat = (buttonOption && buttonOption->features & QStyleOptionButton::Flat)
+                          && !(option->state & State_On);
+        if (flat && styleState.focused) {
+            // For other buttons, this is done in `drawButtonBackground`, but that is not called for flat buttons
+            drawRoundedRect(painter, option->rect, DEFAULT_RADIUS, NO_FILL, QPen(fontPrimaryColor(), navCtrlBorderWidth()));
+        }
+    } break;
 
     // Checkboxes
     case QStyle::PE_IndicatorCheckBox: {
@@ -798,6 +807,32 @@ QSize UiTheme::sizeFromContents(QStyle::ContentsType type, const QStyleOption* o
     return proxyStyleSize;
 }
 
+QIcon UiTheme::standardIcon(QStyle::StandardPixmap standardIcon, const QStyleOption* option, const QWidget* widget) const
+{
+    switch (standardIcon) {
+    case SP_DialogOkButton:
+    case SP_DialogCancelButton:
+    case SP_DialogHelpButton:
+    case SP_DialogOpenButton:
+    case SP_DialogSaveButton:
+    case SP_DialogCloseButton:
+    case SP_DialogApplyButton:
+    case SP_DialogResetButton:
+    case SP_DialogDiscardButton:
+    case SP_DialogYesButton:
+    case SP_DialogNoButton:
+    case SP_DialogYesToAllButton:
+    case SP_DialogNoToAllButton:
+    case SP_DialogSaveAllButton:
+    case SP_DialogAbortButton:
+    case SP_DialogRetryButton:
+    case SP_DialogIgnoreButton:
+        return {};
+    default:
+        return QProxyStyle::standardIcon(standardIcon, option, widget);
+    }
+}
+
 int UiTheme::styleHint(QStyle::StyleHint hint, const QStyleOption* option, const QWidget* widget, QStyleHintReturn* returnData) const
 {
     switch (hint) {
@@ -895,7 +930,9 @@ void UiTheme::drawRadioButtonIndicator(QPainter* painter, const QRect& rect, con
     QColor borderColor = fontPrimaryColor();
     QColor backgroundColor = textFieldColor();
 
-    if (styleState.pressed) {
+    if (!styleState.enabled) {
+        borderColor.setAlphaF(itemOpacityDisabled());
+    } else if (styleState.pressed) {
         borderColor.setAlphaF(buttonOpacityHit());
     } else if (styleState.hovered) {
         borderColor.setAlphaF(buttonOpacityHover());

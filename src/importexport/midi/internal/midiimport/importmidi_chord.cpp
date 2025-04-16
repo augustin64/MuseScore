@@ -25,8 +25,8 @@
 #include "importmidi_clef.h"
 #include "importmidi_operations.h"
 #include "importmidi_quant.h"
-#include "libmscore/mscore.h"
-#include "libmscore/sig.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/sig.h"
 
 #include <set>
 
@@ -86,7 +86,7 @@ findFirstChordInRange(const std::multimap<ReducedFraction, MidiChord>& chords,
 
 const ReducedFraction& minAllowedDuration()
 {
-    const static auto minDuration = ReducedFraction::fromTicks(engraving::Constants::division) / 32;
+    const static auto minDuration = ReducedFraction::fromTicks(engraving::Constants::DIVISION) / 32;
     return minDuration;
 }
 

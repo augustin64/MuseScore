@@ -32,7 +32,8 @@ enum class Err {
     UnknownError    = int(Ret::Code::NotationFirst),
 
     // selection
-    NoteOrRestIsNotSelected = 1050,
+    NoteIsNotSelected = 1050,
+    NoteOrRestIsNotSelected,
     NoteOrFiguredBassIsNotSelected,
     MeasureIsNotSelected,
     SelectCompleteTupletOrTremolo,
@@ -47,6 +48,10 @@ inline Ret make_ret(Err err)
     case Err::UnknownError:
         text = trc("notation", "Unknown error");
         break;
+    case Err::NoteIsNotSelected:
+        text = trc("notation", "No note selected")
+               + "\n" + trc("notation", "Please select a note and retry");
+        break;
     case Err::NoteOrRestIsNotSelected:
         text = trc("notation", "No note or rest selected")
                + "\n" + trc("notation", "Please select a note or rest and retry");
@@ -60,7 +65,7 @@ inline Ret make_ret(Err err)
                + "\n" + trc("notation", "Please select a measure and retry");
         break;
     case Err::SelectCompleteTupletOrTremolo:
-        text = trc("notation", "Please select the complete tuplet/tremolo and retry the command");
+        text = trc("notation", "Please select the complete tuplet or tremolo and retry");
         break;
     case Err::EmptySelection:
         text = trc("notation", "The selection is empty");

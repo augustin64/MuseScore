@@ -21,12 +21,13 @@
  */
 #include "pagesettings.h"
 
+#include <QKeyEvent>
 #include <QPageSize>
 
-#include "engraving/libmscore/page.h"
-#include "engraving/libmscore/masterscore.h"
-#include "engraving/libmscore/mscore.h"
-#include "engraving/libmscore/excerpt.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/excerpt.h"
 #include "engraving/style/pagestyle.h"
 
 #include "ui/view/widgetstatestore.h"
@@ -43,7 +44,7 @@ PageSettings::PageSettings(QWidget* parent)
     setWindowFlags(windowFlags() & ~Qt::WindowContextHelpButtonHint);
     setModal(true);
 
-    mmUnit = true;        // should be made a global configuration item
+    mmUnit = configuration()->metricUnit();
     _changeFlag = false;
 
     if (mmUnit) {
@@ -204,7 +205,7 @@ void PageSettings::updateValues()
     pageWidth->setValue(w * f);
 
     double f1 = mm ? 1.0 / DPMM : 1.0 / DPI;
-    spatiumEntry->setValue(score()->spatium() * f1);
+    spatiumEntry->setValue(score()->style().spatium() * f1);
 
     bool _twosided = styleValueBool(Sid::pageTwosided);
     evenPageTopMargin->setEnabled(_twosided);
@@ -234,12 +235,14 @@ void PageSettings::updateValues()
 void PageSettings::inchClicked()
 {
     mmUnit = false;
+    configuration()->setMetricUnit(false);
     updateValues();
 }
 
 void PageSettings::mmClicked()
 {
     mmUnit = true;
+    configuration()->setMetricUnit(true);
     updateValues();
 }
 
@@ -276,6 +279,14 @@ void PageSettings::twosidedToggled(bool flag)
     updateValues();
 }
 
+void PageSettings::keyPressEvent(QKeyEvent* event)
+{
+    if (event->key() == Qt::Key_Enter || event->key() == Qt::Key_Return) {
+        return;
+    }
+    QDialog::keyPressEvent(event);
+}
+
 void PageSettings::buttonBoxClicked(QAbstractButton* button)
 {
     switch (buttonBox->buttonRole(button)) {
@@ -309,17 +320,20 @@ void PageSettings::applyToScore(Score* s)
     double f  = mmUnit ? 1.0 / INCH : 1.0;
     double f1 = mmUnit ? DPMM : DPI;
 
-    s->undoChangeStyleVal(Sid::pageWidth, pageWidth->value() * f);
-    s->undoChangeStyleVal(Sid::pageHeight, pageHeight->value() * f);
-    s->undoChangeStyleVal(Sid::pagePrintableWidth, (pageWidth->value() - oddPageLeftMargin->value() - oddPageRightMargin->value()) * f);
-    s->undoChangeStyleVal(Sid::pageEvenTopMargin, evenPageTopMargin->value() * f);
-    s->undoChangeStyleVal(Sid::pageEvenBottomMargin, evenPageBottomMargin->value() * f);
-    s->undoChangeStyleVal(Sid::pageEvenLeftMargin, evenPageLeftMargin->value() * f);
-    s->undoChangeStyleVal(Sid::pageOddTopMargin, oddPageTopMargin->value() * f);
-    s->undoChangeStyleVal(Sid::pageOddBottomMargin, oddPageBottomMargin->value() * f);
-    s->undoChangeStyleVal(Sid::pageOddLeftMargin, oddPageLeftMargin->value() * f);
-    s->undoChangeStyleVal(Sid::pageTwosided, twosided->isChecked());
-    s->undoChangeStyleVal(Sid::spatium, spatiumEntry->value() * f1);
+    std::unordered_map<Sid, PropertyValue> values;
+    values.emplace(Sid::pageWidth, pageWidth->value() * f);
+    values.emplace(Sid::pageHeight, pageHeight->value() * f);
+    values.emplace(Sid::pagePrintableWidth, (pageWidth->value() - oddPageLeftMargin->value() - oddPageRightMargin->value()) * f);
+    values.emplace(Sid::pageEvenTopMargin, evenPageTopMargin->value() * f);
+    values.emplace(Sid::pageEvenBottomMargin, evenPageBottomMargin->value() * f);
+    values.emplace(Sid::pageEvenLeftMargin, evenPageLeftMargin->value() * f);
+    values.emplace(Sid::pageOddTopMargin, oddPageTopMargin->value() * f);
+    values.emplace(Sid::pageOddBottomMargin, oddPageBottomMargin->value() * f);
+    values.emplace(Sid::pageOddLeftMargin, oddPageLeftMargin->value() * f);
+    values.emplace(Sid::pageTwosided, twosided->isChecked());
+    values.emplace(Sid::spatium, spatiumEntry->value() * f1);
+
+    s->undoChangeStyleValues(std::move(values));
     s->undoChangePageNumberOffset(pageOffsetEntry->value() - 1);
 }
 
@@ -337,14 +351,16 @@ void PageSettings::applyToAllParts()
 void PageSettings::pageFormatSelected(int size)
 {
     if (size >= 0) {
+        bool landscape = landscapeButton->isChecked();
         int id = pageGroup->currentData().toInt();
         QSizeF sz = QPageSize::size(QPageSize::PageSizeId(id), QPageSize::Inch);
 
-        setStyleValue(Sid::pageWidth, sz.width());
-        setStyleValue(Sid::pageHeight, sz.height());
+        setStyleValue(Sid::pageWidth, landscape ? sz.height() : sz.width());
+        setStyleValue(Sid::pageHeight, landscape ? sz.width() : sz.height());
 
         double f  = mmUnit ? 1.0 / INCH : 1.0;
-        setStyleValue(Sid::pagePrintableWidth, sz.width() - (oddPageLeftMargin->value() + oddPageRightMargin->value()) * f);
+        setStyleValue(Sid::pagePrintableWidth,
+                      (landscape ? sz.height() : sz.width()) - (oddPageLeftMargin->value() + oddPageRightMargin->value()) * f);
         updateValues();
     }
 }
@@ -457,9 +473,7 @@ void PageSettings::ebmChanged(double val)
 void PageSettings::spatiumChanged(double val)
 {
     val *= mmUnit ? DPMM : DPI;
-    double oldVal = score()->spatium();
-    setStyleValue(Sid::spatium, val);
-    score()->spatiumChanged(oldVal, val);
+    setStyleValue(Sid::spatium, val); // this will also call Score::spatiumChanged()
 }
 
 void PageSettings::pageOffsetChanged(int val)

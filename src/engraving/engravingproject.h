@@ -24,10 +24,11 @@
 
 #include <memory>
 
-#include "engravingerrors.h"
+#include "global/types/ret.h"
 #include "infrastructure/mscreader.h"
 #include "infrastructure/mscwriter.h"
 #include "infrastructure/ifileinfoprovider.h"
+#include "types/types.h"
 
 #include "modularity/ioc.h"
 #include "diagnostics/iengravingelementsprovider.h"
@@ -48,7 +49,7 @@ class MStyle;
 
 class EngravingProject : public std::enable_shared_from_this<EngravingProject>
 {
-    INJECT_STATIC(engraving, diagnostics::IEngravingElementsProvider, engravingElementsProvider)
+    INJECT_STATIC(diagnostics::IEngravingElementsProvider, engravingElementsProvider)
 
 public:
     ~EngravingProject();
@@ -65,10 +66,13 @@ public:
     bool readOnly() const;
 
     MasterScore* masterScore() const;
-    Err setupMasterScore(bool forceMode);
+    Ret setupMasterScore(bool forceMode);
 
-    Err loadMscz(const MscReader& msc, bool ignoreVersionError);
+    Ret loadMscz(const MscReader& msc, SettingsCompat& settingsCompat, bool ignoreVersionError);
     bool writeMscz(MscWriter& writer, bool onlySelection, bool createThumbnail);
+
+    bool isCorruptedUponLoading() const;
+    Ret checkCorrupted() const;
 
 private:
     friend class MasterScore;
@@ -77,9 +81,11 @@ private:
 
     void init(const MStyle& style);
 
-    Err doSetupMasterScore(MasterScore* score, bool forceMode);
+    Ret doSetupMasterScore(bool forceMode);
 
     MasterScore* m_masterScore = nullptr;
+
+    bool m_isCorruptedUponLoading = false;
 };
 
 using EngravingProjectPtr = std::shared_ptr<EngravingProject>;

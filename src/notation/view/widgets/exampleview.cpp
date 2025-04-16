@@ -25,17 +25,9 @@
 #include <cmath>
 #include <QMimeData>
 
-#include "engraving/rw/xml.h"
-
-#include "libmscore/masterscore.h"
-#include "libmscore/engravingitem.h"
-#include "libmscore/page.h"
-#include "libmscore/system.h"
-#include "libmscore/actionicon.h"
-#include "libmscore/chord.h"
-#include "libmscore/factory.h"
-
-#include "commonscene/commonscenetypes.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/system.h"
 
 #include "log.h"
 
@@ -164,7 +156,7 @@ void ExampleView::drawElements(mu::draw::Painter& painter, const std::vector<Eng
         e->itemDiscovered = 0;
         PointF pos(e->pagePos());
         painter.translate(pos);
-        e->draw(&painter);
+        EngravingItem::renderer()->drawItem(e, &painter);
         painter.translate(-pos);
     }
 }
@@ -278,8 +270,8 @@ void ExampleView::constraintCanvas(int* dxx)
     Q_ASSERT(m_score->pages().front()->system(0));   // should exist if doLayout ran
 
     // form rectangle bounding the system with a spatium margin and translate relative to view space
-    qreal xstart = m_score->pages().front()->system(0)->bbox().left() - SPATIUM20;
-    qreal xend = m_score->pages().front()->system(0)->bbox().right() + 2.0 * SPATIUM20;
+    qreal xstart = m_score->pages().front()->system(0)->ldata()->bbox().left() - SPATIUM20;
+    qreal xend = m_score->pages().front()->system(0)->ldata()->bbox().right() + 2.0 * SPATIUM20;
     QRectF systemScaledViewRect(xstart * m_matrix.m11(), 0, xend * m_matrix.m11(), 0);
     systemScaledViewRect.translate(m_matrix.dx(), 0);
 

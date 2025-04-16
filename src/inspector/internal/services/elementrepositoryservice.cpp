@@ -21,28 +21,32 @@
  */
 #include "elementrepositoryservice.h"
 
-#include "chord.h"
-#include "stem.h"
-#include "hook.h"
-#include "beam.h"
-#include "glissando.h"
-#include "hairpin.h"
-#include "volta.h"
-#include "staff.h"
-#include "layoutbreak.h"
-#include "pedal.h"
-#include "tremolo.h"
-#include "bracket.h"
-#include "bracketItem.h"
-#include "durationtype.h"
-#include "stafftype.h"
-#include "mscore.h"
-
-#include "log.h"
 #include "types/texttypes.h"
 
+#include "engraving/dom/beam.h"
+#include "engraving/dom/bracket.h"
+#include "engraving/dom/bracketItem.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/durationtype.h"
+#include "engraving/dom/glissando.h"
+#include "engraving/dom/hairpin.h"
+#include "engraving/dom/hook.h"
+#include "engraving/dom/layoutbreak.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/pedal.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/stafftype.h"
+#include "engraving/dom/stem.h"
+#include "engraving/dom/tremolo.h"
+#include "engraving/dom/trill.h"
+#include "engraving/dom/volta.h"
+#include "engraving/dom/note.h"
+
+#include "log.h"
+
 using namespace mu::inspector;
-using namespace mu::notation;
+using namespace mu::engraving;
 
 ElementRepositoryService::ElementRepositoryService(QObject* parent)
     : QObject(parent)
@@ -54,14 +58,14 @@ QObject* ElementRepositoryService::getQObject()
     return this;
 }
 
-bool ElementRepositoryService::needUpdateElementList(const QList<mu::engraving::EngravingItem*>& newRawElementList,
-                                                     SelectionState selectionState) const
+bool ElementRepositoryService::needUpdateElementList(const QList<EngravingItem*>& newRawElementList,
+                                                     SelState selectionState) const
 {
     return m_rawElementList != newRawElementList || m_selectionState != selectionState;
 }
 
-void ElementRepositoryService::updateElementList(const QList<mu::engraving::EngravingItem*>& newRawElementList,
-                                                 SelectionState selectionState)
+void ElementRepositoryService::updateElementList(const QList<EngravingItem*>& newRawElementList,
+                                                 SelState selectionState)
 {
     if (!needUpdateElementList(newRawElementList, selectionState)) {
         return;
@@ -85,10 +89,11 @@ QList<mu::engraving::EngravingItem*> ElementRepositoryService::findElementsByTyp
     case mu::engraving::ElementType::BEAM: return findBeams();
     case mu::engraving::ElementType::STAFF: return findStaffs();
     case mu::engraving::ElementType::LAYOUT_BREAK: return findSectionBreaks(); //Page breaks and line breaks are of type LAYOUT_BREAK, but they don't appear in the inspector for now.
-    case mu::engraving::ElementType::CLEF: return findPairedClefs();
     case mu::engraving::ElementType::TEXT: return findTexts();
     case mu::engraving::ElementType::TREMOLO: return findTremolos();
     case mu::engraving::ElementType::BRACKET: return findBrackets();
+    case mu::engraving::ElementType::REST: return findRests();
+    case mu::engraving::ElementType::ORNAMENT: return findOrnaments();
     case mu::engraving::ElementType::PEDAL:
     case mu::engraving::ElementType::GLISSANDO:
     case mu::engraving::ElementType::VIBRATO:
@@ -141,7 +146,7 @@ const
 {
     QList<mu::engraving::EngravingItem*> resultList;
 
-    for (const mu::engraving::EngravingItem* element : rawElementList) {
+    for (mu::engraving::EngravingItem* element : rawElementList) {
         mu::engraving::ElementType elementType = element->type();
 
         //! NOTE: instrument names can't survive the layout process,
@@ -156,9 +161,7 @@ const
             continue;
         }
 
-        if (!resultList.contains(element->elementBase())) {
-            resultList << element->elementBase();
-        }
+        resultList << element;
 
         if (elementType == mu::engraving::ElementType::BEAM) {
             const mu::engraving::Beam* beam = mu::engraving::toBeam(element);
@@ -174,15 +177,21 @@ const
 
 QList<mu::engraving::EngravingItem*> ElementRepositoryService::findChords() const
 {
-    QList<mu::engraving::EngravingItem*> resultList;
+    QSet<mu::engraving::EngravingItem*> elements;
 
     for (mu::engraving::EngravingItem* element : m_exposedElementList) {
         if (element->type() == mu::engraving::ElementType::CHORD) {
-            resultList << element;
+            elements << element;
+            continue;
+        }
+
+        mu::engraving::EngravingItem* chord = element->findAncestor(mu::engraving::ElementType::CHORD);
+        if (chord) {
+            elements << chord;
         }
     }
 
-    return resultList;
+    return QList<mu::engraving::EngravingItem*>(elements.begin(), elements.end());
 }
 
 QList<mu::engraving::EngravingItem*> ElementRepositoryService::findNotes() const
@@ -367,29 +376,6 @@ QList<mu::engraving::EngravingItem*> ElementRepositoryService::findSectionBreaks
     return resultList;
 }
 
-QList<mu::engraving::EngravingItem*> ElementRepositoryService::findPairedClefs() const
-{
-    QList<mu::engraving::EngravingItem*> resultList;
-
-    for (mu::engraving::EngravingItem* element : m_exposedElementList) {
-        if (element->type() == mu::engraving::ElementType::CLEF) {
-            auto clef = mu::engraving::toClef(element);
-            IF_ASSERT_FAILED(clef) {
-                continue;
-            }
-
-            resultList << clef; //could be both main clef and courtesy clef
-
-            auto courtesyPairClef = clef->otherClef(); //seeking for a "pair" clef
-            if (courtesyPairClef) {
-                resultList << courtesyPairClef;
-            }
-        }
-    }
-
-    return resultList;
-}
-
 QList<mu::engraving::EngravingItem*> ElementRepositoryService::findTexts() const
 {
     QList<mu::engraving::EngravingItem*> resultList;
@@ -427,6 +413,36 @@ QList<mu::engraving::EngravingItem*> ElementRepositoryService::findBrackets() co
     for (mu::engraving::EngravingItem* element : m_exposedElementList) {
         if (element->isBracketItem()) {
             resultList << element;
+        }
+    }
+
+    return resultList;
+}
+
+QList<mu::engraving::EngravingItem*> ElementRepositoryService::findRests() const
+{
+    QList<mu::engraving::EngravingItem*> resultList;
+
+    for (mu::engraving::EngravingItem* element : m_exposedElementList) {
+        if (element->isRest()) {
+            resultList << element;
+        }
+    }
+
+    return resultList;
+}
+
+QList<mu::engraving::EngravingItem*> ElementRepositoryService::findOrnaments() const
+{
+    QList<mu::engraving::EngravingItem*> resultList;
+
+    for (mu::engraving::EngravingItem* element : m_exposedElementList) {
+        if (element->isOrnament()) {
+            resultList << element;
+        } else if (element->isTrill()) {
+            resultList << (EngravingItem*)(toTrill(element)->ornament());
+        } else if (element->isTrillSegment()) {
+            resultList << (EngravingItem*)(toTrillSegment(element)->trill()->ornament());
         }
     }
 

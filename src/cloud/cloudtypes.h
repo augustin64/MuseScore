@@ -22,14 +22,31 @@
 #ifndef MU_CLOUD_CLOUDTYPES_H
 #define MU_CLOUD_CLOUDTYPES_H
 
+#include <vector>
+
+#include <QDate>
+#include <QString>
 #include <QUrl>
 
+#include "types/id.h"
+
 namespace mu::cloud {
+static const QString MUSESCORE_COM_CLOUD_CODE = "musescorecom";
+static const QString AUDIO_COM_CLOUD_CODE = "audiocom";
+
+struct CloudInfo {
+    QString code;
+    QString title;
+    QUrl url;
+    QString logoUrl;
+    QString logoColor;
+};
+
 struct AccountInfo {
-    int id = 0;
+    QString id;
     QString userName;
     QUrl profileUrl;
-    QUrl sheetmusicUrl;
+    QUrl collectionUrl;
     QUrl avatarUrl;
 
     bool operator==(const AccountInfo& another) const
@@ -39,7 +56,7 @@ struct AccountInfo {
         equals &= (id == another.id);
         equals &= (userName == another.userName);
         equals &= (profileUrl == another.profileUrl);
-        equals &= (sheetmusicUrl == another.sheetmusicUrl);
+        equals &= (collectionUrl == another.collectionUrl);
         equals &= (avatarUrl == another.avatarUrl);
 
         return equals;
@@ -47,7 +64,7 @@ struct AccountInfo {
 
     bool isValid() const
     {
-        return id != 0 && !userName.isEmpty();
+        return !id.isEmpty() && !userName.isEmpty();
     }
 };
 
@@ -68,6 +85,7 @@ struct ScoreOwnerInfo {
     }
 };
 
+//! Note: these values are currently supposed to be in sync with the MuseScore.com API!
 enum class Visibility {
     Public = 0,
     Unlisted = 1,
@@ -76,6 +94,7 @@ enum class Visibility {
 
 struct ScoreInfo {
     int id = 0;
+    int revisionId = 0;
     QString title;
     QString description;
     Visibility visibility = Visibility::Private;
@@ -89,6 +108,8 @@ struct ScoreInfo {
         bool equals = true;
 
         equals &= (id == another.id);
+        equals &= (revisionId == another.revisionId);
+        equals &= (title == another.title);
         equals &= (description == another.description);
         equals &= (visibility == another.visibility);
         equals &= (license == another.license);
@@ -104,6 +125,40 @@ struct ScoreInfo {
         return id > 0 && !title.isEmpty();
     }
 };
+
+struct ScoresList {
+    struct Item {
+        int id = 0;
+        QString title;
+        QDateTime lastModified;
+        size_t fileSize = 0;
+        QString thumbnailUrl;
+        Visibility visibility = Visibility::Private;
+        int viewCount = 0;
+    };
+
+    std::vector<Item> items;
+
+    /// See explanation at `IMuseScoreComService::downloadScoresList`
+    struct Meta {
+        int totalScoresCount = 0;
+        int batchesCount = 0;
+        int thisBatchNumber = 0;
+        int scoresPerBatch = 0;
+    } meta;
+};
+
+constexpr ID INVALID_ID = 0;
+
+inline ID idFromCloudUrl(const QUrl& sourceUrl)
+{
+    QStringList parts = sourceUrl.toString().split("/");
+    if (parts.isEmpty()) {
+        return INVALID_ID;
+    }
+
+    return ID(parts.last());
+}
 }
 
 #endif // MU_CLOUD_ACCOUNTTYPES_H

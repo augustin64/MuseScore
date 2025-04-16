@@ -31,34 +31,34 @@
 #include "types/id.h"
 #include "types/translatablestring.h"
 
-#include "libmscore/articulation.h"
-#include "libmscore/chord.h"
-#include "libmscore/durationtype.h"
-#include "libmscore/engravingitem.h"
-#include "libmscore/hairpin.h"
-#include "libmscore/harmony.h"
-#include "libmscore/hook.h"
-#include "libmscore/instrtemplate.h"
-#include "libmscore/instrtemplate.h"
-#include "libmscore/instrument.h"
-#include "libmscore/key.h"
-#include "libmscore/measure.h"
-#include "libmscore/mscore.h"
-#include "libmscore/note.h"
-#include "libmscore/ottava.h"
-#include "libmscore/page.h"
-#include "libmscore/part.h"
-#include "libmscore/realizedharmony.h"
-#include "libmscore/rest.h"
-#include "libmscore/score.h"
-#include "libmscore/slur.h"
-#include "libmscore/staff.h"
-#include "libmscore/stafftype.h"
-#include "libmscore/stem.h"
-#include "libmscore/system.h"
-#include "libmscore/timesig.h"
+#include "engraving/dom/articulation.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/durationtype.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/hairpin.h"
+#include "engraving/dom/harmony.h"
+#include "engraving/dom/hook.h"
+#include "engraving/dom/instrtemplate.h"
+#include "engraving/dom/instrtemplate.h"
+#include "engraving/dom/instrument.h"
+#include "engraving/dom/key.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/mscore.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/ottava.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/realizedharmony.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/score.h"
+#include "engraving/dom/slur.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/stafftype.h"
+#include "engraving/dom/stem.h"
+#include "engraving/dom/system.h"
+#include "engraving/dom/timesig.h"
 
-#include "engraving/layout/layoutoptions.h"
+#include "engraving/rendering/layoutoptions.h"
 
 namespace mu::notation {
 using Page = mu::engraving::Page;
@@ -76,6 +76,7 @@ using Pad = mu::engraving::Pad;
 using ViewMode = engraving::LayoutMode;
 using PitchMode = mu::engraving::UpDownMode;
 using StyleId = mu::engraving::Sid;
+using StyleIdSet = mu::engraving::StyleIdSet;
 using SymbolId = mu::engraving::SymId;
 using Key = mu::engraving::Key;
 using KeyMode = mu::engraving::KeyMode;
@@ -123,35 +124,28 @@ using StaffTypeId = mu::engraving::StaffTypes;
 using StaffName = mu::engraving::StaffName;
 using StaffNameList = mu::engraving::StaffNameList;
 using Segment = mu::engraving::Segment;
-using MidiArticulation = mu::engraving::MidiArticulation;
 using TextStyleType = mu::engraving::TextStyleType;
-using Trait = mu::engraving::Trait;
 using TraitType = mu::engraving::TraitType;
 using HarmonyDurationType = mu::engraving::HDuration;
 using Voicing = mu::engraving::Voicing;
-using InstrumentChannel = mu::engraving::InstrChannel;
 using Instrument = mu::engraving::Instrument;
 using InstrumentTemplate = mu::engraving::InstrumentTemplate;
 using InstrumentTrait = mu::engraving::Trait;
 using ScoreOrder = mu::engraving::ScoreOrder;
-using ScoreOrderGroup = mu::engraving::ScoreGroup;
-using InstrumentOverwrite = mu::engraving::InstrumentOverwrite;
 using InstrumentGenre = mu::engraving::InstrumentGenre;
 using InstrumentGroup = mu::engraving::InstrumentGroup;
-using MidiArticulation = mu::engraving::MidiArticulation;
 using PageList = std::vector<const Page*>;
 using PartList = std::vector<const Part*>;
-using InstrumentList = QList<Instrument>;
-using InstrumentTemplateList = QList<const InstrumentTemplate*>;
-using InstrumentGenreList = QList<const InstrumentGenre*>;
+using InstrumentTemplateList = std::vector<const InstrumentTemplate*>;
+using InstrumentGenreList = std::vector<const InstrumentGenre*>;
 using ScoreOrderList = std::vector<mu::engraving::ScoreOrder>;
-using InstrumentGroupList = QList<const InstrumentGroup*>;
-using MidiArticulationList = QList<MidiArticulation>;
+using InstrumentGroupList = std::vector<const InstrumentGroup*>;
 using InstrumentTrackId = mu::engraving::InstrumentTrackId;
 using InstrumentTrackIdSet = mu::engraving::InstrumentTrackIdSet;
 using voice_idx_t = mu::engraving::voice_idx_t;
 using track_idx_t = mu::engraving::track_idx_t;
 using ChangesRange = mu::engraving::ScoreChangesRange;
+using GuitarBendType = mu::engraving::GuitarBendType;
 
 static const String COMMON_GENRE_ID("common");
 
@@ -314,35 +308,9 @@ struct Tempo
 
 static constexpr int MAX_STAVES  = 4;
 
-struct ClefPair
-{
-    ClefType concertClef = ClefType::G;
-    ClefType transposingClef = ClefType::G;
-};
-
-struct PitchRange
-{
-    int min = 0;
-    int max = 0;
-
-    PitchRange() = default;
-    PitchRange(int min, int max)
-        : min(min), max(max) {}
-
-    bool operator ==(const PitchRange& other) const
-    {
-        return min == other.min && max == other.max;
-    }
-
-    bool operator !=(const PitchRange& other) const
-    {
-        return !operator ==(other);
-    }
-};
-
 struct InstrumentKey
 {
-    QString instrumentId;
+    String instrumentId;
     ID partId;
     Fraction tick = mu::engraving::Fraction(0, 1);
 };
@@ -441,6 +409,8 @@ struct FilterElementsOptions
     int voice = -1;
     const mu::engraving::System* system = nullptr;
     Fraction durationTicks{ -1, 1 };
+    Fraction beat{ 0, 0 };
+    const mu::engraving::Measure* measure = nullptr;
 
     bool bySubtype = false;
     int subtype = -1;
@@ -458,7 +428,7 @@ struct FilterNotesOptions : FilterElementsOptions
     int pitch = -1;
     int string = mu::engraving::INVALID_STRING_INDEX;
     int tpc = mu::engraving::Tpc::TPC_INVALID;
-    engraving::NoteHeadGroup notehead = engraving::NoteHeadGroup::HEAD_INVALID;
+    mu::engraving::NoteHeadGroup notehead = mu::engraving::NoteHeadGroup::HEAD_INVALID;
     mu::engraving::TDuration durationType = mu::engraving::TDuration();
     mu::engraving::NoteType noteType = mu::engraving::NoteType::INVALID;
 };
@@ -479,6 +449,7 @@ struct StaffConfig
     bool showIfEmpty = false;
     bool hideSystemBarline = false;
     bool mergeMatchingRests = false;
+    bool reflectTranspositionInLinkedTab = false;
     Staff::HideMode hideMode = Staff::HideMode::AUTO;
     ClefTypeList clefTypeList;
     engraving::StaffType staffType;
@@ -494,6 +465,7 @@ struct StaffConfig
         equal &= hideMode == conf.hideMode;
         equal &= clefTypeList == conf.clefTypeList;
         equal &= staffType == conf.staffType;
+        equal &= reflectTranspositionInLinkedTab == conf.reflectTranspositionInLinkedTab;
 
         return equal;
     }
@@ -559,6 +531,7 @@ enum class ScoreConfigType
     ShowUnprintableElements,
     ShowFrames,
     ShowPageMargins,
+    ShowSoundFlags,
     MarkIrregularMeasures
 };
 
@@ -568,6 +541,7 @@ struct ScoreConfig
     bool isShowUnprintableElements = false;
     bool isShowFrames = false;
     bool isShowPageMargins = false;
+    bool isShowSoundFlags = false;
     bool isMarkIrregularMeasures = false;
 
     bool operator==(const ScoreConfig& conf) const
@@ -576,6 +550,7 @@ struct ScoreConfig
         equal &= (isShowUnprintableElements == conf.isShowUnprintableElements);
         equal &= (isShowFrames == conf.isShowFrames);
         equal &= (isShowPageMargins == conf.isShowPageMargins);
+        equal &= (isShowSoundFlags == conf.isShowSoundFlags);
         equal &= (isMarkIrregularMeasures == conf.isMarkIrregularMeasures);
 
         return equal;
@@ -670,12 +645,27 @@ inline bool isVerticalBoxTextStyle(TextStyleType type)
         TextStyleType::TITLE,
         TextStyleType::SUBTITLE,
         TextStyleType::COMPOSER,
-        TextStyleType::POET,
+        TextStyleType::LYRICIST,
         TextStyleType::INSTRUMENT_EXCERPT,
     };
 
     return mu::contains(types, type);
 }
+
+struct StringTuningPreset
+{
+    std::string name;
+    std::vector<int> value;
+    bool useFlats = false;
+};
+
+struct StringTuningsInfo
+{
+    size_t number = 0;
+    std::vector<StringTuningPreset> presets;
+};
+
+using InstrumentStringTuningsMap = std::map<std::string, std::vector<StringTuningsInfo> >;
 }
 
 #endif // MU_NOTATION_NOTATIONTYPES_H

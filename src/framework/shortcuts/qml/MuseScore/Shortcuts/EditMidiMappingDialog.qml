@@ -21,23 +21,22 @@
  */
 import QtQuick 2.15
 import QtQuick.Layouts 1.12
-import QtQuick.Dialogs 1.3
 
 import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
 import MuseScore.Shortcuts 1.0
 
-Dialog {
+StyledDialogView {
     id: root
-
-    signal mapToEventRequested(var event)
 
     title: qsTrc("shortcuts", "MIDI remote control")
 
-    height: 220
-    width: 538
+    contentWidth: 538
+    contentHeight: 164
 
-    standardButtons: Dialog.NoButton
+    margins: 20
+
+    signal mapToEventRequested(var event)
 
     function startEdit(action) {
         model.load(action.mappedType, action.mappedValue)
@@ -47,23 +46,23 @@ Dialog {
         open()
     }
 
-    EditMidiMappingModel {
-        id: model
-    }
 
     Rectangle {
         anchors.fill: parent
 
         color: ui.theme.backgroundPrimaryColor
 
+        EditMidiMappingModel {
+            id: model
+        }
+
         Column {
             anchors.fill: parent
-            anchors.margins: 8
 
             spacing: 24
 
             Row {
-                width: parent.width
+                anchors.horizontalCenter: parent.horizontalCenter
 
                 spacing: 8
 
@@ -98,6 +97,8 @@ Dialog {
 
                     Layout.fillWidth: true
 
+                    background.border.color: ui.theme.accentColor
+
                     readOnly: true
 
                     currentText: model.mappingTitle
@@ -107,16 +108,17 @@ Dialog {
                 }
             }
 
-            Row {
-                anchors.right: parent.right
+            ButtonBox {
+                width: parent.width
 
-                spacing: 8
+                buttons: [ ButtonBoxModel.Cancel ]
 
                 FlatButton {
-                    width: 100
-
                     text: qsTrc("global", "Add")
+                    buttonRole: ButtonBoxModel.ApplyRole
+                    buttonId: ButtonBoxModel.Apply
                     enabled: mappingField.hasText
+                    accentButton: true
 
                     onClicked: {
                         root.mapToEventRequested(model.inputtedEvent())
@@ -124,12 +126,8 @@ Dialog {
                     }
                 }
 
-                FlatButton {
-                    width: 100
-
-                    text: qsTrc("global", "Cancel")
-
-                    onClicked: {
+                onStandardButtonClicked: function(buttonId) {
+                    if (buttonId === ButtonBoxModel.Cancel) {
                         root.reject()
                     }
                 }

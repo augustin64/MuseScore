@@ -23,12 +23,13 @@
 #include "instrument.h"
 
 #include "engraving/compat/midi/midipatch.h"
-#include "libmscore/part.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/undo.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/undo.h"
 
-namespace mu::engraving {
-namespace PluginAPI {
+using namespace mu::engraving;
+
+namespace mu::plugins::api {
 //---------------------------------------------------------
 //   Channel::activeChannel
 //---------------------------------------------------------
@@ -163,5 +164,4 @@ ChannelListProperty Instrument::channels()
 {
     return ChannelListProperty(this);
 }
-} // namespace PluginAPI
-} // namespace Ms
+}

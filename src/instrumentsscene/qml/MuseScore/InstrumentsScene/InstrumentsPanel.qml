@@ -36,7 +36,12 @@ Item {
     id: root
 
     property NavigationSection navigationSection: null
+    property NavigationPanel navigationPanel: controlPanel.navigation // first panel
     property alias contextMenuModel: contextMenuModel
+
+    onVisibleChanged: {
+        instrumentsTreeModel.setInstrumentsPanelVisible(root.visible)
+    }
 
     Rectangle {
         id: background
@@ -91,6 +96,7 @@ Item {
             isMovingDownAvailable: instrumentsTreeModel.isMovingDownAvailable
             isAddingAvailable: instrumentsTreeModel.isAddingAvailable
             isRemovingAvailable: instrumentsTreeModel.isRemovingAvailable
+            isInstrumentSelected: instrumentsTreeModel.isInstrumentSelected
 
             onAddRequested: {
                 instrumentsTreeModel.addInstruments()
@@ -165,7 +171,7 @@ Item {
                     section: root.navigationSection
                     direction: NavigationPanel.Both
                     enabled: instrumentsTreeView.enabled && instrumentsTreeView.visible
-                    order: 3
+                    order: controlPanel.navigation.order + 1
 
                     onNavigationEvent: function(event) {
                         if (event.type === NavigationEvent.AboutActive) {
@@ -278,6 +284,14 @@ Item {
 
                                 onVisibilityChanged: function(visible) {
                                     instrumentsTreeModel.toggleVisibilityOfSelectedRows(visible);
+                                }
+
+                                onDragStarted: {
+                                    instrumentsTreeModel.startActiveDrag()
+                                }
+
+                                onDropped: {
+                                    instrumentsTreeModel.endActiveDrag()
                                 }
                             }
                         }

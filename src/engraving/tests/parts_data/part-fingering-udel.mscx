@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<museScore version="4.00">
+<museScore version="4.30">
   <Score>
-    <LayerTag id="0" tag="default"></LayerTag>
-    <currentLayer>0</currentLayer>
     <Division>480</Division>
     <Style>
       <Spatium>1.76389</Spatium>
@@ -17,12 +15,11 @@
     <metaTag name="lyricist"></metaTag>
     <metaTag name="movementNumber"></metaTag>
     <metaTag name="movementTitle"></metaTag>
-    <metaTag name="poet"></metaTag>
     <metaTag name="source"></metaTag>
     <metaTag name="translator"></metaTag>
     <metaTag name="workNumber"></metaTag>
     <metaTag name="workTitle">testpart1</metaTag>
-    <Part>
+    <Part id="1">
       <Staff id="1">
         <StaffType group="pitched">
           <name>Standard</name>
@@ -59,7 +56,7 @@
           </Channel>
         </Instrument>
       </Part>
-    <Part>
+    <Part id="2">
       <Staff id="2">
         <StaffType group="pitched">
           <name>Standard</name>
@@ -116,6 +113,7 @@
           <Clef>
             <concertClefType>G</concertClefType>
             <transposingClefType>G</transposingClefType>
+            <isHeader>1</isHeader>
             <linkedMain/>
             </Clef>
           <TimeSig>
@@ -452,6 +450,7 @@
           <Clef>
             <concertClefType>G8vb</concertClefType>
             <transposingClefType>G8vb</transposingClefType>
+            <isHeader>1</isHeader>
             <linkedMain/>
             </Clef>
           <TimeSig>
@@ -778,11 +777,10 @@
         </Measure>
       </Staff>
     <Score>
-      <LayerTag id="0" tag="default"></LayerTag>
-      <currentLayer>0</currentLayer>
+      <name>Alto</name>
+      <initialPartId>1</initialPartId>
       <Division>480</Division>
       <Style>
-        <createMultiMeasureRests>1</createMultiMeasureRests>
         <Spatium>1.74978</Spatium>
         </Style>
       <showInvisible>1</showInvisible>
@@ -790,7 +788,7 @@
       <showFrames>1</showFrames>
       <showMargins>0</showMargins>
       <metaTag name="partName">Alto</metaTag>
-      <Part>
+      <Part id="1">
         <Staff id="1">
           <linkedTo>1</linkedTo>
           <StaffType group="pitched">
@@ -855,6 +853,7 @@
             <Clef>
               <concertClefType>G</concertClefType>
               <transposingClefType>G</transposingClefType>
+              <isHeader>1</isHeader>
               <linked>
                 </linked>
               </Clef>
@@ -880,7 +879,7 @@
                 <Fingering>
                   <linked>
                     </linked>
-                  <offset x="0.663397" y="-1.51211"/>
+                  <offset x="0.658089" y="-1.50001"/>
                   <text>3</text>
                   </Fingering>
                 <pitch>72</pitch>
@@ -923,15 +922,6 @@
                 </linked>
               <durationType>measure</durationType>
               <duration>4/4</duration>
-              </Rest>
-            </voice>
-          </Measure>
-        <Measure len="124/4">
-          <multiMeasureRest>31</multiMeasureRest>
-          <voice>
-            <Rest>
-              <durationType>measure</durationType>
-              <duration>124/4</duration>
               </Rest>
             </voice>
           </Measure>
@@ -1236,14 +1226,12 @@
             </voice>
           </Measure>
         </Staff>
-      <name>Alto</name>
       </Score>
     <Score>
-      <LayerTag id="0" tag="default"></LayerTag>
-      <currentLayer>0</currentLayer>
+      <name>Tenor</name>
+      <initialPartId>2</initialPartId>
       <Division>480</Division>
       <Style>
-        <createMultiMeasureRests>1</createMultiMeasureRests>
         <Spatium>1.74978</Spatium>
         </Style>
       <showInvisible>1</showInvisible>
@@ -1251,7 +1239,7 @@
       <showFrames>1</showFrames>
       <showMargins>0</showMargins>
       <metaTag name="partName">Tenor</metaTag>
-      <Part>
+      <Part id="2">
         <Staff id="1">
           <linkedTo>2</linkedTo>
           <StaffType group="pitched">
@@ -1325,6 +1313,7 @@
             <Clef>
               <concertClefType>G8vb</concertClefType>
               <transposingClefType>G8vb</transposingClefType>
+              <isHeader>1</isHeader>
               <linked>
                 </linked>
               </Clef>
@@ -1402,15 +1391,6 @@
               </Rest>
             </voice>
           </Measure>
-        <Measure len="124/4">
-          <multiMeasureRest>31</multiMeasureRest>
-          <voice>
-            <Rest>
-              <durationType>measure</durationType>
-              <duration>124/4</duration>
-              </Rest>
-            </voice>
-          </Measure>
         <Measure>
           <voice>
             <Rest>
@@ -1712,7 +1692,6 @@
             </voice>
           </Measure>
         </Staff>
-      <name>Tenor</name>
       </Score>
     </Score>
   </museScore>

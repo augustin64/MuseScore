@@ -30,18 +30,19 @@
 #include "actions/iactionsdispatcher.h"
 #include "multiinstances/imultiinstancesprovider.h"
 #include "../iupdateconfiguration.h"
-#include "../iupdateservice.h"
+#include "../iappupdateservice.h"
 
 #include "../iupdatescenario.h"
 
 namespace mu::update {
 class UpdateScenario : public IUpdateScenario, public async::Asyncable
 {
-    INJECT(update, framework::IInteractive, interactive)
-    INJECT(update, actions::IActionsDispatcher, dispatcher)
-    INJECT(update, mi::IMultiInstancesProvider, multiInstancesProvider)
-    INJECT(update, IUpdateConfiguration, configuration)
-    INJECT(update, IUpdateService, updateService)
+    INJECT(framework::IInteractive, interactive);
+    INJECT(actions::IActionsDispatcher, dispatcher);
+    INJECT(mi::IMultiInstancesProvider, multiInstancesProvider);
+    INJECT(IUpdateConfiguration, configuration);
+
+    INJECT(IAppUpdateService, service);
 
 public:
     void delayedInit();
@@ -52,7 +53,7 @@ private:
     bool isCheckStarted() const;
 
     void doCheckForUpdate(bool manual);
-    void th_heckForUpdate();
+    void th_checkForUpdate();
 
     void processUpdateResult(int errorCode);
 
@@ -64,8 +65,8 @@ private:
     void downloadRelease();
     void closeAppAndStartInstallation(const io::path_t& installerPath);
 
-    bool m_progress = false;
-    framework::ProgressPtr m_progressChannel = nullptr;
+    bool m_checkProgress = false;
+    framework::ProgressPtr m_checkProgressChannel = nullptr;
 };
 }
 

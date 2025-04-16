@@ -23,12 +23,21 @@
 #define MU_FRAMEWORK_MACOSINTERACTIVEHELPER_H
 
 #include "io/path.h"
+#include "types/ret.h"
+#include "types/uri.h"
+
+#include "async/asyncable.h"
+#include "async/promise.h"
 
 namespace mu::framework {
-class MacOSInteractiveHelper
+class MacOSInteractiveHelper : public async::Asyncable
 {
 public:
     static bool revealInFinder(const io::path_t& filePath);
+
+    static Ret isAppExists(const std::string& appIdentifier);
+    static Ret canOpenApp(const Uri& uri);
+    static async::Promise<Ret> openApp(const Uri& uri);
 };
 }
 

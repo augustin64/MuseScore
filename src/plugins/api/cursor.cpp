@@ -23,22 +23,22 @@
 #include "cursor.h"
 #include "elements.h"
 #include "score.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/chordrest.h"
-#include "libmscore/chord.h"
-#include "libmscore/rest.h"
-#include "libmscore/note.h"
-#include "libmscore/stafftext.h"
-#include "libmscore/measure.h"
-#include "libmscore/repeatlist.h"
-#include "libmscore/page.h"
-#include "libmscore/system.h"
-#include "libmscore/segment.h"
-#include "libmscore/timesig.h"
-#include "libmscore/tuplet.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/chordrest.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/stafftext.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/system.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/timesig.h"
+#include "engraving/dom/tuplet.h"
 
-namespace mu::engraving {
-namespace PluginAPI {
+using namespace mu::engraving;
+
+namespace mu::plugins::api {
 //---------------------------------------------------------
 //   Cursor
 //---------------------------------------------------------
@@ -166,7 +166,7 @@ void Cursor::rewind(RewindMode mode)
 ///   Rewind cursor to a position defined by tick.
 ///   \param tick Determines the position where to move
 ///   this cursor.
-///   \see \ref mu::engraving::PluginAPI::Segment::tick "Segment.tick"
+///   \see \ref mu::plugins::api::Segment::tick "Segment.tick"
 ///   \since MuseScore 3.5
 //---------------------------------------------------------
 
@@ -765,5 +765,4 @@ void Cursor::setInputStateString(int string)
     const int visString = _score->staff(staffIdx())->staffType(istate.tick())->visualStringToPhys(string);
     istate.setString(visString);
 }
-}
-}
+} // namespace mu::plugins::api

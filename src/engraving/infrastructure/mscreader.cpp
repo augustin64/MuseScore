@@ -26,6 +26,7 @@
 #include "io/dir.h"
 #include "serialization/zipreader.h"
 #include "serialization/xmlstreamreader.h"
+#include "engraving/engravingerrors.h"
 
 #include "log.h"
 
@@ -65,7 +66,7 @@ const MscReader::Params& MscReader::params() const
     return m_params;
 }
 
-bool MscReader::open()
+Ret MscReader::open()
 {
     return reader()->open(m_params.device, m_params.filePath);
 }
@@ -107,6 +108,11 @@ MscReader::IReader* MscReader::reader() const
     return m_reader;
 }
 
+bool MscReader::fileExists(const String& fileName) const
+{
+    return reader()->fileExists(fileName);
+}
+
 ByteArray MscReader::fileData(const String& fileName) const
 {
     return reader()->fileData(fileName);
@@ -114,6 +120,9 @@ ByteArray MscReader::fileData(const String& fileName) const
 
 ByteArray MscReader::readStyleFile() const
 {
+    if (!fileExists(u"score_style.mss")) {
+        return ByteArray();
+    }
     return fileData(u"score_style.mss");
 }
 
@@ -154,7 +163,7 @@ ByteArray MscReader::readScoreFile() const
     return fileData(mscxFileName);
 }
 
-std::vector<String> MscReader::excerptNames() const
+std::vector<String> MscReader::excerptFileNames() const
 {
     if (!reader()->isContainer()) {
         NOT_SUPPORTED << " not container";
@@ -171,20 +180,23 @@ std::vector<String> MscReader::excerptNames() const
     return names;
 }
 
-ByteArray MscReader::readExcerptStyleFile(const String& name) const
+ByteArray MscReader::readExcerptStyleFile(const String& excerptFileName) const
 {
-    String fileName = name + u".mss";
-    return fileData(u"Excerpts/" + name + u"/" + fileName);
+    String fileName = excerptFileName + u".mss";
+    return fileData(u"Excerpts/" + excerptFileName + u"/" + fileName);
 }
 
-ByteArray MscReader::readExcerptFile(const String& name) const
+ByteArray MscReader::readExcerptFile(const String& excerptFileName) const
 {
-    String fileName = name + u".mscx";
-    return fileData(u"Excerpts/" + name + u"/" + fileName);
+    String fileName = excerptFileName + u".mscx";
+    return fileData(u"Excerpts/" + excerptFileName + u"/" + fileName);
 }
 
 ByteArray MscReader::readChordListFile() const
 {
+    if (!fileExists(u"chordlist.xml")) {
+        return ByteArray();
+    }
     return fileData(u"chordlist.xml");
 }
 
@@ -201,7 +213,7 @@ ByteArray MscReader::readImageFile(const String& fileName) const
 std::vector<String> MscReader::imageFileNames() const
 {
     if (!reader()->isContainer()) {
-        NOT_SUPPORTED << " not container";
+        // NOT_SUPPORTED << " not container";
         return std::vector<String>();
     }
 
@@ -242,18 +254,23 @@ MscReader::ZipFileReader::~ZipFileReader()
     }
 }
 
-bool MscReader::ZipFileReader::open(IODevice* device, const path_t& filePath)
+Ret MscReader::ZipFileReader::open(IODevice* device, const path_t& filePath)
 {
     m_device = device;
     if (!m_device) {
+        if (!FileInfo::exists(filePath)) {
+            LOGE() << "path does not exist: " << filePath;
+            return make_ret(Err::FileNotFound, filePath);
+        }
+
         m_device = new File(filePath);
         m_selfDeviceOwner = true;
     }
 
     if (!m_device->isOpen()) {
         if (!m_device->open(IODevice::ReadOnly)) {
-            LOGD() << "failed open file: " << filePath;
-            return false;
+            LOGE() << "failed open file: " << filePath;
+            return make_ret(Err::FileOpenError, filePath);
         }
     }
 
@@ -292,7 +309,7 @@ StringList MscReader::ZipFileReader::fileList() const
     StringList files;
     std::vector<ZipReader::FileInfo> fileInfoList = m_zip->fileInfoList();
     if (m_zip->hasError()) {
-        LOGD() << "failed read meta";
+        LOGE() << "failed read meta";
     }
 
     for (const ZipReader::FileInfo& fi : fileInfoList) {
@@ -304,6 +321,15 @@ StringList MscReader::ZipFileReader::fileList() const
     return files;
 }
 
+bool MscReader::ZipFileReader::fileExists(const String& fileName) const
+{
+    IF_ASSERT_FAILED(m_zip) {
+        return false;
+    }
+
+    return m_zip->fileExists(fileName.toStdString());
+}
+
 ByteArray MscReader::ZipFileReader::fileData(const String& fileName) const
 {
     IF_ASSERT_FAILED(m_zip) {
@@ -312,13 +338,13 @@ ByteArray MscReader::ZipFileReader::fileData(const String& fileName) const
 
     ByteArray data = m_zip->fileData(fileName.toStdString());
     if (m_zip->hasError()) {
-        LOGD() << "failed read data";
+        LOGE() << "failed read data for filename " << fileName;
         return ByteArray();
     }
     return data;
 }
 
-bool MscReader::DirReader::open(IODevice* device, const path_t& filePath)
+Ret MscReader::DirReader::open(IODevice* device, const path_t& filePath)
 {
     if (device) {
         NOT_SUPPORTED;
@@ -326,13 +352,13 @@ bool MscReader::DirReader::open(IODevice* device, const path_t& filePath)
     }
 
     if (!FileInfo::exists(filePath)) {
-        LOGD() << "not exists path: " << filePath;
-        return false;
+        LOGE() << "path does not exist: " << filePath;
+        return make_ret(Err::FileNotFound, filePath);
     }
 
     m_rootPath = containerPath(filePath);
 
-    return true;
+    return make_ok();
 }
 
 void MscReader::DirReader::close()
@@ -369,34 +395,45 @@ StringList MscReader::DirReader::fileList() const
     return files;
 }
 
+bool MscReader::DirReader::fileExists(const String& fileName) const
+{
+    io::path_t filePath = m_rootPath + "/" + fileName;
+    return File::exists(filePath);
+}
+
 ByteArray MscReader::DirReader::fileData(const String& fileName) const
 {
     io::path_t filePath = m_rootPath + "/" + fileName;
     File file(filePath);
     if (!file.open(IODevice::ReadOnly)) {
-        LOGD() << "failed open file: " << filePath;
+        LOGE() << "failed open file: " << filePath;
         return ByteArray();
     }
 
     return file.readAll();
 }
 
-bool MscReader::XmlFileReader::open(IODevice* device, const path_t& filePath)
+Ret MscReader::XmlFileReader::open(IODevice* device, const path_t& filePath)
 {
     m_device = device;
     if (!m_device) {
+        if (!FileInfo::exists(filePath)) {
+            LOGE() << "path does not exist: " << filePath;
+            return make_ret(Err::FileNotFound, filePath);
+        }
+
         m_device = new File(filePath);
         m_selfDeviceOwner = true;
     }
 
     if (!m_device->isOpen()) {
         if (!m_device->open(IODevice::ReadOnly)) {
-            LOGD() << "failed open file: " << filePath;
-            return false;
+            LOGE() << "failed open file: " << filePath;
+            return make_ret(Err::FileOpenError, filePath);
         }
     }
 
-    return true;
+    return make_ok();
 }
 
 void MscReader::XmlFileReader::close()
@@ -427,13 +464,13 @@ StringList MscReader::XmlFileReader::fileList() const
     m_device->seek(0);
     XmlStreamReader xml(m_device);
     while (xml.readNextStartElement()) {
-        if ("files" != xml.name()) {
+        if (xml.name() != "files") {
             xml.skipCurrentElement();
             continue;
         }
 
         while (xml.readNextStartElement()) {
-            if ("file" != xml.name()) {
+            if (xml.name() != "file") {
                 xml.skipCurrentElement();
                 continue;
             }
@@ -447,10 +484,10 @@ StringList MscReader::XmlFileReader::fileList() const
     return files;
 }
 
-ByteArray MscReader::XmlFileReader::fileData(const String& fileName) const
+bool MscReader::XmlFileReader::fileExists(const String& fileName) const
 {
     if (!m_device) {
-        return ByteArray();
+        return false;
     }
 
     m_device->seek(0);
@@ -463,6 +500,35 @@ ByteArray MscReader::XmlFileReader::fileData(const String& fileName) const
 
         while (xml.readNextStartElement()) {
             if ("file" != xml.name()) {
+                xml.skipCurrentElement();
+                continue;
+            }
+
+            if (fileName == xml.attribute("name")) {
+                return true;
+            }
+        }
+    }
+
+    return false;
+}
+
+ByteArray MscReader::XmlFileReader::fileData(const String& fileName) const
+{
+    if (!m_device) {
+        return ByteArray();
+    }
+
+    m_device->seek(0);
+    XmlStreamReader xml(m_device);
+    while (xml.readNextStartElement()) {
+        if (xml.name() != "files") {
+            xml.skipCurrentElement();
+            continue;
+        }
+
+        while (xml.readNextStartElement()) {
+            if (xml.name() != "file") {
                 xml.skipCurrentElement();
                 continue;
             }

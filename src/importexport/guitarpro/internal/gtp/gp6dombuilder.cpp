@@ -4,12 +4,13 @@
 
 #include "global/log.h"
 
-namespace mu::engraving {
-std::pair<int, std::unique_ptr<GPTrack> > GP6DomBuilder::createGPTrack(XmlDomNode* trackNode)
+namespace mu::iex::guitarpro {
+std::pair<int, std::unique_ptr<GPTrack> > GP6DomBuilder::createGPTrack(XmlDomNode* trackNode, XmlDomNode* versionNode)
 {
+    UNUSED(versionNode);
     static const std::set<String> sUnusedNodes = {
-        u"Color",                                        // we dont use icon color for the tracks
-        u"SystemsDefaultLayout", u"SystemsLayout",        // we have our own layout algorithms
+        u"Color",                                        // we don't use icon color for the tracks
+        u"SystemsDefaultLayout", u"SystemsLayout",       // we have our own layout algorithms
         u"SystemsDefautLayout",                          // GP has a typo here :)
         u"PalmMute",                                     // currently our synthesizer is unable to simulate this feature
         u"AutoAccentuation",                             // currently our synthesizer is unable to simulate this feature
@@ -50,15 +51,13 @@ std::pair<int, std::unique_ptr<GPTrack> > GP6DomBuilder::createGPTrack(XmlDomNod
         } else if (nodeName == u"ShortName") {
             track->setShortName(trackChildNode.toElement().text());
         } else if (nodeName == u"Properties") {
-            readTrackProperties(&trackChildNode, track.get());
+            readTrackProperties(&trackChildNode, track.get(), false);
         } else if (nodeName == u"Instrument") {
             setUpInstrument(&trackChildNode, track.get());
         } else if (nodeName == u"Lyrics") {
             readLyrics(trackChildNode, track.get());
         } else if (sUnusedNodes.find(nodeName) != sUnusedNodes.end()) {
             // these nodes are not used (see comment to the sUnusedNodes variable)
-        } else {
-            LOGW() << "unknown GP track tag" << nodeName << "\n";
         }
 
         trackChildNode = trackChildNode.nextSibling();
@@ -89,7 +88,8 @@ GPTrack::SoundAutomation GP6DomBuilder::readRsePickUp(XmlDomNode& bankChangesNod
 
     result.bar = bankChangesNode.attribute("barIndex").toInt();
     result.value = bankChangesNode.attribute("bankId");
+    result.position = bankChangesNode.attribute("tickOffset").toFloat();
 
     return result;
 }
-} //ebd Ms namespace
+} // namespace mu::iex::guitarpro

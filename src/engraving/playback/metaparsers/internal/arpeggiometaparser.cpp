@@ -22,7 +22,7 @@
 
 #include "arpeggiometaparser.h"
 
-#include "libmscore/arpeggio.h"
+#include "dom/arpeggio.h"
 
 using namespace mu::engraving;
 
@@ -64,9 +64,14 @@ void ArpeggioMetaParser::doParse(const EngravingItem* item, const RenderingConte
         return;
     }
 
+    const mpe::ArticulationPattern& pattern = ctx.profile->pattern(type);
+    if (pattern.empty()) {
+        return;
+    }
+
     mpe::ArticulationMeta articulationMeta;
     articulationMeta.type = type;
-    articulationMeta.pattern = ctx.profile->pattern(type);
+    articulationMeta.pattern = pattern;
     articulationMeta.timestamp = ctx.nominalTimestamp;
     articulationMeta.overallDuration = ctx.nominalDuration * arpeggio->Stretch();
 

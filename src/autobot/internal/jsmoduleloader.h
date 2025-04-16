@@ -27,7 +27,7 @@
 #include <QList>
 
 #include "modularity/ioc.h"
-#include "iautobotconfiguration.h"
+#include "../iautobotconfiguration.h"
 #include "io/ifilesystem.h"
 
 namespace mu::autobot {
@@ -37,8 +37,8 @@ class JsModuleLoader : public QObject
     Q_OBJECT
     Q_PROPERTY(QJSValue exports READ exports WRITE setExports)
 
-    INJECT(autobot, IAutobotConfiguration, configuration)
-    INJECT(autobot, io::IFileSystem, fileSystem)
+    INJECT(IAutobotConfiguration, configuration)
+    INJECT(io::IFileSystem, fileSystem)
 public:
     explicit JsModuleLoader(QObject* parent = 0);
 

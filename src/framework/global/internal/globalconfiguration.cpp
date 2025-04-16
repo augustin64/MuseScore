@@ -26,18 +26,30 @@
 #include <QDir>
 #include <QCoreApplication>
 
-#include "config.h"
 #include "settings.h"
+#include "muversion.h"
 #include "log.h"
 
 using namespace mu;
 using namespace mu::framework;
 
 static const Settings::Key BACKUP_KEY("global", "application/backup/subfolder");
+static const Settings::Key DEV_MODE_ENABLED_KEY("global", "application/devModeEnabled");
+static const Settings::Key METRIC_UNIT_KEY("global", "application/metricUnit");
 
 static const std::string MUSESCORE_URL("https://www.musescore.org/");
 
+void GlobalConfiguration::init()
+{
+    settings()->setDefaultValue(DEV_MODE_ENABLED_KEY, Val(MUVersion::unstable()));
+}
+
 io::path_t GlobalConfiguration::appBinPath() const
+{
+    return QCoreApplication::applicationFilePath();
+}
+
+io::path_t GlobalConfiguration::appBinDirPath() const
 {
     return io::path_t(QCoreApplication::applicationDirPath());
 }
@@ -53,7 +65,7 @@ io::path_t GlobalConfiguration::appDataPath() const
 QString GlobalConfiguration::resolveAppDataPath() const
 {
 #ifdef Q_OS_WIN
-    QDir dir(QCoreApplication::applicationDirPath() + QString("/../" INSTALL_NAME));
+    QDir dir(QCoreApplication::applicationDirPath() + QString("/../" MUSESCORE_INSTALL_NAME));
     return dir.absolutePath() + "/";
 #elif defined(Q_OS_MAC)
     QDir dir(QCoreApplication::applicationDirPath() + QString("/../Resources"));
@@ -62,12 +74,12 @@ QString GlobalConfiguration::resolveAppDataPath() const
     return "/files/share";
 #else
     // Try relative path (needed for portable AppImage and non-standard installations)
-    QDir dir(QCoreApplication::applicationDirPath() + QString("/../share/" INSTALL_NAME));
+    QDir dir(QCoreApplication::applicationDirPath() + QString("/../share/" MUSESCORE_INSTALL_NAME));
     if (dir.exists()) {
         return dir.absolutePath() + "/";
     }
     // Otherwise fall back to default location (e.g. if binary has moved relative to share)
-    return QString(INSTPREFIX "/share/" INSTALL_NAME);
+    return QString(MUSESCORE_INSTALL_PREFIX "/share/" MUSESCORE_INSTALL_NAME);
 #endif
 }
 
@@ -86,7 +98,7 @@ io::path_t GlobalConfiguration::userAppDataPath() const
 
 QString GlobalConfiguration::resolveUserAppDataPath() const
 {
-#if defined(WIN_PORTABLE)
+#ifdef WIN_PORTABLE
     return QDir::cleanPath(QString("%1/../../../Data/settings").arg(QCoreApplication::applicationDirPath()));
 #elif defined(Q_OS_WASM)
     return QString("/files/data");
@@ -118,6 +130,12 @@ io::path_t GlobalConfiguration::downloadsPath() const
     return p;
 }
 
+io::path_t GlobalConfiguration::genericDataPath() const
+{
+    static io::path_t p = QStandardPaths::writableLocation(QStandardPaths::GenericDataLocation);
+    return p;
+}
+
 bool GlobalConfiguration::useFactorySettings() const
 {
     return false;
@@ -126,6 +144,26 @@ bool GlobalConfiguration::useFactorySettings() const
 bool GlobalConfiguration::enableExperimental() const
 {
     return false;
+}
+
+bool GlobalConfiguration::devModeEnabled() const
+{
+    return settings()->value(DEV_MODE_ENABLED_KEY).toBool();
+}
+
+void GlobalConfiguration::setDevModeEnabled(bool enabled)
+{
+    settings()->setSharedValue(DEV_MODE_ENABLED_KEY, Val(enabled));
+}
+
+bool GlobalConfiguration::metricUnit() const
+{
+    return settings()->value(METRIC_UNIT_KEY).toBool();
+}
+
+void GlobalConfiguration::setMetricUnit(bool metricUnit)
+{
+    settings()->setSharedValue(METRIC_UNIT_KEY, Val(metricUnit));
 }
 
 std::string GlobalConfiguration::museScoreUrl() const

@@ -26,7 +26,7 @@
 #include <stack>
 
 #include "ipaintprovider.h"
-#include "buffereddrawtypes.h"
+#include "types/drawdata.h"
 #include "types/pen.h"
 #include "types/brush.h"
 
@@ -43,11 +43,13 @@ public:
     void beforeEndTargetHook(Painter* painter) override;
     bool endTarget(bool endDraw = false) override;
 
-    void beginObject(const std::string& name, const PointF& pagePos) override;
+    void beginObject(const std::string& name) override;
     void endObject() override;
 
     void setAntialiasing(bool arg) override;
     void setCompositionMode(CompositionMode mode) override;
+    void setWindow(const RectF& window) override;
+    void setViewport(const RectF& viewport) override;
 
     void setFont(const Font& font) override;
     const Font& font() const override;
@@ -83,15 +85,20 @@ public:
     void drawTiledPixmap(const RectF& rect, const QPixmap& pm, const PointF& offset = PointF()) override;
 #endif
 
+    bool hasClipping() const override;
+
     void setClipRect(const RectF& rect) override;
     void setClipping(bool enable) override;
 
     // ---
 
-    const DrawData& drawData() const;
+    DrawDataPtr drawData() const;
     void clear();
 
 private:
+
+    const DrawData::Item& currentItem() const;
+    DrawData::Item& editableItem();
 
     const DrawData::Data& currentData() const;
     DrawData::Data& editableData();
@@ -99,8 +106,12 @@ private:
     const DrawData::State& currentState() const;
     DrawData::State& editableState();
 
-    DrawData m_buf;
-    std::stack<DrawData::Object> m_currentObjects;
+    void ensureItemInit(DrawData::Item& item) const;
+
+    DrawDataPtr m_buf = nullptr;
+    int m_itemLevel = -1;
+    bool m_stateIsUsed = false;
+    int m_currentStateNo = 0;
     bool m_isActive = false;
     DrawObjectsLogger* m_drawObjectsLogger = nullptr;
 };

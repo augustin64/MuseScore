@@ -30,11 +30,10 @@
 
 #include "types/string.h"
 #include "realfn.h"
-#include "midi/miditypes.h"
 #include "mpe/events.h"
-#include "io/path.h"
 #include "io/iodevice.h"
 #include "async/channel.h"
+#include "io/path.h"
 
 namespace mu::audio {
 using msecs_t = int64_t;
@@ -54,8 +53,12 @@ using TrackId = int32_t;
 using TrackIdList = std::vector<TrackId>;
 using TrackName = std::string;
 
+using aux_channel_idx_t = uint8_t;
+
 using PlaybackData = std::variant<mpe::PlaybackData, io::IODevice*>;
 using PlaybackSetupData = mpe::PlaybackSetupData;
+
+static constexpr TrackId INVALID_TRACK_ID = -1;
 
 static constexpr int MINIMUM_BUFFER_SIZE = 1024;
 
@@ -96,12 +99,15 @@ using AudioResourceVendor = std::string;
 using AudioResourceAttributes = std::map<String, String>;
 using AudioUnitConfig = std::map<std::string, std::string>;
 
+static const String PLAYBACK_SETUP_DATA_ATTRIBUTE("playbackSetupData");
+static const String CATEGORIES_ATTRIBUTE("categories");
+
 enum class AudioResourceType {
     Undefined = -1,
     FluidSoundfont,
     VstPlugin,
+    MusePlugin,
     MuseSamplerSoundPack,
-    SoundTrack,
 };
 
 struct AudioResourceMeta {
@@ -154,9 +160,26 @@ struct AudioResourceMeta {
 using AudioResourceMetaList = std::vector<AudioResourceMeta>;
 using AudioResourceMetaSet = std::set<AudioResourceMeta>;
 
+static const AudioResourceId MUSE_REVERB_ID("Muse Reverb");
+
+enum class AudioPluginType {
+    Undefined = -1,
+    Instrument,
+    Fx,
+};
+
+struct AudioPluginInfo {
+    AudioPluginType type = AudioPluginType::Undefined;
+    AudioResourceMeta meta;
+    io::path_t path;
+    bool enabled = false;
+    int errorCode = 0;
+};
+
 enum class AudioFxType {
     Undefined = -1,
-    VstFx
+    VstFx,
+    MuseFx,
 };
 
 enum class AudioFxCategory {
@@ -185,8 +208,13 @@ struct AudioFxParams {
     {
         switch (resourceMeta.type) {
         case AudioResourceType::VstPlugin: return AudioFxType::VstFx;
-        default: return AudioFxType::Undefined;
+        case AudioResourceType::MusePlugin: return AudioFxType::MuseFx;
+        case AudioResourceType::FluidSoundfont:
+        case AudioResourceType::MuseSamplerSoundPack:
+        case AudioResourceType::Undefined: break;
         }
+
+        return AudioFxType::Undefined;
     }
 
     AudioFxCategories categories;
@@ -223,17 +251,31 @@ struct AudioFxParams {
 
 using AudioFxChain = std::map<AudioFxChainOrder, AudioFxParams>;
 
+struct AuxSendParams {
+    gain_t signalAmount = 0.f; // [0; 1]
+    bool active = false;
+
+    bool operator ==(const AuxSendParams& other) const
+    {
+        return RealIsEqual(signalAmount, other.signalAmount) && active == other.active;
+    }
+};
+
+using AuxSendsParams = std::vector<AuxSendParams>;
+
 struct AudioOutputParams {
     AudioFxChain fxChain;
     volume_db_t volume = 0.f;
     balance_t balance = 0.f;
+    AuxSendsParams auxSends;
     bool muted = false;
 
     bool operator ==(const AudioOutputParams& other) const
     {
         return fxChain == other.fxChain
-               && volume == other.volume
-               && balance == other.balance
+               && RealIsEqual(volume, other.volume)
+               && RealIsEqual(balance, other.balance)
+               && auxSends == other.auxSends
                && muted == other.muted;
     }
 };
@@ -245,19 +287,27 @@ enum class AudioSourceType {
     MuseSampler
 };
 
-struct AudioSourceParams {
-    AudioSourceType type() const
-    {
-        switch (resourceMeta.type) {
-        case AudioResourceType::FluidSoundfont: return AudioSourceType::Fluid;
-        case AudioResourceType::VstPlugin: return AudioSourceType::Vsti;
-        case AudioResourceType::MuseSamplerSoundPack: return AudioSourceType::MuseSampler;
-        default: return AudioSourceType::Undefined;
-        }
+inline AudioSourceType sourceTypeFromResourceType(AudioResourceType type)
+{
+    switch (type) {
+    case AudioResourceType::FluidSoundfont: return AudioSourceType::Fluid;
+    case AudioResourceType::VstPlugin: return AudioSourceType::Vsti;
+    case AudioResourceType::MuseSamplerSoundPack: return AudioSourceType::MuseSampler;
+    case AudioResourceType::MusePlugin:
+    case AudioResourceType::Undefined: break;
     }
 
+    return AudioSourceType::Undefined;
+}
+
+struct AudioSourceParams {
     AudioResourceMeta resourceMeta;
     AudioUnitConfig configuration;
+
+    AudioSourceType type() const
+    {
+        return sourceTypeFromResourceType(resourceMeta.type);
+    }
 
     bool isValid() const
     {
@@ -336,9 +386,33 @@ struct AudioDevice {
 
 using AudioDeviceList = std::vector<AudioDevice>;
 
+using SoundPresetAttributes = std::map<String, String>;
+static const String PLAYING_TECHNIQUES_ATTRIBUTE(u"playing_techniques");
+
+struct SoundPreset
+{
+    String code;
+    String name;
+    bool isDefault = false;
+    SoundPresetAttributes attributes;
+
+    bool operator==(const SoundPreset& other) const
+    {
+        return code == other.code && name == other.name && isDefault == other.isDefault && attributes == other.attributes;
+    }
+
+    bool isValid() const
+    {
+        return !code.empty();
+    }
+};
+
+using SoundPresetList = std::vector<SoundPreset>;
+
 enum class RenderMode {
     Undefined = -1,
     RealTimeMode,
+    IdleMode,
     OfflineMode
 };
 }

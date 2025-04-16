@@ -20,6 +20,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 import QtQuick 2.15
+import QtQuick.Layouts 1.15
 
 import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
@@ -27,43 +28,100 @@ import MuseScore.UiComponents 1.0
 StyledDialogView {
     id: root
 
-    property alias type: content.type
+    property alias type: mainPanel.type
 
-    property alias title: content.title
-    property alias text: content.text
-    property alias textFormat: content.textFormat
+    property alias title: mainPanel.title
+    property alias text: mainPanel.text
+    property alias textFormat: mainPanel.textFormat
+    property string detailedText: ""
 
-    property alias withIcon: content.withIcon
-    property alias iconCode: content.iconCode
+    property alias withIcon: mainPanel.withIcon
+    property alias iconCode: mainPanel.iconCode
 
-    property alias withDontShowAgainCheckBox: content.withDontShowAgainCheckBox
+    property alias withDontShowAgainCheckBox: mainPanel.withDontShowAgainCheckBox
 
-    property var buttons: [ { "buttonId": 1, "title": qsTrc("global", "OK") } ]
-    property alias defaultButtonId: content.defaultButtonId
+    property var buttons
+    property var customButtons
+    property alias defaultButtonId: mainPanel.defaultButtonId
 
-    contentWidth: content.implicitWidth
+    QtObject {
+        id: toggleDetailsButton
+
+        property int buttonId: 999
+        property string text: detailsLoader.active ? qsTrc("global", "Hide details") : qsTrc("global", "Show details")
+        property int role: ButtonBoxModel.CustomRole
+        property bool isAccent: false
+        property bool isLeftSide: true
+    }
+
+    contentWidth: mainPanel.implicitWidth
     contentHeight: content.implicitHeight
 
     margins: 16
 
+    onDetailedTextChanged: {
+        if (root.detailedText.length <= 0) {
+            return
+        }
+
+        var tmp = []
+        tmp.push(toggleDetailsButton)
+
+        for (var i = 0; i < root.customButtons.length; ++i) {
+            tmp.push(root.customButtons[i])
+        }
+
+        root.customButtons = tmp
+    }
+
     onNavigationActivateRequested: {
-        content.focusOnFirst()
+        mainPanel.focusOnFirst()
     }
 
     onAccessibilityActivateRequested: {
-        content.readInfo()
+        mainPanel.readInfo()
     }
 
-    StandardDialogPanel {
+    Column {
         id: content
-        anchors.fill: parent
 
-        navigation.section: root.navigationSection
-        buttons: root.buttons
+        spacing: 16
 
-        onClicked: function(buttonId, showAgain) {
-            root.ret = { "errcode": 0, "value": { "buttonId": buttonId, "showAgain": showAgain}}
-            root.hide()
+        StandardDialogPanel {
+            id: mainPanel
+
+            navigation.section: root.navigationSection
+            navigation.order: 1
+
+            buttons: root.buttons
+            customButtons: root.customButtons
+
+            onClicked: function(buttonId, showAgain) {
+                if (buttonId === toggleDetailsButton.buttonId) {
+                    detailsLoader.active = !detailsLoader.active
+                    return
+                }
+
+                root.ret = { "errcode": 0, "value": { "buttonId": buttonId, "showAgain": showAgain }}
+                root.hide()
+            }
+        }
+
+        Loader {
+            id: detailsLoader
+
+            width: parent.width
+            height: visible ? implicitHeight : 0
+
+            active: false
+            visible: active
+
+            sourceComponent: ErrorDetailsView {
+                detailedText: root.detailedText
+
+                navigationSection: root.navigationSection
+                navigationOrder: 2
+            }
         }
     }
 }

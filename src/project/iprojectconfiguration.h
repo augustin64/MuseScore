@@ -25,12 +25,14 @@
 #include <QStringList>
 #include <QColor>
 
-#include "modularity/imoduleexport.h"
-#include "io/path.h"
+#include "modularity/imoduleinterface.h"
 #include "async/channel.h"
 #include "async/notification.h"
+#include "io/path.h"
+#include "types/bytearray.h"
+
 #include "inotationproject.h"
-#include "projecttypes.h"
+#include "types/projecttypes.h"
 
 namespace mu::project {
 class IProjectConfiguration : MODULE_EXPORT_INTERFACE
@@ -40,9 +42,8 @@ class IProjectConfiguration : MODULE_EXPORT_INTERFACE
 public:
     virtual ~IProjectConfiguration() = default;
 
-    virtual io::paths_t recentProjectPaths() const = 0;
-    virtual void setRecentProjectPaths(const io::paths_t& recentScorePaths) = 0;
-    virtual async::Channel<io::paths_t> recentProjectPathsChanged() const = 0;
+    virtual io::path_t recentFilesJsonPath() const = 0;
+    virtual ByteArray compatRecentFilesData() const = 0;
 
     virtual io::path_t myFirstProjectPath() const = 0;
 
@@ -53,9 +54,6 @@ public:
     virtual void setUserTemplatesPath(const io::path_t& path) = 0;
     virtual async::Channel<io::path_t> userTemplatesPathChanged() const = 0;
 
-    virtual io::path_t defaultProjectsPath() const = 0;
-    virtual void setDefaultProjectsPath(const io::path_t& path) = 0;
-
     virtual io::path_t lastOpenedProjectsPath() const = 0;
     virtual void setLastOpenedProjectsPath(const io::path_t& path) = 0;
 
@@ -65,13 +63,18 @@ public:
     virtual io::path_t userProjectsPath() const = 0;
     virtual void setUserProjectsPath(const io::path_t& path) = 0;
     virtual async::Channel<io::path_t> userProjectsPathChanged() const = 0;
+    virtual io::path_t defaultUserProjectsPath() const = 0;
 
     virtual bool shouldAskSaveLocationType() const = 0;
     virtual void setShouldAskSaveLocationType(bool shouldAsk) = 0;
 
     virtual bool isCloudProject(const io::path_t& projectPath) const = 0;
+    virtual bool isLegacyCloudProject(const io::path_t& projectPath) const = 0;
+    virtual io::path_t cloudProjectPath(int scoreId) const = 0;
+    virtual int cloudScoreIdFromPath(const io::path_t& projectPath) const = 0;
 
-    virtual io::path_t cloudProjectSavingFilePath(const io::path_t& projectName) const = 0;
+    virtual io::path_t cloudProjectSavingPath(int scoreId = 0) const = 0;
+
     virtual io::path_t defaultSavingFilePath(INotationProjectPtr project, const std::string& filenameAddition = "",
                                              const std::string& suffix = "") const = 0;
 
@@ -83,6 +86,17 @@ public:
 
     virtual bool shouldWarnBeforeSavingPubliclyToCloud() const = 0;
     virtual void setShouldWarnBeforeSavingPubliclyToCloud(bool shouldWarn) = 0;
+
+    virtual int homeScoresPageTabIndex() const = 0;
+    virtual void setHomeScoresPageTabIndex(int index) = 0;
+
+    enum class HomeScoresPageViewType {
+        Grid,
+        List
+    };
+
+    virtual HomeScoresPageViewType homeScoresPageViewType() const = 0;
+    virtual void setHomeScoresPageViewType(HomeScoresPageViewType type) = 0;
 
     virtual QColor templatePreviewBackgroundColor() const = 0;
     virtual async::Notification templatePreviewBackgroundChanged() const = 0;
@@ -106,6 +120,16 @@ public:
     virtual void setAutoSaveInterval(int minutes) = 0;
     virtual async::Channel<int> autoSaveIntervalChanged() const = 0;
 
+    virtual bool alsoShareAudioCom() const = 0;
+    virtual void setAlsoShareAudioCom(bool share) = 0;
+    virtual async::Channel<bool> alsoShareAudioComChanged() const = 0;
+
+    virtual bool showAlsoShareAudioComDialog() const = 0;
+    virtual void setShowAlsoShareAudioComDialog(bool show) = 0;
+
+    virtual bool hasAskedAlsoShareAudioCom() const = 0;
+    virtual void setHasAskedAlsoShareAudioCom(bool has) = 0;
+
     virtual io::path_t newProjectTemporaryPath() const = 0;
 
     virtual bool isAccessibleEnabled() const = 0;
@@ -113,7 +137,6 @@ public:
     virtual bool shouldDestinationFolderBeOpenedOnExport() const = 0;
     virtual void setShouldDestinationFolderBeOpenedOnExport(bool shouldDestinationFolderBeOpenedOnExport) = 0;
 
-    virtual QUrl scoreManagerUrl() const = 0;
     virtual QUrl supportForumUrl() const = 0;
 
     virtual bool openDetailedProjectUploadedDialog() const = 0;
@@ -134,6 +157,9 @@ public:
 
     virtual bool showCloudIsNotAvailableWarning() const = 0;
     virtual void setShowCloudIsNotAvailableWarning(bool show) = 0;
+
+    virtual bool disableVersionChecking() const = 0;
+    virtual void setDisableVersionChecking(bool disable) = 0;
 };
 }
 

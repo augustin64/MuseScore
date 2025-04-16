@@ -21,8 +21,8 @@
  */
 #include "importmidi_operations.h"
 
-#include <QXmlStreamReader>
 #include <QFile>
+#include <QXmlStreamReader>
 
 #include "log.h"
 

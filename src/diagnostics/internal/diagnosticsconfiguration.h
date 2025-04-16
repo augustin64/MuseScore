@@ -22,16 +22,28 @@
 #ifndef MU_DIAGNOSTICS_DIAGNOSTICSCONFIGURATION_H
 #define MU_DIAGNOSTICS_DIAGNOSTICSCONFIGURATION_H
 
+#include "../idiagnosticsconfiguration.h"
+
+#include "modularity/ioc.h"
+#include "iglobalconfiguration.h"
+
 namespace mu::diagnostics {
-class DiagnosticsConfiguration
+class DiagnosticsConfiguration : public IDiagnosticsConfiguration
 {
+    INJECT(framework::IGlobalConfiguration, globalConfiguration)
+
 public:
     DiagnosticsConfiguration() = default;
 
     void init();
 
-    bool isDumpUploadAllowed() const;
-    void setIsDumpUploadAllowed(bool val);
+    bool isDumpUploadAllowed() const override;
+    void setIsDumpUploadAllowed(bool val) override;
+
+    bool shouldWarnBeforeSavingDiagnosticFiles() const override;
+    void setShouldWarnBeforeSavingDiagnosticFiles(bool val) override;
+
+    io::path_t diagnosticFilesDefaultSavingPath() const override;
 };
 }
 

@@ -24,11 +24,19 @@
 #include <QTimer>
 #include <QWindow>
 
-#include "modularity/ioc.h"
+#include "global/io/file.h"
+#include "global/serialization/json.h"
+
+#include "draw/types/font.h"
+
+#include "testcasecontext.h"
+#include "../autobotutils.h"
 
 #include "log.h"
 
+using namespace mu;
 using namespace mu::autobot;
+using namespace mu::framework;
 
 void Autobot::init()
 {
@@ -59,40 +67,108 @@ void Autobot::init()
 
 void Autobot::affectOnServices()
 {
-    //! NOTE Move focus to main window
-    mainWindow()->qWindow()->requestActivate();
+    IApplication::RunMode runMode = application()->runMode();
+    if (runMode == IApplication::RunMode::GuiApp) {
+        //! NOTE Move focus to main window
+        mainWindow()->qWindow()->requestActivate();
 
-    //! NOTE Disable reset on mouse press for testing purpose
-    navigation()->setIsResetOnMousePress(false);
+        //! NOTE Disable reset on mouse press for testing purpose
+        navigation()->setIsResetOnMousePress(false);
 
-    //! NOTE Set navigation highlight
-    navigation()->setIsHighlight(true);
+        //! NOTE Set navigation highlight
+        navigation()->setIsHighlight(true);
 
-    //! NOTE Only defaults shortcuts
-    shortcutsRegister()->reload(true);
+        //! NOTE Only defaults shortcuts
+        shortcutsRegister()->reload(true);
 
-    //! NOTE Change Interactive implementation
-    using namespace mu::framework;
-    auto realInteractive = modularity::ioc()->resolve<IInteractive>("autobot");
-    m_autobotInteractive->setRealInteractive(realInteractive);
-    modularity::ioc()->unregisterExport<IInteractive>("autobot");
-    modularity::ioc()->registerExport<IInteractive>("autobot", m_autobotInteractive);
+        //! NOTE Change Interactive implementation
+        auto realInteractive = modularity::ioc()->resolve<IInteractive>("autobot");
+        m_autobotInteractive->setRealInteractive(realInteractive);
+        modularity::ioc()->unregister<IInteractive>("autobot");
+        modularity::ioc()->registerExport<IInteractive>("autobot", m_autobotInteractive);
+    }
+
+    m_affectedServiceState.fontDisabledMerging = draw::Font::g_disableFontMerging;
+    draw::Font::g_disableFontMerging = true;
 }
 
 void Autobot::restoreAffectOnServices()
 {
-    navigation()->setIsResetOnMousePress(true);
-    shortcutsRegister()->reload(false);
+    IApplication::RunMode runMode = application()->runMode();
+    if (runMode == IApplication::RunMode::GuiApp) {
+        navigation()->setIsResetOnMousePress(true);
+        shortcutsRegister()->reload(false);
 
-    using namespace mu::framework;
-    auto realInteractive = m_autobotInteractive->realInteractive();
-    modularity::ioc()->unregisterExport<IInteractive>("autobot");
-    modularity::ioc()->registerExport<IInteractive>("autobot", realInteractive);
+        auto realInteractive = m_autobotInteractive->realInteractive();
+        modularity::ioc()->unregister<IInteractive>("autobot");
+        modularity::ioc()->registerExport<IInteractive>("autobot", realInteractive);
+    }
+
+    draw::Font::g_disableFontMerging = m_affectedServiceState.fontDisabledMerging;
 }
 
-void Autobot::execScript(const io::path_t& path)
+void Autobot::loadContext(ITestCaseContextPtr ctx, const io::path_t& context, const std::string& contextVal, ScriptEngine* e)
 {
-    LOGD() << path;
+    auto loadFromJson = [ctx, e](const ByteArray& json) {
+        std::string err;
+        JsonObject ctxObj = JsonDocument::fromJson(json, &err).rootObject();
+        if (!err.empty()) {
+            LOGE() << "failed parse context value, err: " << err;
+            return;
+        }
+
+        std::vector<std::string> keys = ctxObj.keys();
+        for (const std::string& k : keys) {
+            ctx->setGlobalVal(QString::fromStdString(k), toQJSValue(ctxObj.value(k), e));
+        }
+    };
+
+    // from file
+    if (!context.empty()) {
+        ctx->setGlobalVal("context_path", context.toQString());
+
+        ByteArray json;
+        Ret ret = io::File::readFile(context, json);
+        if (!ret) {
+            LOGE() << "failed read file: " << context;
+            return;
+        }
+        loadFromJson(json);
+    }
+
+    // from value (maybe override)
+    if (!contextVal.empty()) {
+        ByteArray json = ByteArray::fromRawData(contextVal.c_str(), contextVal.size());
+        loadFromJson(json);
+    }
+}
+
+QJSValueList Autobot::parseFuncArgs(const std::string& funcArgs, ScriptEngine* e) const
+{
+    ByteArray json = ByteArray::fromRawData(funcArgs.c_str(), funcArgs.size());
+    std::string err;
+    JsonArray arr = JsonDocument::fromJson(json, &err).rootArray();
+    if (!err.empty()) {
+        LOGE() << "failed parse context value, err: " << err;
+        return QJSValueList();
+    }
+
+    QJSValueList args;
+    for (size_t i = 0; i < arr.size(); ++i) {
+        const JsonValue& a = arr.at(i);
+        args.append(toQJSValue(a, e));
+    }
+
+    return args;
+}
+
+void Autobot::execScript(const io::path_t& path, const Options& opt)
+{
+    LOGD() << "path: " << path
+           << ", context: " << opt.context
+           << ", contextVal: " << opt.contextVal
+           << ", func: " << opt.func
+           << ", funcArgs: " << opt.funcArgs;
 
     if (status() == Status::Running || status() == Status::Paused) {
         abort();
@@ -106,8 +182,8 @@ void Autobot::execScript(const io::path_t& path)
         if (stack.size() > 1) {
             const Uri& uri = stack.back();
             interactive()->close(uri);
-            QTimer::singleShot(1000, [this, path]() {
-                execScript(path);
+            QTimer::singleShot(1000, [this, path, opt]() {
+                execScript(path, opt);
             });
             return;
         }
@@ -126,14 +202,17 @@ void Autobot::execScript(const io::path_t& path)
 
     affectOnServices();
 
-    m_context = std::make_shared<TestCaseContext>();
-    m_context->setGlobalVal("script_path", path.toQString());
-
     m_engine = new ScriptEngine();
     m_engine->setScriptPath(path);
 
+    m_context = std::make_shared<TestCaseContext>();
+    m_context->setGlobalVal("script_path", path.toQString());
+    loadContext(m_context, opt.context, opt.contextVal, m_engine);
+
     setStatus(Status::Running);
-    Ret ret = m_engine->call("main");
+    QString func = opt.func.empty() ? QString("main") : QString::fromStdString(opt.func);
+    QJSValueList args = opt.funcArgs.empty() ? QJSValueList() : parseFuncArgs(opt.funcArgs, m_engine);
+    Ret ret = m_engine->call(func, args);
 
     //! NOTE Also maybe abort or error
     if (status() == Status::Running) {

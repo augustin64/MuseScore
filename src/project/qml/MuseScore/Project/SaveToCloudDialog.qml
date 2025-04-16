@@ -21,18 +21,21 @@
  */
 import QtQuick 2.15
 import QtQuick.Layouts 1.15
+import QtGraphicalEffects 1.15
 
 import MuseScore.Ui 1.0
 import MuseScore.UiComponents 1.0
-import MuseScore.Project 1.0
 import MuseScore.Cloud 1.0
 
 StyledDialogView {
     id: root
 
-    property bool isPublish: false
+    property bool isPublishShare: false
     property string name
     property int visibility: CloudVisibility.Private
+    property string existingScoreOrAudioUrl
+    property bool replaceExisting: true
+    property string cloudCode: ""
 
     contentWidth: contentItem.implicitWidth
     contentHeight: contentItem.implicitHeight
@@ -53,37 +56,84 @@ StyledDialogView {
     Item {
         id: contentItem
 
+        property var cloudInfo: null
+        property var dialogText: null
+        property var visibilityModel: null
+
         implicitWidth: Math.max(420, contentColumn.implicitWidth)
         implicitHeight: contentColumn.implicitHeight
 
-        AccountAvatar {
-            anchors.top: parent.top
-            anchors.right: parent.right
-
-            side: 38
-            url: accountModel.accountInfo.avatarUrl
-
-            AccountModel {
-                id: accountModel
-
-                Component.onCompleted: {
-                    load()
-                }
-            }
-        }
-
         ColumnLayout {
             id: contentColumn
+
             anchors.fill: parent
+
             spacing: 20
 
-            StyledTextLabel {
-                id: titleLabel
-                text: root.isPublish
-                      ? qsTrc("project/save", "Publish to MuseScore.com")
-                      : qsTrc("project/save", "Save to cloud")
-                font: ui.theme.largeBodyBoldFont
-                horizontalAlignment: Text.AlignLeft
+            ColumnLayout {
+                id: headerColumn
+
+                spacing: root.isPublishShare ? 16 : 0
+
+                Item {
+                    id: cloudImages
+
+                    width: contentItem.width
+                    height: root.isPublishShare ? childrenRect.height : 0
+
+                    Image {
+                        id: cloudLogo
+
+                        visible: false
+
+                        anchors.verticalCenter: avatar.verticalCenter
+                        anchors.left: parent.left
+
+                        source: contentItem.cloudInfo.cloudLogoUrl
+                        sourceSize.height: 20
+                    }
+
+                    ColorOverlay {
+                        visible: root.isPublishShare
+
+                        anchors.fill: cloudLogo
+
+                        color: contentItem.cloudInfo.cloudLogoColor
+
+                        source: cloudLogo
+                    }
+
+                    AccountAvatar {
+                        id: avatar
+
+                        anchors.right: parent.right
+
+                        side: 38
+                        url: Boolean(contentItem.cloudInfo) ? contentItem.cloudInfo.userAvatarUrl : null
+
+                        CloudsModel {
+                            id: cloudsModel
+
+                            Component.onCompleted: {
+                                load()
+
+                                contentItem.cloudInfo = cloudsModel.cloudInfo(root.cloudCode)
+                                contentItem.dialogText = cloudsModel.dialogText(root.cloudCode, existingScoreOrAudioUrl)
+                                contentItem.visibilityModel = cloudsModel.visibilityModel(root.cloudCode)
+                            }
+                        }
+                    }
+                }
+
+                StyledTextLabel {
+                    id: titleLabel
+
+                    text: root.isPublishShare && Boolean(contentItem.dialogText) ? contentItem.dialogText.titleText
+                                                                                 : qsTrc("project/save", "Save to cloud")
+
+                    font: ui.theme.largeBodyBoldFont
+                    horizontalAlignment: Text.AlignLeft
+                }
             }
 
             ColumnLayout {
@@ -128,52 +178,73 @@ StyledDialogView {
 
                     StyledTextLabel {
                         Layout.fillWidth: true
-                        //: visibility of a score on MuseScore.com: private or public
-                        text: qsTrc("project/save", "Visibility")
+                        //: visibility of a score on MuseScore.com: private, public or unlisted
+                        text: qsTrc("project/cloud", "Visibility")
                         horizontalAlignment: Text.AlignLeft
                     }
 
                     StyledDropdown {
                         Layout.fillWidth: true
 
-                        model: [
-                            { value: CloudVisibility.Private, text: qsTrc("project/save", "Private") },
-                            { value: CloudVisibility.Public, text: qsTrc("project/save", "Public") }
-                        ]
+                        model: contentItem.visibilityModel
 
                         currentIndex: indexOfValue(root.visibility)
 
                         navigation.panel: optionsNavPanel
                         navigation.row: 2
-                        navigation.accessible.name: qsTrc("project/save", "Visibility") + ": " + currentText
+                        navigation.accessible.name: qsTrc("project/cloud", "Visibility") + ": " + currentText
 
                         onActivated: function(index, value) {
                             root.visibility = value
                         }
                     }
                 }
+
+                RadioButtonGroup {
+                    Layout.fillWidth: true
+
+                    orientation: ListView.Vertical
+                    spacing: 8
+
+                    visible: root.isPublishShare && Boolean(root.existingScoreOrAudioUrl)
+
+                    model: [
+                        { text: Boolean(contentItem.dialogText) ? contentItem.dialogText.replaceButtonText
+                                                                : qsTrc("project/save", "Replace existing"), value: true },
+                        { text: Boolean(contentItem.dialogText) ? contentItem.dialogText.newButtonText
+                                                                : qsTrc("project/save", "Create new"), value: false }
+                    ]
+
+                    delegate: RoundedRadioButton {
+                        checked: modelData.value === root.replaceExisting
+                        text: modelData.text
+
+                        navigation.name: modelData.text
+                        navigation.panel: optionsNavPanel
+                        navigation.row: 3 + model.index
+
+                        onToggled: {
+                            root.replaceExisting = modelData.value
+                        }
+                    }
+                }
             }
 
-            RowLayout {
-                id: buttonsRow
-                Layout.alignment: Qt.AlignRight
-                spacing: 12
+            ButtonBox {
+                id: buttonBox
 
-                NavigationPanel {
-                    id: buttonsNavPanel
-                    name: "SaveToCloudButtons"
-                    enabled: buttonsRow.enabled && buttonsRow.visible
-                    direction: NavigationPanel.Horizontal
-                    section: root.navigationSection
-                    order: 2
-                }
+                Layout.fillWidth: true
+
+                buttons: [ ButtonBoxModel.Cancel ]
+
+                navigationPanel.section: root.navigationSection
+                navigationPanel.order: 2
 
                 FlatButton {
                     text: qsTrc("project/save", "Save to computer")
-                    visible: !root.isPublish
-
-                    navigation.panel: buttonsNavPanel
-                    navigation.column: 2
+                    buttonRole: ButtonBoxModel.ApplyRole
+                    buttonId: ButtonBoxModel.CustomButton + 1
+                    visible: !root.isPublishShare
 
                     onClicked: {
                         root.done(SaveToCloudResponse.SaveLocallyInstead)
@@ -181,30 +252,26 @@ StyledDialogView {
                 }
 
                 FlatButton {
-                    text: qsTrc("global", "Cancel")
+                    text: root.isPublishShare && Boolean(contentItem.dialogText) ? contentItem.dialogText.saveButtonText
+                                                                                 : qsTrc("project/save", "Save")
 
-                    navigation.panel: buttonsNavPanel
-                    navigation.column: 3
-
-                    onClicked: {
-                        root.done(SaveToCloudResponse.Cancel)
-                    }
-                }
-
-                FlatButton {
-                    id: saveButton
-                    text: root.isPublish ? qsTrc("project/save", "Publish") : qsTrc("project/save", "Save")
-                    accentButton: enabled
+                    buttonRole: ButtonBoxModel.ApplyRole
+                    buttonId: ButtonBoxModel.Save
                     enabled: Boolean(root.name)
-
-                    navigation.panel: buttonsNavPanel
-                    navigation.column: 1
+                    accentButton: true
 
                     onClicked: {
                         root.done(SaveToCloudResponse.Ok, {
                                       name: root.name,
-                                      visibility: root.visibility
+                                      visibility: root.visibility,
+                                      replaceExisting: root.replaceExisting
                                   })
+                    }
+                }
+
+                onStandardButtonClicked: function(buttonId) {
+                    if (buttonId === ButtonBoxModel.Cancel) {
+                        root.done(SaveToCloudResponse.Cancel)
                     }
                 }
             }

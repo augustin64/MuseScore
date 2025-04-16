@@ -44,8 +44,9 @@ public:
     virtual INotationNoteInputPtr noteInput() const = 0;
 
     // Shadow note
-    virtual void showShadowNote(const PointF& pos) = 0;
+    virtual bool showShadowNote(const PointF& pos) = 0;
     virtual void hideShadowNote() = 0;
+    virtual RectF shadowNoteRect() const = 0;
 
     // Visibility
     virtual void toggleVisible() = 0;
@@ -58,6 +59,11 @@ public:
     {
         notation::EngravingItem* element = nullptr;
         notation::Staff* staff = nullptr;
+
+        bool operator ==(const HitElementContext& other) const
+        {
+            return element == other.element && staff == other.staff;
+        }
     };
 
     virtual const HitElementContext& hitElementContext() const = 0;
@@ -89,6 +95,7 @@ public:
     virtual async::Notification dragChanged() const = 0;
 
     virtual bool isDragCopyStarted() const = 0;
+    virtual bool dragCopyAllowed(const EngravingItem* element) const = 0;
     virtual void startDragCopy(const EngravingItem* element, QObject* dragSource) = 0;
     virtual void endDragCopy() = 0;
 
@@ -160,7 +167,7 @@ public:
 
     virtual Ret canAddBoxes() const = 0;
     virtual void addBoxes(BoxType boxType, int count, AddBoxesTarget target) = 0;
-    virtual void addBoxes(BoxType boxType, int count, int beforeBoxIndex) = 0;
+    virtual void addBoxes(BoxType boxType, int count, int beforeBoxIndex, bool insertAfter) = 0;
 
     virtual void copySelection() = 0;
     virtual mu::Ret repeatSelection() = 0;
@@ -232,12 +239,16 @@ public:
     virtual void resetTextStyleOverrides() = 0;
     virtual void resetBeamMode() = 0;
     virtual void resetShapesAndPosition() = 0;
+    virtual void resetToDefaultLayout() = 0;
 
     virtual ScoreConfig scoreConfig() const = 0;
     virtual void setScoreConfig(const ScoreConfig& config) = 0;
 
     virtual void addMelisma() = 0;
     virtual void addLyricsVerse() = 0;
+
+    virtual Ret canAddGuitarBend() const = 0;
+    virtual void addGuitarBend(GuitarBendType bendType) = 0;
 
     // Text navigation
     virtual void navigateToLyrics(MoveDirection direction, bool moveOnly = false) = 0;
@@ -260,13 +271,16 @@ public:
     virtual void toggleItalic() = 0;
     virtual void toggleUnderline() = 0;
     virtual void toggleStrike() = 0;
+    virtual void toggleSubScript() = 0;
+    virtual void toggleSuperScript() = 0;
+
+    virtual bool canInsertClef(mu::engraving::ClefType) const = 0;
+    virtual void insertClef(mu::engraving::ClefType) = 0;
 
     virtual void toggleArticulation(mu::engraving::SymId) = 0;
-    virtual void insertClef(mu::engraving::ClefType) = 0;
     virtual void changeAccidental(mu::engraving::AccidentalType) = 0;
     virtual void transposeSemitone(int) = 0;
     virtual void transposeDiatonicAlterations(mu::engraving::TransposeDirection) = 0;
-    virtual void toggleGlobalOrLocalInsert() = 0;
     virtual void toggleAutoplace(bool all) = 0;
     virtual void getLocation() = 0;
     virtual void execute(void (mu::engraving::Score::*)()) = 0;

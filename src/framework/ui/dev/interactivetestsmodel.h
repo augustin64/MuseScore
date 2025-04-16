@@ -33,7 +33,7 @@ class InteractiveTestsModel : public QObject, async::Asyncable
 {
     Q_OBJECT
 
-    INJECT(ui, framework::IInteractive, interactive)
+    INJECT(framework::IInteractive, interactive)
 
     Q_PROPERTY(QString currentUri READ currentUri NOTIFY currentUriChanged)
 
@@ -56,6 +56,7 @@ public:
     Q_INVOKABLE void information();
     Q_INVOKABLE void warning();
     Q_INVOKABLE void critical();
+    Q_INVOKABLE void criticalWithDetailedText();
 
     Q_INVOKABLE void require();
 

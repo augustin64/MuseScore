@@ -30,6 +30,8 @@
 #include "modularity/ioc.h"
 #include "audio/isynthresolver.h"
 #include "audio/ifxresolver.h"
+#include "audio/iaudiopluginsscannerregister.h"
+#include "audio/iaudiopluginmetareaderregister.h"
 
 #include "internal/vstconfiguration.h"
 #include "internal/vstpluginsregister.h"
@@ -37,8 +39,9 @@
 #include "internal/synth/vstsynthesiser.h"
 #include "internal/synth/vstiresolver.h"
 #include "internal/fx/vstfxresolver.h"
+#include "internal/vstpluginsscanner.h"
+#include "internal/vstpluginmetareader.h"
 
-#include "devtools/vstpluginlistmodelexample.h"
 #include "view/vstieditorview.h"
 #include "view/vstfxeditorview.h"
 
@@ -90,6 +93,16 @@ void VSTModule::resolveImports()
     if (fxResolver) {
         fxResolver->registerResolver(AudioFxType::VstFx, std::make_shared<VstFxResolver>());
     }
+
+    auto scannerRegister = ioc()->resolve<IAudioPluginsScannerRegister>(moduleName());
+    if (scannerRegister) {
+        scannerRegister->registerScanner(std::make_shared<VstPluginsScanner>());
+    }
+
+    auto metaReaderRegister = ioc()->resolve<IAudioPluginMetaReaderRegister>(moduleName());
+    if (metaReaderRegister) {
+        metaReaderRegister->registerReader(std::make_shared<VstPluginMetaReader>());
+    }
 }
 
 void VSTModule::registerResources()
@@ -99,17 +112,11 @@ void VSTModule::registerResources()
 
 void VSTModule::registerUiTypes()
 {
-    qmlRegisterType<VstPluginListModelExample>("MuseScore.Vst", 1, 0, "VstPluginListModelExample");
-
     ioc()->resolve<ui::IUiEngine>(moduleName())->addSourceImportPath(vst_QML_IMPORT);
 }
 
-void VSTModule::onInit(const framework::IApplication::RunMode& mode)
+void VSTModule::onInit(const framework::IApplication::RunMode&)
 {
-    if (framework::IApplication::RunMode::Editor != mode) {
-        return;
-    }
-
     s_configuration->init();
     s_pluginModulesRepo->init();
 }

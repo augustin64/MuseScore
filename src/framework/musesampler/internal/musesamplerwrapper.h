@@ -25,17 +25,20 @@
 
 #include <memory>
 
-#include "audio/abstractsynthesizer.h"
+#include "audio/internal/abstractsynthesizer.h"
 #include "async/channel.h"
 
 #include "libhandler.h"
 #include "musesamplersequencer.h"
 
+#include "imusesamplertracks.h"
+
 namespace mu::musesampler {
-class MuseSamplerWrapper : public audio::synth::AbstractSynthesizer
+class MuseSamplerWrapper : public audio::synth::AbstractSynthesizer, public IMuseSamplerTracks,
+    public std::enable_shared_from_this<MuseSamplerWrapper>
 {
 public:
-    MuseSamplerWrapper(MuseSamplerLibHandlerPtr samplerLib, const audio::AudioSourceParams& params);
+    MuseSamplerWrapper(MuseSamplerLibHandlerPtr samplerLib, const InstrumentInfo& instrument, const audio::AudioSourceParams& params);
     ~MuseSamplerWrapper() override;
 
     void setSampleRate(unsigned int sampleRate) override;
@@ -50,15 +53,22 @@ public:
 
     void revokePlayingNotes() override;
 
-protected:
+private:
     void setupSound(const mpe::PlaybackSetupData& setupData) override;
     void setupEvents(const mpe::PlaybackData& playbackData) override;
     void updateRenderingMode(const audio::RenderMode mode) override;
+
+    // IMuseSamplerTracks
+    const TrackList& allTracks() const override;
+    ms_Track addTrack() override;
 
     audio::msecs_t playbackPosition() const override;
     void setPlaybackPosition(const audio::msecs_t newPosition) override;
     bool isActive() const override;
     void setIsActive(bool arg) override;
+
+    InstrumentInfo resolveInstrument(const mpe::PlaybackSetupData& setupData) const;
+    std::string resolveDefaultPresetCode(const InstrumentInfo& instrument) const;
 
     void handleAuditionEvents(const MuseSamplerSequencer::EventType& event);
     void setCurrentPosition(const audio::samples_t samples);
@@ -68,7 +78,8 @@ protected:
 
     MuseSamplerLibHandlerPtr m_samplerLib = nullptr;
     ms_MuseSampler m_sampler = nullptr;
-    ms_Track m_track = nullptr;
+    InstrumentInfo m_instrument;
+    TrackList m_tracks;
     ms_OutputBuffer m_bus;
 
     audio::samples_t m_currentPosition = 0;
@@ -77,6 +88,8 @@ protected:
     std::vector<float> m_rightChannel;
 
     std::array<float*, 2> m_internalBuffer;
+
+    bool m_offlineModeStarted = false;
 
     MuseSamplerSequencer m_sequencer;
 };

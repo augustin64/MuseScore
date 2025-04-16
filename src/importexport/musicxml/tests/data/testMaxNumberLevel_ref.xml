@@ -13,12 +13,6 @@
       </encoding>
     </identification>
   <part-list>
-    <part-group type="start" number="1">
-      <group-symbol>bracket</group-symbol>
-      </part-group>
-    <part-group type="start" number="2">
-      <group-symbol>square</group-symbol>
-      </part-group>
     <score-part id="P1">
       <part-name>Violins</part-name>
       <part-abbreviation>Vlns.</part-abbreviation>
@@ -33,8 +27,6 @@
         <pan>0</pan>
         </midi-instrument>
       </score-part>
-    <part-group type="stop" number="2"/>
-    <part-group type="stop" number="1"/>
     </part-list>
   <part id="P1">
     <measure number="1">
@@ -141,7 +133,7 @@
         <type>whole</type>
         <staff>1</staff>
         <notations>
-          <slur type="start" placement="below" number="1"/>
+          <slur type="start" number="1"/>
           </notations>
         </note>
       <backup>
@@ -163,7 +155,7 @@
         <type>whole</type>
         <staff>2</staff>
         <notations>
-          <slur type="start" placement="below" number="2"/>
+          <slur type="start" number="2"/>
           </notations>
         </note>
       <backup>
@@ -185,7 +177,7 @@
         <type>whole</type>
         <staff>3</staff>
         <notations>
-          <slur type="start" placement="below" number="3"/>
+          <slur type="start" number="3"/>
           </notations>
         </note>
       <backup>
@@ -207,7 +199,7 @@
         <type>whole</type>
         <staff>4</staff>
         <notations>
-          <slur type="start" placement="below" number="4"/>
+          <slur type="start" number="4"/>
           </notations>
         </note>
       <backup>
@@ -229,7 +221,7 @@
         <type>whole</type>
         <staff>5</staff>
         <notations>
-          <slur type="start" placement="below" number="5"/>
+          <slur type="start" number="5"/>
           </notations>
         </note>
       <backup>
@@ -251,7 +243,7 @@
         <type>whole</type>
         <staff>6</staff>
         <notations>
-          <slur type="start" placement="below" number="6"/>
+          <slur type="start" number="6"/>
           </notations>
         </note>
       <backup>
@@ -273,7 +265,7 @@
         <type>whole</type>
         <staff>7</staff>
         <notations>
-          <slur type="start" placement="below" number="7"/>
+          <slur type="start" number="7"/>
           </notations>
         </note>
       <backup>
@@ -295,7 +287,7 @@
         <type>whole</type>
         <staff>8</staff>
         <notations>
-          <slur type="start" placement="below" number="8"/>
+          <slur type="start" number="8"/>
           </notations>
         </note>
       <backup>
@@ -317,7 +309,7 @@
         <type>whole</type>
         <staff>9</staff>
         <notations>
-          <slur type="start" placement="below" number="9"/>
+          <slur type="start" number="9"/>
           </notations>
         </note>
       <backup>
@@ -339,7 +331,7 @@
         <type>whole</type>
         <staff>10</staff>
         <notations>
-          <slur type="start" placement="below" number="10"/>
+          <slur type="start" number="10"/>
           </notations>
         </note>
       <backup>
@@ -361,7 +353,7 @@
         <type>whole</type>
         <staff>11</staff>
         <notations>
-          <slur type="start" placement="below" number="11"/>
+          <slur type="start" number="11"/>
           </notations>
         </note>
       <backup>
@@ -383,7 +375,7 @@
         <type>whole</type>
         <staff>12</staff>
         <notations>
-          <slur type="start" placement="below" number="12"/>
+          <slur type="start" number="12"/>
           </notations>
         </note>
       <backup>
@@ -405,7 +397,7 @@
         <type>whole</type>
         <staff>13</staff>
         <notations>
-          <slur type="start" placement="below" number="13"/>
+          <slur type="start" number="13"/>
           </notations>
         </note>
       <backup>
@@ -427,7 +419,7 @@
         <type>whole</type>
         <staff>14</staff>
         <notations>
-          <slur type="start" placement="below" number="14"/>
+          <slur type="start" number="14"/>
           </notations>
         </note>
       <backup>
@@ -449,7 +441,7 @@
         <type>whole</type>
         <staff>15</staff>
         <notations>
-          <slur type="start" placement="below" number="15"/>
+          <slur type="start" number="15"/>
           </notations>
         </note>
       <backup>
@@ -471,7 +463,7 @@
         <type>whole</type>
         <staff>16</staff>
         <notations>
-          <slur type="start" placement="below" number="16"/>
+          <slur type="start" number="16"/>
           </notations>
         </note>
       </measure>

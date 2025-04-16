@@ -20,32 +20,35 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+#include <QFile>
+#include <QFileInfo>
+
 #include "bb.h"
 
 #include "engravingerrors.h"
-#include "libmscore/mscore.h"
+#include "engraving/dom/mscore.h"
 
-#include "libmscore/factory.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/part.h"
-#include "libmscore/staff.h"
-#include "libmscore/text.h"
-#include "libmscore/box.h"
-#include "libmscore/slur.h"
-#include "libmscore/tie.h"
-#include "libmscore/note.h"
-#include "libmscore/chord.h"
-#include "libmscore/rest.h"
-#include "libmscore/drumset.h"
-#include "libmscore/utils.h"
-#include "libmscore/chordlist.h"
-#include "libmscore/harmony.h"
-#include "libmscore/layoutbreak.h"
-#include "libmscore/key.h"
-#include "libmscore/pitchspelling.h"
-#include "libmscore/measure.h"
-#include "libmscore/segment.h"
-#include "libmscore/keysig.h"
+#include "engraving/dom/factory.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/box.h"
+#include "engraving/dom/slur.h"
+#include "engraving/dom/tie.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/drumset.h"
+#include "engraving/dom/utils.h"
+#include "engraving/dom/chordlist.h"
+#include "engraving/dom/harmony.h"
+#include "engraving/dom/layoutbreak.h"
+#include "engraving/dom/key.h"
+#include "engraving/dom/pitchspelling.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/keysig.h"
 
 #include "log.h"
 
@@ -358,7 +361,7 @@ bool BBFile::read(const QString& name)
                     continue;
                 }
                 Event note(ME_NOTE);
-                note.setOntime((tick.ticks() * Constants::division) / bbDivision);
+                note.setOntime((tick.ticks() * Constants::DIVISION) / bbDivision);
                 note.setPitch(a[idx + 5]);
                 note.setVelo(a[idx + 6]);
                 note.setChannel(channel);
@@ -371,7 +374,7 @@ bool BBFile::read(const QString& name)
                     len1 = lastLen;
                 }
                 lastLen = len1;
-                note.setDuration((len1* Constants::division) / bbDivision);
+                note.setDuration((len1* Constants::DIVISION) / bbDivision);
                 track->append(note);
             } else if (type == 0xb0 || type == 0xc0) {
                 // ignore controller
@@ -553,13 +556,24 @@ Err importBB(MasterScore* score, const QString& name)
     foreach (Staff* staff, score->staves()) {
         Fraction tick = Fraction(0, 1);
         KeySigEvent ke;
-        ke.setKey(Key(bb.key()));
+        Key key = Key(bb.key());
+        Key cKey = key;
+        Interval v = staff->part()->instrument(tick)->transpose();
+        if (!v.isZero() && !score->style().styleB(Sid::concertPitch)) {
+            cKey = transposeKey(key, v);
+            // if there are more than 6 accidentals in transposing key, it cannot be PreferSharpFlat::AUTO
+            if ((key > 6 || key < -6) && staff->part()->preferSharpFlat() == PreferSharpFlat::AUTO) {
+                staff->part()->setPreferSharpFlat(PreferSharpFlat::NONE);
+            }
+        }
+        ke.setConcertKey(cKey);
+        ke.setKey(key);
         staff->setKey(tick, ke);
         Measure* mks = score->tick2measure(tick);
         Segment* sks = mks->getSegment(SegmentType::KeySig, tick);
         KeySig* keysig = Factory::createKeySig(sks);
         keysig->setTrack((static_cast<int>(score->staffIdx(staff->part())) + staff->rstaff()) * VOICES);
-        keysig->setKey(Key(bb.key()));
+        keysig->setKey(cKey, key);
         sks->add(keysig);
     }
     score->setUpTempoMap();
@@ -792,7 +806,7 @@ void BBFile::convertTrack(Score* score, BBTrack* track, int staffIdx)
 
 void BBTrack::quantize(int startTick, int endTick, EventList* dst)
 {
-    int mintick = Constants::division * 64;
+    int mintick = Constants::DIVISION * 64;
     iEvent i = _events.begin();
     for (; i != _events.end(); ++i) {
         if (i->ontime() >= startTick) {
@@ -809,26 +823,26 @@ void BBTrack::quantize(int startTick, int endTick, EventList* dst)
             mintick = e.duration();
         }
     }
-    if (mintick <= Constants::division / 16) {        // minimum duration is 1/64
-        mintick = Constants::division / 16;
-    } else if (mintick <= Constants::division / 8) {
-        mintick = Constants::division / 8;
-    } else if (mintick <= Constants::division / 4) {
-        mintick = Constants::division / 4;
-    } else if (mintick <= Constants::division / 2) {
-        mintick = Constants::division / 2;
-    } else if (mintick <= Constants::division) {
-        mintick = Constants::division;
-    } else if (mintick <= Constants::division* 2) {
-        mintick = Constants::division * 2;
-    } else if (mintick <= Constants::division* 4) {
-        mintick = Constants::division * 4;
-    } else if (mintick <= Constants::division* 8) {
-        mintick = Constants::division * 8;
+    if (mintick <= Constants::DIVISION / 16) {        // minimum duration is 1/64
+        mintick = Constants::DIVISION / 16;
+    } else if (mintick <= Constants::DIVISION / 8) {
+        mintick = Constants::DIVISION / 8;
+    } else if (mintick <= Constants::DIVISION / 4) {
+        mintick = Constants::DIVISION / 4;
+    } else if (mintick <= Constants::DIVISION / 2) {
+        mintick = Constants::DIVISION / 2;
+    } else if (mintick <= Constants::DIVISION) {
+        mintick = Constants::DIVISION;
+    } else if (mintick <= Constants::DIVISION* 2) {
+        mintick = Constants::DIVISION * 2;
+    } else if (mintick <= Constants::DIVISION* 4) {
+        mintick = Constants::DIVISION * 4;
+    } else if (mintick <= Constants::DIVISION* 8) {
+        mintick = Constants::DIVISION * 8;
     }
     int raster;
-    if (mintick > Constants::division) {
-        raster = Constants::division;
+    if (mintick > Constants::DIVISION) {
+        raster = Constants::DIVISION;
     } else {
         raster = mintick;
     }

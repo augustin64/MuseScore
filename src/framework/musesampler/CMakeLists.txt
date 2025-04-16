@@ -25,6 +25,7 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/musesamplermodule.h
     ${CMAKE_CURRENT_LIST_DIR}/imusesamplerconfiguration.h
     ${CMAKE_CURRENT_LIST_DIR}/imusesamplerinfo.h
+    ${CMAKE_CURRENT_LIST_DIR}/musesamplertypes.h
 
     ${CMAKE_CURRENT_LIST_DIR}/internal/musesamplerresolver.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/musesamplerresolver.h
@@ -32,6 +33,7 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/musesamplerwrapper.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/musesamplersequencer.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/musesamplersequencer.h
+    ${CMAKE_CURRENT_LIST_DIR}/internal/imusesamplertracks.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/musesamplerconfiguration.cpp
     ${CMAKE_CURRENT_LIST_DIR}/internal/musesamplerconfiguration.h
     ${CMAKE_CURRENT_LIST_DIR}/internal/apitypes.h

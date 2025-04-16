@@ -41,14 +41,14 @@
 namespace mu::notation {
 class NotationActionController : public actions::Actionable, public async::Asyncable
 {
-    INJECT(notation, actions::IActionsDispatcher, dispatcher)
-    INJECT(notation, ui::IUiActionsRegister, actionRegister)
-    INJECT(notation, context::IGlobalContext, globalContext)
-    INJECT(notation, context::IUiContextResolver, uiContextResolver)
-    INJECT(notation, framework::IInteractive, interactive)
-    INJECT(notation, playback::IPlaybackController, playbackController)
-    INJECT(notation, INotationConfiguration, configuration)
-    INJECT(notation, engraving::IEngravingConfiguration, engravingConfiguration)
+    INJECT(actions::IActionsDispatcher, dispatcher)
+    INJECT(ui::IUiActionsRegister, actionRegister)
+    INJECT(context::IGlobalContext, globalContext)
+    INJECT(context::IUiContextResolver, uiContextResolver)
+    INJECT(framework::IInteractive, interactive)
+    INJECT(playback::IPlaybackController, playbackController)
+    INJECT(INotationConfiguration, configuration)
+    INJECT(engraving::IEngravingConfiguration, engravingConfiguration)
 
 public:
     void init();
@@ -80,6 +80,7 @@ private:
 
     void toggleNoteInput();
     void toggleNoteInputMethod(NoteInputMethod method);
+    void toggleNoteInputInsert();
     void addNote(NoteName note, NoteAddingMode addingMode);
     void padNote(const Pad& pad);
     void putNote(const actions::ActionData& args);
@@ -108,6 +109,9 @@ private:
     void addTie();
     void chordTie();
     void addSlur();
+    void addFret(int num);
+
+    void insertClef(mu::engraving::ClefType type);
 
     framework::IInteractive::Result showErrorMessage(const std::string& message) const;
 
@@ -116,6 +120,7 @@ private:
     void addText(TextStyleType type);
     void addImage();
     void addFiguredBass();
+    void addGuitarBend(GuitarBendType bendType);
 
     void selectAllSimilarElements();
     void selectAllSimilarElementsInStaff();
@@ -139,6 +144,7 @@ private:
     void openEditStyleDialog(const actions::ActionData& args);
     void openPageSettingsDialog();
     void openStaffProperties();
+    void openEditStringsDialog();
     void openBreaksDialog();
     void openTransposeDialog();
     void openPartsDialog();
@@ -201,6 +207,8 @@ private:
 
     const mu::engraving::Harmony* editedChordSymbol() const;
 
+    bool elementHasPopup(EngravingItem* e);
+
     bool canUndo() const;
     bool canRedo() const;
     bool isNotationPage() const;
@@ -241,6 +249,9 @@ private:
     template<typename P1, typename P2>
     void registerAction(const mu::actions::ActionCode&, void (INotationInteraction::*)(P1, P2), P1, P2, PlayMode = PlayMode::NoPlay,
                         bool (NotationActionController::*)() const = &NotationActionController::isNotationPage);
+
+    void notifyAccessibilityAboutActionTriggered(const mu::actions::ActionCode& actionCode);
+    void notifyAccessibilityAboutVoiceInfo(const std::string& info);
 
     async::Notification m_currentNotationNoteInputChanged;
 

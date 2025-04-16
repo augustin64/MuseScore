@@ -17,7 +17,7 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Edit Staff Type</string>
+   <string>Edit staff type</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_4">
    <item>
@@ -29,7 +29,6 @@
       <widget class="QLabel" name="groupName">
        <property name="font">
         <font>
-         <weight>75</weight>
          <bold>true</bold>
         </font>
        </property>
@@ -218,7 +217,7 @@
         <number>0</number>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>2</number>
        </property>
        <widget class="QWidget" name="page">
         <layout class="QVBoxLayout" name="verticalLayout_7" stretch="0,0,0">
@@ -435,7 +434,7 @@
               </property>
               <widget class="QWidget" name="tab">
                <attribute name="title">
-                <string>Fret Marks</string>
+                <string>Fret marks</string>
                </attribute>
                <layout class="QVBoxLayout" name="verticalLayout_2">
                 <item>
@@ -682,13 +681,6 @@
                 <item>
                  <layout class="QHBoxLayout" name="horizontalLayout_3">
                   <item>
-                   <widget class="QCheckBox" name="showBackTied">
-                    <property name="text">
-                     <string>Show back-tied fret marks</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
                    <widget class="QCheckBox" name="showTabFingering">
                     <property name="text">
                      <string>Show fingering in tablature</string>
@@ -714,7 +706,7 @@
               </widget>
               <widget class="QWidget" name="tab_2">
                <attribute name="title">
-                <string>Note Values</string>
+                <string>Note values</string>
                </attribute>
                <layout class="QVBoxLayout" name="verticalLayout_11">
                 <property name="spacing">
@@ -1335,7 +1327,7 @@
        <item>
         <widget class="QPushButton" name="templateReset">
          <property name="text">
-          <string>&lt; Reset to Template</string>
+          <string>&lt; Reset to template</string>
          </property>
         </widget>
        </item>
@@ -1361,7 +1353,7 @@
           <string>Create a new staff type of current group.</string>
          </property>
          <property name="text">
-          <string>Add to Templates</string>
+          <string>Add to templates</string>
          </property>
         </widget>
        </item>
@@ -1431,7 +1423,6 @@
   <tabstop>aboveLinesRadio</tabstop>
   <tabstop>linesThroughRadio</tabstop>
   <tabstop>linesBrokenRadio</tabstop>
-  <tabstop>showBackTied</tabstop>
   <tabstop>showTabFingering</tabstop>
   <tabstop>durFontName</tabstop>
   <tabstop>durFontSize</tabstop>

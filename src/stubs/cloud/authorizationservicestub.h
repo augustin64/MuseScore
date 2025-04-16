@@ -28,11 +28,18 @@ namespace mu::cloud {
 class AuthorizationServiceStub : public IAuthorizationService
 {
 public:
+    void signUp() override;
     void signIn() override;
     void signOut() override;
 
+    RetVal<Val> ensureAuthorization(bool publishingScore, const std::string& text = {}) override;
+
     ValCh<bool> userAuthorized() const override;
     ValCh<AccountInfo> accountInfo() const override;
+
+    CloudInfo cloudInfo() const override;
+
+    Ret checkCloudIsAvailable() const override;
 };
 }
 

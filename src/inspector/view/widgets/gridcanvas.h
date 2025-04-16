@@ -20,8 +20,8 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-#ifndef MU_INSPECTOR_GRIDCANVAS_H
-#define MU_INSPECTOR_GRIDCANVAS_H
+#ifndef MU_INSPECTOR_COMPAT_GRIDCANVAS_H
+#define MU_INSPECTOR_COMPAT_GRIDCANVAS_H
 
 #include <QPainter>
 
@@ -35,7 +35,7 @@ class GridCanvas : public uicomponents::QuickPaintedView
 {
     Q_OBJECT
 
-    INJECT(inspector, mu::ui::IUiConfiguration, uiConfig)
+    INJECT(mu::ui::IUiConfiguration, uiConfig)
 
     Q_PROPERTY(QVariant pointList READ pointList WRITE setPointList NOTIFY pointListChanged)
 

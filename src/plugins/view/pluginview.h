@@ -31,20 +31,20 @@
 #include "framework/ui/iuiengine.h"
 #include "plugins/ipluginsconfiguration.h"
 
+#include "uicomponents/view/dialogview.h"
+
 class QQmlComponent;
 class QQuickView;
 
-namespace mu::engraving {
-class QmlPlugin;
-}
-
 namespace mu::plugins {
+class QmlPlugin;
+
 class PluginView : public QObject
 {
     Q_OBJECT
 
-    INJECT(plugins, ui::IUiEngine, uiEngine)
-    INJECT(plugins, IPluginsConfiguration, configuration)
+    INJECT(ui::IUiEngine, uiEngine)
+    INJECT(IPluginsConfiguration, configuration)
 
 public:
     PluginView(QObject* parent = nullptr);
@@ -57,8 +57,9 @@ public:
     QVersionNumber version() const;
     QString thumbnailName() const;
     QString categoryCode() const;
+    bool requiresScore() const;
 
-    mu::engraving::QmlPlugin* qmlPlugin() const;
+    QmlPlugin* qmlPlugin() const;
 
     void run();
 
@@ -73,9 +74,9 @@ private:
 
     void destroyView();
 
-    mu::engraving::QmlPlugin* m_qmlPlugin = nullptr;
+    QmlPlugin* m_qmlPlugin = nullptr;
     QQmlComponent* m_component = nullptr;
-    QQuickView* m_view = nullptr;
+    uicomponents::DialogView* m_dialogView = nullptr;
 };
 }
 

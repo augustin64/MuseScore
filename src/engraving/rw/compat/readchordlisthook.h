@@ -19,10 +19,9 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-#ifndef MU_ENGRAVING_CHORDLIST_H
-#define MU_ENGRAVING_CHORDLIST_H
+#ifndef MU_ENGRAVING_READCHORDLISTHOOK_H
+#define MU_ENGRAVING_READCHORDLISTHOOK_H
 
-#include <functional>
 #include "types/string.h"
 
 namespace mu::engraving {
@@ -46,4 +45,4 @@ private:
 };
 }
 
-#endif // MU_ENGRAVING_CHORDLIST_H
+#endif // MU_ENGRAVING_READCHORDLISTHOOK_H

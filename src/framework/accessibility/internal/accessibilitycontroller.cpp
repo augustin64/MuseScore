@@ -34,12 +34,10 @@
 #include "accessibleobject.h"
 #include "accessiblestub.h"
 #include "accessibleiteminterface.h"
-#include "async/async.h"
 
 #include "log.h"
-#include "config.h"
 
-#ifdef ACCESSIBILITY_LOGGING_ENABLED
+#ifdef MUE_ENABLE_ACCESSIBILITY_TRACE
 #define MYLOG() LOGI()
 #else
 #define MYLOG() LOGN()
@@ -49,6 +47,10 @@ using namespace mu::accessibility;
 
 AccessibleObject* s_rootObject = nullptr;
 std::shared_ptr<IQAccessibleInterfaceRegister> accessibleInterfaceRegister = nullptr;
+
+static void updateHandlerNoop(QAccessibleEvent*)
+{
+}
 
 AccessibilityController::~AccessibilityController()
 {
@@ -137,6 +139,10 @@ void AccessibilityController::unreg(IAccessible* aitem)
         m_lastFocused = nullptr;
     }
 
+    if (m_itemForRestoreFocus == item.item) {
+        m_itemForRestoreFocus = nullptr;
+    }
+
     if (m_children.contains(aitem)) {
         m_children.removeOne(aitem);
     }
@@ -166,6 +172,15 @@ QString AccessibilityController::currentPanelAccessibleName() const
 {
     const IAccessible* focusedItemPanel = panel(m_lastFocused);
     return focusedItemPanel ? focusedItemPanel->accessibleName() : "";
+}
+
+void AccessibilityController::setIgnoreQtAccessibilityEvents(bool ignore)
+{
+    if (ignore) {
+        QAccessible::installUpdateHandler(updateHandlerNoop);
+    } else {
+        QAccessible::installUpdateHandler(nullptr);
+    }
 }
 
 void AccessibilityController::propertyChanged(IAccessible* item, IAccessible::Property property, const Val& value)
@@ -271,8 +286,8 @@ void AccessibilityController::stateChanged(IAccessible* aitem, State state, bool
             cancelPreviousReading();
             savePanelAccessibleName(m_lastFocused, item.item);
 
-            QAccessibleEvent ev(item.object, QAccessible::Focus);
-            sendEvent(&ev);
+            QAccessibleEvent ev2(item.object, QAccessible::Focus);
+            sendEvent(&ev2);
             m_lastFocused = item.item;
         }
     }
@@ -280,7 +295,7 @@ void AccessibilityController::stateChanged(IAccessible* aitem, State state, bool
 
 void AccessibilityController::sendEvent(QAccessibleEvent* ev)
 {
-#ifdef ACCESSIBILITY_LOGGING_ENABLED
+#ifdef MUE_ENABLE_ACCESSIBILITY_TRACE
     AccessibleObject* obj = qobject_cast<AccessibleObject*>(ev->object());
     MYLOG() << "object: " << obj->item()->accessibleName() << ", event: " << int(ev->type());
 #endif
@@ -349,12 +364,15 @@ void AccessibilityController::triggerRevoicingOfChangedName(IAccessible* item)
     m_itemForRestoreFocus = item;
 
     //! NOTE: Restore the focused element after some delay(this value was found experimentally)
-    QTimer::singleShot(200, [=]() {
+    QTimer::singleShot(100, [=]() {
         if (m_lastFocused) {
             m_lastFocused->setState(State::Focused, false);
         }
 
-        m_itemForRestoreFocus->setState(State::Focused, true);
+        if (m_itemForRestoreFocus) {
+            m_itemForRestoreFocus->setState(State::Focused, true);
+        }
+
         m_ignorePanelChangingVoice = false;
     });
 }
@@ -640,6 +658,11 @@ QString AccessibilityController::accessibleTextAtOffset(int, TextBoundaryType, i
 }
 
 int AccessibilityController::accessibleCharacterCount() const
+{
+    return 0;
+}
+
+int AccessibilityController::accessibleRowIndex() const
 {
     return 0;
 }

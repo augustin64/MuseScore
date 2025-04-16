@@ -27,13 +27,12 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
-#include "libmscore/tempotext.h"
-#include "libmscore/text.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/excerpt.h"
+#include "engraving/dom/tempotext.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/excerpt.h"
 
 #include "log.h"
-#include "global/deprecated/xmlwriter.h"
 
 using namespace mu::converter;
 using namespace mu::engraving;
@@ -82,7 +81,7 @@ mu::RetVal<std::string> NotationMeta::metaJson(mu::engraving::Score* score)
     json["tempoText"] =  _tempo.second;
 
     json["parts"] =  partsJsonArray(score);
-    json["pageFormat"] = pageFormatJson(score);
+    json["pageFormat"] = pageFormatJson(score->style());
     json["textFramesData"] =  typeDataJson(score);
     json["excerpts"] = excerptsJsonArray(score);
 
@@ -141,7 +140,7 @@ QString NotationMeta::composer(const mu::engraving::Score* score)
 QString NotationMeta::poet(const mu::engraving::Score* score)
 {
     QString poet;
-    const mu::engraving::Text* text = score->getText(mu::engraving::TextStyleType::POET);
+    const mu::engraving::Text* text = score->getText(mu::engraving::TextStyleType::LYRICIST);
     if (text) {
         poet = text->plainText();
     }
@@ -220,12 +219,12 @@ QJsonArray NotationMeta::partsJsonArray(const mu::engraving::Score* score)
     return jsonPartsArray;
 }
 
-QJsonObject NotationMeta::pageFormatJson(const mu::engraving::Score* score)
+QJsonObject NotationMeta::pageFormatJson(const mu::engraving::MStyle& style)
 {
     QJsonObject format;
-    format.insert("height", round(score->styleD(mu::engraving::Sid::pageHeight) * mu::engraving::INCH));
-    format.insert("width", round(score->styleD(mu::engraving::Sid::pageWidth) * mu::engraving::INCH));
-    format.insert("twosided", boolToString(score->styleB(mu::engraving::Sid::pageTwosided)));
+    format.insert("height", round(style.styleD(mu::engraving::Sid::pageHeight) * mu::engraving::INCH));
+    format.insert("width", round(style.styleD(mu::engraving::Sid::pageWidth) * mu::engraving::INCH));
+    format.insert("twosided", boolToString(style.styleB(mu::engraving::Sid::pageTwosided)));
 
     return format;
 }
@@ -252,7 +251,7 @@ QJsonObject NotationMeta::typeDataJson(mu::engraving::Score* score)
         { "titles", TextStyleType::TITLE },
         { "subtitles", TextStyleType::SUBTITLE },
         { "composers", TextStyleType::COMPOSER },
-        { "poets", TextStyleType::POET }
+        { "poets", TextStyleType::LYRICIST }
     };
 
     for (auto nameType : namesTypesList) {

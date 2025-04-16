@@ -22,9 +22,10 @@
 #ifndef MU_PLAYBACK_IPLAYBACKCONTROLLER_H
 #define MU_PLAYBACK_IPLAYBACKCONTROLLER_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "async/notification.h"
 #include "async/channel.h"
+#include "async/promise.h"
 #include "global/progress.h"
 #include "notation/inotation.h"
 #include "notation/notationtypes.h"
@@ -61,8 +62,16 @@ public:
     using InstrumentTrackIdMap = std::unordered_map<engraving::InstrumentTrackId, audio::TrackId>;
     virtual const InstrumentTrackIdMap& instrumentTrackIdMap() const = 0;
 
-    virtual async::Channel<audio::TrackId, engraving::InstrumentTrackId> trackAdded() const = 0;
-    virtual async::Channel<audio::TrackId, engraving::InstrumentTrackId> trackRemoved() const = 0;
+    using AuxTrackIdMap = std::map<audio::aux_channel_idx_t, audio::TrackId>;
+    virtual const AuxTrackIdMap& auxTrackIdMap() const = 0;
+
+    virtual async::Channel<audio::TrackId> trackAdded() const = 0;
+    virtual async::Channel<audio::TrackId> trackRemoved() const = 0;
+
+    virtual std::string auxChannelName(audio::aux_channel_idx_t index) const = 0;
+    virtual async::Channel<audio::aux_channel_idx_t, std::string> auxChannelNameChanged() const = 0;
+
+    virtual async::Promise<audio::SoundPresetList> availableSoundPresets(const engraving::InstrumentTrackId& instrumentTrackId) const = 0;
 
     virtual void playElements(const std::vector<const notation::EngravingItem*>& elements) = 0;
     virtual void playMetronome(int tick) = 0;

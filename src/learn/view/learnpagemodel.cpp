@@ -60,16 +60,6 @@ void LearnPageModel::load()
     });
 }
 
-void LearnPageModel::openVideo(const QString& videoId) const
-{
-    learnService()->openVideo(videoId);
-}
-
-void LearnPageModel::openUrl(const QString& url) const
-{
-    interactive()->openUrl(QUrl(url));
-}
-
 void LearnPageModel::setSearchText(const QString& text)
 {
     if (m_searchText == text) {
@@ -88,6 +78,8 @@ QVariantMap LearnPageModel::classesAuthor() const
     author["name"] = qtrc("learn", "Marc Sabatella");
     author["role"] = qtrc("learn", "Instructor");
     author["position"] = qtrc("learn", "Creator, Mastering MuseScore");
+
+    // Rename to "MuseScore Studio" in this description?
     author["description"] = qtrc("learn", "Welcome to Mastering MuseScore – the most comprehensive resource "
                                           "for learning the world’s most popular music notation software! "
                                           "My name is Marc Sabatella, and I have been helping develop, support, "
@@ -96,7 +88,7 @@ QVariantMap LearnPageModel::classesAuthor() const
                                           "or are a power user eager to explore advanced engraving and playback techniques, "
                                           "my flagship online course Mastering MuseScore "
                                           "covers everything you need to know to get the most out of MuseScore. "
-                                          "In addition, Mastering MuseScore features a supportive community of musicians, "
+                                          "\n\nIn addition, Mastering MuseScore features a supportive community of musicians, "
                                           "with discussion spaces, live streams, "
                                           "and other related courses and services to help you create your best music. "
                                           "Take advantage of this opportunity to learn MuseScore from one of its most recognized experts!");
@@ -150,9 +142,9 @@ QVariantList LearnPageModel::playlistToVariantList(const Playlist& playlist) con
 
     for (const PlaylistItem& item : playlist) {
         QVariantMap itemObj;
-        itemObj["videoId"] = item.videoId;
         itemObj["title"] = item.title;
         itemObj["author"] = item.author;
+        itemObj["url"] = item.url;
         itemObj["thumbnailUrl"] = item.thumbnailUrl;
         itemObj["duration"] = formatDuration(item.durationSecs);
 

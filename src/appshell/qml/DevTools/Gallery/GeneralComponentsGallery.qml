@@ -30,6 +30,7 @@ Rectangle {
     id: root
 
     color: ui.theme.backgroundSecondaryColor
+    clip: true
 
     NavigationSection {
         id: navSec
@@ -71,6 +72,7 @@ Rectangle {
                     { textRole: "RoundedRadioButton", componentRole: roundedRadioButtonSample },
                     { textRole: "IncrementalPropertyControl (Hidden icon, Icon left, Icon right)", componentRole: incrementalPropertyControlSample },
                     { textRole: "FlatToggleButton", componentRole: flatToggleButtonSample },
+                    { textRole: "ToggleButton", componentRole: toggleButtonSample },
                     { textRole: "RoundedRectangle (which allows to round the particular corners)", componentRole: roundedRectangleSample },
                     { textRole: "TextInputField", componentRole: textInputFieldSample },
                     { textRole: "SearchField", componentRole: searchFieldSample },
@@ -82,7 +84,9 @@ Rectangle {
                     { textRole: "StyledSlider", componentRole: slidersSample },
                     { textRole: "NumberInputField", componentRole: numberInputFieldSample },
                     { textRole: "TimeInputField", componentRole: timeInputFieldSample },
-                    { textRole: "ValueList", componentRole: valueListSample }
+                    { textRole: "ValueList", componentRole: valueListSample },
+                    { textRole: "StyledBusyIndicator", componentRole: styledBusyIndicatorSample },
+                    { textRole: "DialogButtonBox", componentRole: dialogButtonBoxSample }
                 ]
 
                 delegate: Column {
@@ -368,8 +372,32 @@ Rectangle {
 
             FlatButton {
                 icon: IconCode.SAVE
+                text: "Suuuuuuuuuuuuuper long text with icon"
+            }
+
+            FlatButton {
+                icon: IconCode.SAVE
+                text: "Elided suuuuuuuuuuuuuper long text with icon"
+                width: 132
+            }
+
+            FlatButton {
+                icon: IconCode.SAVE
                 text: "Text with icon"
                 orientation: Qt.Horizontal
+            }
+
+            FlatButton {
+                icon: IconCode.SAVE
+                text: "Suuuuuuuuuuuuuper long text with icon"
+                orientation: Qt.Horizontal
+            }
+
+            FlatButton {
+                icon: IconCode.SAVE
+                text: "Elided suuuuuuuuuuuuuper long text with icon"
+                orientation: Qt.Horizontal
+                width: 132
             }
 
             FlatButton {
@@ -488,6 +516,67 @@ Rectangle {
     }
 
     Component {
+        id: dialogButtonBoxSample
+
+        Column {
+            spacing: 8
+
+            Row {
+                spacing: 8
+                anchors.right: parent.right
+
+                FlatButton {
+                    text: "Windows"
+                    onClicked: {
+                        dialogButtonBox.buttonLayout = ButtonBoxModel.WinLayout
+                    }
+                }
+                FlatButton {
+                    text: "Mac"
+                    onClicked: {
+                        dialogButtonBox.buttonLayout = ButtonBoxModel.MacLayout
+                    }
+                }
+                FlatButton {
+                    text: "Linux"
+                    onClicked: {
+                        dialogButtonBox.buttonLayout = ButtonBoxModel.LinuxLayout
+                    }
+                }
+            }
+
+            ButtonBox {
+                id: dialogButtonBox
+                buttonLayout: ButtonBoxModel.WinLayout
+
+                FlatButton {
+                    text: "Details"
+                    buttonRole: ButtonBoxModel.CustomRole
+                    buttonId: ButtonBoxModel.CustomButton + 1
+                    isLeftSide: true
+                }
+
+                FlatButton {
+                    text: "Save"
+                    buttonRole: ButtonBoxModel.AcceptRole
+                    buttonId: ButtonBoxModel.Save
+                }
+                FlatButton {
+                    text: "Close"
+                    buttonRole: ButtonBoxModel.DestructiveRole
+                    buttonId: ButtonBoxModel.Close
+                }
+                FlatButton {
+                    text: "Details 2"
+                    buttonRole: ButtonBoxModel.CustomRole
+                    buttonId: ButtonBoxModel.CustomButton + 2
+                    isLeftSide: false
+                }
+            }
+        }
+    }
+
+    Component {
         id: roundedRadioButtonSample
 
         Row {
@@ -568,6 +657,18 @@ Rectangle {
             width: 20
 
             icon: checked ? IconCode.LOCK_CLOSED : IconCode.LOCK_OPEN
+
+            onToggled: {
+                checked = !checked
+            }
+        }
+    }
+
+    Component {
+        id: toggleButtonSample
+
+        ToggleButton {
+            id: toggleButton
 
             onToggled: {
                 checked = !checked
@@ -944,6 +1045,17 @@ Rectangle {
                     valueType: "Int"
                 }
             }
+        }
+    }
+
+    Component {
+        id: styledBusyIndicatorSample
+
+        Item {
+            width: childrenRect.width
+            height: childrenRect.height
+
+            StyledBusyIndicator {}
         }
     }
 }

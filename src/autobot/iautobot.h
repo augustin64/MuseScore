@@ -25,8 +25,7 @@
 #include <vector>
 #include <QJSValue>
 
-#include "modularity/imoduleexport.h"
-#include "types/retval.h"
+#include "modularity/imoduleinterface.h"
 #include "io/path.h"
 #include "async/channel.h"
 #include "autobottypes.h"
@@ -73,7 +72,15 @@ public:
     virtual int defaultIntervalMsec() const = 0;
     virtual int intervalMsec() const = 0;
 
-    virtual void execScript(const io::path_t& path) = 0;
+    struct Options {
+        io::path_t context;
+        std::string contextVal;
+        std::string func;
+        std::string funcArgs;
+    };
+
+    virtual void execScript(const io::path_t& path, const Options& opt = Options()) = 0;
+
     virtual void runTestCase(const TestCase& testCase) = 0;
     virtual void sleep(int msec) = 0;
     virtual void pause() = 0;

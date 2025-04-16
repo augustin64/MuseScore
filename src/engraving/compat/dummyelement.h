@@ -23,7 +23,8 @@
 #define MU_ENGRAVING_DUMMYELEMENT_H
 
 #include <list>
-#include "libmscore/engravingitem.h"
+
+#include "dom/engravingitem.h"
 
 namespace mu::engraving {
 enum class Pid : int;

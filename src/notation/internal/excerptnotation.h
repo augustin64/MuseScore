@@ -35,15 +35,20 @@ public:
     ~ExcerptNotation() override;
 
     void init();
+    void reinit(engraving::Excerpt* newExcerpt);
 
-    mu::engraving::Excerpt* excerpt() const;
+    engraving::Excerpt* excerpt() const;
 
+    bool isInited() const override;
     bool isCustom() const override;
     bool isEmpty() const override;
 
     QString name() const override;
     void setName(const QString& name) override;
+    void undoSetName(const QString& name) override;
     async::Notification nameChanged() const override;
+
+    const String& fileName() const override;
 
     INotationPtr notation() override;
     IExcerptNotationPtr clone() const override;

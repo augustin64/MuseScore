@@ -24,26 +24,26 @@
 
 #include <cmath>
 
-#include "libmscore/articulation.h"
-#include "libmscore/bend.h"
-#include "libmscore/box.h"
-#include "libmscore/chord.h"
-#include "libmscore/clef.h"
-#include "libmscore/factory.h"
-#include "libmscore/instrument.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/measure.h"
-#include "libmscore/note.h"
-#include "libmscore/palmmute.h"
-#include "libmscore/part.h"
-#include "libmscore/rehearsalmark.h"
-#include "libmscore/rest.h"
-#include "libmscore/staff.h"
-#include "libmscore/tempotext.h"
-#include "libmscore/text.h"
-#include "libmscore/tie.h"
-#include "libmscore/timesig.h"
-#include "libmscore/tuplet.h"
+#include "engraving/dom/articulation.h"
+#include "engraving/dom/bend.h"
+#include "engraving/dom/box.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/clef.h"
+#include "engraving/dom/factory.h"
+#include "engraving/dom/instrument.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/palmmute.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/rehearsalmark.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/tempotext.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/tie.h"
+#include "engraving/dom/timesig.h"
+#include "engraving/dom/tuplet.h"
 
 #include "types/symid.h"
 
@@ -51,7 +51,7 @@
 
 using namespace mu::engraving;
 
-namespace mu::engraving {
+namespace mu::iex::guitarpro {
 bool PowerTab::readBoolean()
 {
     return readUInt8() != 0;
@@ -446,7 +446,7 @@ void PowerTab::readPosition(int staff, int voice, ptSection& sec)
     beat.position = position;
     beat.voice = voice;
     bool add = false;
-    if (voice == 0 || staff >= sec.beats.size() || sec.beats[staff].empty()) {
+    if (voice == 0 || static_cast<size_t>(staff) >= sec.beats.size() || sec.beats[staff].empty()) {
         beat = ptBeat(staff, voice);
         beat.position = position;
         add = true;
@@ -1279,4 +1279,4 @@ Err PowerTab::read()
     }
     return Err::NoError;
 }
-}
+} // namespace mu::iex::guitarpro

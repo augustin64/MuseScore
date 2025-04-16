@@ -67,6 +67,22 @@ PreferencesPage {
 
         SeparatorLine { }
 
+        ProgramStartSection {
+            startupModes: preferencesModel.startupModes
+            scorePathFilter: preferencesModel.scorePathFilter()
+
+            navigation.section: root.navigationSection
+            navigation.order: root.navigationOrderStart + 2
+
+            onCurrentStartupModesChanged: function(index) {
+                preferencesModel.setCurrentStartupMode(index)
+            }
+
+            onStartupScorePathChanged: function(path) {
+                preferencesModel.setStartupScorePath(path)
+            }
+        }
+
         /*
          * TODO: https://github.com/musescore/MuseScore/issues/9807
         KeyboardLayoutsSection {
@@ -83,22 +99,6 @@ PreferencesPage {
 
         SeparatorLine { }
         */
-
-        AutoSaveSection {
-            isAutoSaveEnabled: preferencesModel.isAutoSaveEnabled
-            autoSaveInterval: preferencesModel.autoSaveInterval
-
-            navigation.section: root.navigationSection
-            navigation.order: root.navigationOrderStart + 3
-
-            onAutoSaveEnabledChanged: function(enabled) {
-                preferencesModel.isAutoSaveEnabled = enabled
-            }
-
-            onIntervalChanged: function(minutes) {
-                preferencesModel.autoSaveInterval = minutes
-            }
-        }
 
         /*
          * TODO: https://github.com/musescore/MuseScore/issues/9807

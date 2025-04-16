@@ -27,8 +27,10 @@
 #include <QAccessible>
 #include <QAccessibleEvent>
 #include <QAction>
+#include <QApplication>
 #include <QContextMenuEvent>
 #include <QDrag>
+#include <QFileInfo>
 #include <QMenu>
 #include <QMimeData>
 #include <QResizeEvent>
@@ -36,28 +38,27 @@
 
 #include "translation.h"
 #include "types/bytearray.h"
-#include "global/deprecated/qzipreader_p.h"
-#include "global/deprecated/qzipwriter_p.h"
 
 #include "actions/actiontypes.h"
 #include "commonscene/commonscenetypes.h"
 
 #include "draw/types/color.h"
 #include "draw/types/pen.h"
-#include "engraving/rw/xml.h"
-#include "engraving/libmscore/actionicon.h"
-#include "engraving/libmscore/chord.h"
-#include "engraving/libmscore/engravingitem.h"
-#include "engraving/libmscore/fret.h"
-#include "engraving/libmscore/image.h"
-#include "engraving/libmscore/masterscore.h"
-#include "engraving/libmscore/note.h"
-#include "engraving/libmscore/symbol.h"
-#include "engraving/libmscore/factory.h"
+
+#include "engraving/rw/rwregister.h"
+
+#include "engraving/dom/actionicon.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/fret.h"
+#include "engraving/dom/image.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/symbol.h"
+#include "engraving/dom/factory.h"
 #include "engraving/style/defaultstyle.h"
 #include "engraving/style/style.h"
 #include "engraving/compat/dummyelement.h"
-#include "engraving/accessibility/accessibleitem.h"
 
 #include "internal/palettecelliconengine.h"
 
@@ -576,7 +577,7 @@ QRect PaletteWidget::rectForCellAt(int idx) const
 
 QPixmap PaletteWidget::pixmapForCellAt(int paletteIdx) const
 {
-    qreal _spatium = gpaletteScore->spatium();
+    qreal _spatium = gpaletteScore->style().spatium();
     qreal magS     = configuration()->paletteSpatium() * mag() * paletteScaling();
     qreal mag      = magS / _spatium;
 
@@ -593,9 +594,9 @@ QPixmap PaletteWidget::pixmapForCellAt(int paletteIdx) const
         cellMag = 1.0;
     }
 
-    element->layout();
+    engravingRender()->layoutItem(element.get());
 
-    RectF r = element->bbox();
+    RectF r = element->ldata()->bbox();
     int w = lrint(r.width() * cellMag);
     int h = lrint(r.height() * cellMag);
 
@@ -613,7 +614,7 @@ QPixmap PaletteWidget::pixmapForCellAt(int paletteIdx) const
     painter.scale(cellMag, cellMag);
 
     painter.translate(-r.topLeft());
-    PointF pos = element->ipos();
+    PointF pos = element->ldata()->pos();
     element->setPos(0, 0);
 
     QColor color;
@@ -633,7 +634,7 @@ QPixmap PaletteWidget::pixmapForCellAt(int paletteIdx) const
     PaletteCellIconEngine::PaintContext ctx;
     ctx.painter = &painter;
 
-    element->scanElements(&ctx, PaletteCellIconEngine::paintPaletteElement);
+    element->scanElements(&ctx, PaletteCellIconEngine::paintPaletteItem);
 
     element->setPos(pos);
     return pm;
@@ -820,6 +821,9 @@ void PaletteWidget::dragEnterEvent(QDragEnterEvent* event)
                 || suffix == "jpg"
                 || suffix == "jpeg"
                 || suffix == "png"
+                || suffix == "bmp"
+                || suffix == "tif"
+                || suffix == "tiff"
                 ) {
                 event->acceptProposedAction();
             }
@@ -885,12 +889,12 @@ void PaletteWidget::dropEvent(QDropEvent* event)
 
         if (type == ElementType::SYMBOL) {
             auto symbol = std::make_shared<Symbol>(gpaletteScore->dummy());
-            symbol->read(xml);
+            rw::RWRegister::reader()->readItem(symbol.get(), xml);
             element = symbol;
         } else {
             element = std::shared_ptr<EngravingItem>(Factory::createItem(type, gpaletteScore->dummy()));
             if (element) {
-                element->read(xml);
+                rw::RWRegister::reader()->readItem(element.get(), xml);
                 element->setTrack(0);
 
                 if (element->isActionIcon()) {
@@ -945,10 +949,10 @@ void PaletteWidget::resizeEvent(QResizeEvent* e)
 
 void PaletteWidget::paintEvent(QPaintEvent* /*event*/)
 {
-    qreal _spatium = gpaletteScore->spatium();
+    qreal _spatium = gpaletteScore->style().spatium();
     qreal magS     = configuration()->paletteSpatium() * mag() * paletteScaling();
     qreal mag      = magS / _spatium;
-    gpaletteScore->setSpatium(SPATIUM20);
+    gpaletteScore->style().setSpatium(SPATIUM20);
 
     mu::draw::Painter painter(this, "palette");
     painter.setAntialiasing(true);
@@ -1055,7 +1059,8 @@ void PaletteWidget::paintEvent(QPaintEvent* /*event*/)
             toActionIcon(el.get())->setFontSize(ActionIcon::DEFAULT_FONT_SIZE * currentCell->mag);
             cellMag = 1.0;
         }
-        el->layout();
+
+        engravingRender()->layoutItem(el.get());
 
         if (drawStaff) {
             qreal y = r.y() + vgridM * .5 - dy + yOffset() * _spatium * cellMag;
@@ -1082,9 +1087,9 @@ void PaletteWidget::paintEvent(QPaintEvent* /*event*/)
         if (drawStaff) {
             sy = gy + gh * .5 - 2.0 * _spatium;
         } else {
-            sy  = gy + (gh - sh) * .5 - el->bbox().y();
+            sy  = gy + (gh - sh) * .5 - el->ldata()->bbox().y();
         }
-        double sx  = gx + (gw - sw) * .5 - el->bbox().x();
+        double sx  = gx + (gw - sw) * .5 - el->ldata()->bbox().x();
 
         sy += yOffset() * _spatium;
 
@@ -1109,7 +1114,7 @@ void PaletteWidget::paintEvent(QPaintEvent* /*event*/)
         ctx.useElementColors = m_paintOptions.useElementColors;
         ctx.colorsInversionEnabled = m_paintOptions.colorsInverionsEnabled;
 
-        el->scanElements(&ctx, PaletteCellIconEngine::paintPaletteElement);
+        el->scanElements(&ctx, PaletteCellIconEngine::paintPaletteItem);
         painter.restore();
     }
 }
@@ -1146,7 +1151,7 @@ void PaletteWidget::contextMenuEvent(QContextMenuEvent* event)
         if (cell) {
             std::string title = mu::trc("palette", "Delete palette cell");
             std::string question
-                = mu::qtrc("palette", "Are you sure you want to delete palette cell \"%1\"?").arg(cell->name).toStdString();
+                = mu::qtrc("palette", "Are you sure you want to delete palette cell “%1”?").arg(cell->name).toStdString();
 
             IInteractive::Result result = interactive()->question(title, question, {
                 IInteractive::Button::Yes,
@@ -1179,14 +1184,14 @@ void PaletteWidget::contextMenuEvent(QContextMenuEvent* event)
 // Read/write
 // ====================================================
 
-void PaletteWidget::read(XmlReader& e)
+void PaletteWidget::read(XmlReader& e, bool pasteMode)
 {
-    m_palette->read(e);
+    m_palette->read(e, pasteMode);
 }
 
-void PaletteWidget::write(XmlWriter& xml) const
+void PaletteWidget::write(XmlWriter& xml, bool pasteMode) const
 {
-    m_palette->write(xml);
+    m_palette->write(xml, pasteMode);
 }
 
 bool PaletteWidget::readFromFile(const QString& path)

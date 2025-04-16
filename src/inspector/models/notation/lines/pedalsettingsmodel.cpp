@@ -24,7 +24,7 @@
 #include "translation.h"
 #include "ui/view/iconcodes.h"
 
-#include "libmscore/pedal.h"
+#include "engraving/dom/pedal.h"
 
 using namespace mu::inspector;
 
@@ -38,15 +38,6 @@ PedalSettingsModel::PedalSettingsModel(QObject* parent, IElementRepositoryServic
     setModelType(InspectorModelType::TYPE_PEDAL);
     setTitle(qtrc("inspector", "Pedal"));
     setIcon(ui::IconCode::Code::PEDAL_MARKING);
-
-    static const QList<HookTypeInfo> startHookTypes {
-        { mu::engraving::HookType::NONE, IconCode::LINE_NORMAL, qtrc("inspector", "Normal") },
-        { mu::engraving::HookType::HOOK_90, IconCode::LINE_WITH_START_HOOK, qtrc("inspector", "Hooked 90°") },
-        { mu::engraving::HookType::HOOK_45, IconCode::LINE_WITH_ANGLED_START_HOOK, qtrc("inspector", "Hooked 45°") },
-        { mu::engraving::HookType::HOOK_90T, IconCode::LINE_WITH_T_LINE_START_HOOK, qtrc("inspector", "Hooked 90° T-style") }
-    };
-
-    setPossibleStartHookTypes(startHookTypes);
 
     static const QList<HookTypeInfo> endHookTypes {
         { mu::engraving::HookType::NONE, IconCode::LINE_NORMAL, qtrc("inspector", "Normal") },
@@ -66,14 +57,9 @@ PropertyItem* PedalSettingsModel::lineType() const
     return m_lineType;
 }
 
-bool PedalSettingsModel::pedalSymbolVisible() const
-{
-    return beginningText()->value().toString() == mu::engraving::Pedal::PEDAL_SYMBOL;
-}
-
 bool PedalSettingsModel::isChangingLineVisibilityAllowed() const
 {
-    return isStarSymbolVisible();
+    return m_rosetteHookSelected;
 }
 
 bool PedalSettingsModel::isStarSymbolVisible() const
@@ -81,18 +67,9 @@ bool PedalSettingsModel::isStarSymbolVisible() const
     return endText()->value().toString() == mu::engraving::Pedal::STAR_SYMBOL;
 }
 
-void PedalSettingsModel::setPedalSymbolVisible(bool visible)
-{
-    beginningText()->setValue(visible ? mu::engraving::Pedal::PEDAL_SYMBOL.toQString() : "");
-}
-
 void PedalSettingsModel::createProperties()
 {
     TextLineSettingsModel::createProperties();
-
-    connect(beginningText(), &PropertyItem::isModifiedChanged, this, [this]() {
-        emit pedalSymbolVisibleChanged();
-    });
 
     connect(endText(), &PropertyItem::isModifiedChanged, this, [this]() {
         emit isChangingLineVisibilityAllowedChanged();
@@ -114,19 +91,22 @@ void PedalSettingsModel::loadProperties()
     m_lineType->setIsEnabled(true);
 
     if (isStarSymbolVisible()) {
+        m_rosetteHookSelected = true;
         m_lineType->updateCurrentValue(HOOK_STAR);
     } else {
+        m_rosetteHookSelected = false;
         m_lineType->updateCurrentValue(endHookType()->value());
     }
+    emit isChangingLineVisibilityAllowedChanged();
 }
 
 void PedalSettingsModel::setLineType(int newType)
 {
-    bool rosetteHookSelected = (newType == HOOK_STAR);
+    m_rosetteHookSelected = (newType == HOOK_STAR);
     int hookType = newType;
     QString text = QString();
 
-    if (rosetteHookSelected) {
+    if (m_rosetteHookSelected) {
         hookType = static_cast<int>(mu::engraving::HookType::NONE);
         text = mu::engraving::Pedal::STAR_SYMBOL;
         startHookType()->setValue(hookType);
@@ -134,12 +114,7 @@ void PedalSettingsModel::setLineType(int newType)
 
     endHookType()->setValue(hookType);
     endText()->setValue(text);
-    isLineVisible()->setValue(!rosetteHookSelected);
+    isLineVisible()->setValue(!m_rosetteHookSelected);
 
     m_lineType->setValue(newType);
-}
-
-bool PedalSettingsModel::isTextVisible(TextType) const
-{
-    return true;
 }

@@ -5,7 +5,7 @@
  * MuseScore
  * Music Composition & Notation
  *
- * Copyright (C) 2021 MuseScore BVBA and others
+ * Copyright (C) 2021-2024 MuseScore BVBA and others
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as
@@ -29,7 +29,7 @@ import MuseScore.AppShell 1.0
 StyledDialogView {
     id: root
 
-    title: qsTrc("appshell/about", "About MuseScore")
+    title: qsTrc("appshell/about", "About MuseScore Studio")
 
     contentHeight: 424
     contentWidth: 480
@@ -59,6 +59,20 @@ StyledDialogView {
 
                 source: "qrc:/qml/resources/mu_logo.svg"
                 sourceSize: Qt.size(100, 100)
+
+                MouseArea {
+                    anchors.fill: parent
+
+                    property int clickCount: 0
+
+                    onClicked: {
+                        clickCount++
+
+                        if (clickCount % 3 == 0) {
+                            aboutModel.toggleDevMode()
+                        }
+                    }
+                }
             }
 
             Column {
@@ -122,7 +136,7 @@ StyledDialogView {
 
             StyledTextLabel {
                 Layout.fillWidth: true
-                text: qsTrc("appshell/about", "Copyright © 1999-2022 MuseScore BVBA and others.\nPublished under the <a href=\"%1\">GNU General Public License version 3</a>.")
+                text: qsTrc("appshell/about", "Copyright © 1999-2024 MuseScore Limited.\nPublished under the <a href=\"%1\">GNU General Public License version 3</a>.")
                       .arg("https://www.gnu.org/licenses/gpl-3.0.html")
                       .replace("\n", "<br>")
 

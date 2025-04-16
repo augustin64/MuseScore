@@ -31,17 +31,16 @@
 #include "translation.h"
 #include "mimedatautils.h"
 
-#include "draw/types/geometry.h"
-#include "engraving/rw/xml.h"
-#include "engraving/libmscore/actionicon.h"
-#include "engraving/libmscore/articulation.h"
-#include "engraving/libmscore/bracket.h"
-#include "engraving/libmscore/engravingitem.h"
-#include "engraving/libmscore/image.h"
-#include "engraving/libmscore/imageStore.h"
-#include "engraving/libmscore/masterscore.h"
+#include "engraving/dom/actionicon.h"
+#include "engraving/dom/articulation.h"
+#include "engraving/dom/bracket.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/image.h"
+#include "engraving/dom/imageStore.h"
+#include "engraving/dom/masterscore.h"
 
 #include "palettecell.h"
+#include "palettecompat.h"
 
 #include "log.h"
 
@@ -106,7 +105,7 @@ PaletteCellPtr Palette::insertElement(size_t idx, ElementPtr element, const QStr
 {
     if (element) {
         // layout may be important for comparing cells, e.g. filtering "More" popup content
-        element->layout();
+        engravingRender()->layoutItem(element.get());
     }
 
     PaletteCellPtr cell = std::make_shared<PaletteCell>(element, name, mag, offset, tag, this);
@@ -126,11 +125,22 @@ PaletteCellPtr Palette::insertElement(size_t idx, ElementPtr element, const Tran
     return insertElement(idx, element, name.str, mag, offset, tag);
 }
 
+PaletteCellPtr Palette::insertActionIcon(size_t idx, ActionIconType type, actions::ActionCode code, double mag)
+{
+    const ui::UiAction& action = actionsRegister()->action(code);
+    QString name = !action.description.isEmpty() ? action.description.qTranslated() : action.title.qTranslatedWithoutMnemonic();
+    auto icon = std::make_shared<ActionIcon>(gpaletteScore->dummy());
+    icon->setActionType(type);
+    icon->setAction(code, static_cast<char16_t>(action.iconCode));
+
+    return insertElement(idx, icon, name, mag);
+}
+
 PaletteCellPtr Palette::appendElement(ElementPtr element, const QString& name, qreal mag, const QPointF& offset, const QString& tag)
 {
     if (element) {
         // layout may be important for comparing cells, e.g. filtering "More" popup content
-        element->layout();
+        engravingRender()->layoutItem(element.get());
     }
 
     PaletteCellPtr cell = std::make_shared<PaletteCell>(element, name, mag, offset, tag, this);
@@ -150,7 +160,7 @@ PaletteCellPtr Palette::appendElement(ElementPtr element, const TranslatableStri
     return appendElement(element, name.str, mag, offset, tag);
 }
 
-PaletteCellPtr Palette::appendActionIcon(ActionIconType type, actions::ActionCode code)
+PaletteCellPtr Palette::appendActionIcon(ActionIconType type, actions::ActionCode code, double mag)
 {
     const ui::UiAction& action = actionsRegister()->action(code);
     QString name = !action.description.isEmpty() ? action.description.qTranslated() : action.title.qTranslatedWithoutMnemonic();
@@ -158,7 +168,7 @@ PaletteCellPtr Palette::appendActionIcon(ActionIconType type, actions::ActionCod
     icon->setActionType(type);
     icon->setAction(code, static_cast<char16_t>(action.iconCode));
 
-    return appendElement(icon, name);
+    return appendElement(icon, name, mag);
 }
 
 bool Palette::insertCell(size_t idx, PaletteCellPtr cell)
@@ -178,6 +188,21 @@ bool Palette::insertCells(size_t idx, std::vector<PaletteCellPtr> cells)
 
     m_cells.insert(m_cells.begin() + idx, std::make_move_iterator(cells.begin()),
                    std::make_move_iterator(cells.end()));
+
+    return true;
+}
+
+bool Palette::removeCell(PaletteCellPtr cell)
+{
+    return removeCells({ cell });
+}
+
+bool Palette::removeCells(std::vector<PaletteCellPtr> cells)
+{
+    for (PaletteCellPtr& c : cells) {
+        c->setParent(nullptr);
+        m_cells.erase(std::remove(m_cells.begin(), m_cells.end(), c), m_cells.end());
+    }
 
     return true;
 }
@@ -258,7 +283,7 @@ QSize Palette::scaledGridSize() const
     return gridSize() * configuration()->paletteScaling();
 }
 
-bool Palette::read(XmlReader& e)
+bool Palette::read(XmlReader& e, bool pasteMode)
 {
     m_name = e.attribute("name");
     m_type = Type::Unknown;
@@ -285,13 +310,13 @@ bool Palette::read(XmlReader& e)
             }
         } else if (tag == "visible") {
             m_isVisible = e.readBool();
-        } else if (e.context()->pasteMode() && tag == "expanded") {
+        } else if (pasteMode && tag == "expanded") {
             m_isExpanded = e.readBool();
         } else if (tag == "editable") {
             m_isEditable = e.readBool();
         } else if (tag == "Cell") {
             PaletteCellPtr cell = std::make_shared<PaletteCell>(this);
-            if (!cell->read(e)) {
+            if (!cell->read(e, pasteMode)) {
                 continue;
             }
 
@@ -317,6 +342,9 @@ bool Palette::read(XmlReader& e)
         m_type = guessType();
     }
 
+    PaletteCompat::removeOldItemsIfNeeded(*this);
+    PaletteCompat::addNewItemsIfNeeded(*this, gpaletteScore);
+
     return true;
 }
 
@@ -325,7 +353,7 @@ QByteArray Palette::toMimeData() const
     return ::toMimeData(this);
 }
 
-void Palette::write(XmlWriter& xml) const
+void Palette::write(XmlWriter& xml, bool pasteMode) const
 {
     xml.startElement("Palette", { { "name", m_name } });
     xml.tag("type", QMetaEnum::fromType<Type>().valueToKey(int(m_type)));
@@ -343,7 +371,7 @@ void Palette::write(XmlWriter& xml) const
     xml.tag("visible", m_isVisible, true);
     xml.tag("editable", m_isEditable, true);
 
-    if (xml.context()->clipboardmode()) {
+    if (pasteMode) {
         xml.tag("expanded", m_isExpanded, false);
     }
 
@@ -352,7 +380,7 @@ void Palette::write(XmlWriter& xml) const
             xml.tag("Cell");
             continue;
         }
-        cell->write(xml);
+        cell->write(xml, pasteMode);
     }
     xml.endElement();
 }
@@ -431,7 +459,7 @@ bool Palette::readFromFile(const QString& p)
 
             while (e.readNextStartElement()) {
                 if (e.name() == "Palette") {
-                    read(e);
+                    read(e, false);
                 } else {
                     e.unknown();
                 }
@@ -494,8 +522,8 @@ bool Palette::writeToFile(const QString& p) const
         cbuf1.open(IODevice::ReadWrite);
         XmlWriter xml1(&cbuf1);
         xml1.startDocument();
-        xml1.startElement("museScore", { { "version", MSC_VERSION } });
-        write(xml1);
+        xml1.startElement("museScore", { { "version", Constants::MSC_VERSION_STR } });
+        write(xml1, false);
         xml1.endElement();
         cbuf1.close();
         f.addFile("palette.xml", cbuf1.data());
@@ -512,8 +540,8 @@ bool Palette::writeToFile(const QString& p) const
 
 void Palette::showWritingPaletteError(const QString& path) const
 {
-    std::string title = trc("palette", "Writing Palette file");
-    std::string message = qtrc("palette", "Writing Palette file\n%1\nfailed.").arg(path).toStdString();
+    std::string title = trc("palette", "Writing palette file");
+    std::string message = qtrc("palette", "Writing palette file\n%1\nfailed.").arg(path).toStdString();
     interactive()->error(title, message);
 }
 
@@ -582,6 +610,10 @@ Palette::Type Palette::guessType() const
         return Type::Layout;
     case ElementType::SYMBOL:
         return Type::Accordion;
+    case ElementType::HARP_DIAGRAM:
+        return Type::Harp;
+    case ElementType::STRING_TUNINGS:
+        return Type::StringTunings;
     case ElementType::ACTION_ICON: {
         const ActionIcon* action = toActionIcon(e);
         QString actionCode = QString::fromStdString(action->actionCode());

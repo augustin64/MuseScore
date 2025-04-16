@@ -45,8 +45,13 @@ Rectangle {
     signal toggleWindowMaximizedRequested()
     signal closeWindowRequested()
 
+    height: content.childrenRect.height
+
     RowLayout {
-        anchors.fill: parent
+        id: content
+
+        anchors.left: parent.left
+        anchors.right: parent.right
 
         spacing: 8
 
@@ -85,7 +90,7 @@ Rectangle {
             TextMetrics {
                 id: titleTextmetrics
 
-                text: qsTrc("appshell", "MuseScore 4")
+                text: qsTrc("appshell", "MuseScore Studio")
                 font: titleLabel.font
                 elide: Qt.ElideRight
                 elideWidth: titleLabel.width
@@ -95,7 +100,7 @@ Rectangle {
         AppSystemButtons {
             id: systemButtons
 
-            Layout.alignment: Qt.RightLeft | Qt.AlignVCenter
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
             Layout.preferredWidth: width
             Layout.preferredHeight: height
 

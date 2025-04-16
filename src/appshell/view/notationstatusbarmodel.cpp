@@ -205,10 +205,6 @@ void NotationStatusBarModel::load()
             if (code == SELECT_WORKSPACE_CODE) {
                 emit currentWorkspaceActionChanged();
             }
-
-            if (code == TOGGLE_CONCERT_PITCH_CODE) {
-                emit concertPitchActionChanged();
-            }
         }
     });
 }
@@ -220,12 +216,19 @@ void NotationStatusBarModel::onCurrentNotationChanged()
     emit currentZoomPercentageChanged();
     emit availableZoomListChanged();
     emit zoomEnabledChanged();
+    emit concertPitchActionChanged();
 
     if (!notation()) {
         return;
     }
 
-    notation()->notationChanged().onNotify(this, [this]() {
+    notation()->undoStack()->changesChannel().onReceive(this, [this](const mu::engraving::ScoreChangesRange& range) {
+        if (mu::contains(range.changedStyleIdSet, mu::engraving::Sid::concertPitch)) {
+            emit concertPitchActionChanged();
+        }
+    });
+
+    notation()->viewModeChanged().onNotify(this, [this]() {
         emit currentViewModeChanged();
         emit availableViewModeListChanged();
     });
@@ -354,7 +357,7 @@ void NotationStatusBarModel::setCurrentZoom(const QString& zoomId)
 
 int NotationStatusBarModel::minZoomPercentage() const
 {
-    return possibleZoomPercentageList().first();
+    return 5;
 }
 
 int NotationStatusBarModel::maxZoomPercentage() const

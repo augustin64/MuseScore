@@ -24,9 +24,9 @@
 
 #include <cmath>
 
-#include "libmscore/masterscore.h"
-#include "libmscore/repeatlist.h"
-#include "libmscore/system.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/repeatlist.h"
+#include "engraving/dom/system.h"
 
 #include "engraving/types/types.h"
 
@@ -205,7 +205,7 @@ void PositionsWriter::writeMeasuresPositions(mu::framework::XmlWriter& writer, c
     qreal ndpi = pngDpiResolution();
 
     for (Measure* measure = score->firstMeasureMM(); measure; measure = measure->nextMeasureMM()) {
-        qreal sx = measure->bbox().width() * ndpi;
+        qreal sx = measure->ldata()->bbox().width() * ndpi;
         qreal sy = measure->system()->height() * ndpi;
         qreal x = measure->pagePos().x() * ndpi;
         qreal y = measure->system()->pagePos().y() * ndpi;

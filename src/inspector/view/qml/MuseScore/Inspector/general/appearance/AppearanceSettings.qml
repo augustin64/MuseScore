@@ -70,6 +70,7 @@ Column {
 
         offset: model ? model.offset : null
         isSnappedToGrid: model ? model.isSnappedToGrid : null
+        isVerticalOffsetAvailable: model ? model.isVerticalOffsetAvailable : false
 
         navigationPanel: root.navigationPanel
         navigationRowStart: verticalSpacingSection.navigationRowEnd + 1
@@ -91,6 +92,8 @@ Column {
 
     ArrangeSection {
         id: arrangeSection
+
+        arrangeOrderProperty: root.model ? root.model.arrangeOrder : null
 
         navigationPanel: root.navigationPanel
         navigationRowStart: offsetSection.navigationRowEnd

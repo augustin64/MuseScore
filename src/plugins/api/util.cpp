@@ -22,21 +22,18 @@
 
 #include <QDateTime>
 
-#include "config.h"
 #include "util.h"
 
 #include "score.h"
 
-#include "libmscore/masterscore.h"
-#include "libmscore/measurebase.h"
-#include "libmscore/page.h"
-#include "libmscore/system.h"
-#include "libmscore/staff.h"
+#include "engraving/dom/measurebase.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/score.h"
+#include "engraving/dom/system.h"
 
 using namespace mu;
 
-namespace mu::engraving {
-namespace PluginAPI {
+namespace mu::plugins::api {
 //---------------------------------------------------------
 //   ScoreView
 //---------------------------------------------------------
@@ -91,7 +88,11 @@ bool FileIO::write(const QString& data)
         return false;
     }
 
-    QFile file(mSource);
+    QUrl url(mSource);
+
+    QString source = (url.isValid() && url.isLocalFile()) ? url.toLocalFile() : mSource;
+
+    QFile file(source);
     if (!file.open(QFile::WriteOnly | QFile::Truncate)) {
         return false;
     }
@@ -141,7 +142,7 @@ int FileIO::modifiedTime()
 //   setScore
 //---------------------------------------------------------
 
-void ScoreView::setScore(mu::engraving::PluginAPI::Score* s)
+void ScoreView::setScore(mu::plugins::api::Score* s)
 {
     mu::engraving::Score* newScore = s ? s->score() : nullptr;
     setScore(newScore);
@@ -186,8 +187,8 @@ void ScoreView::paint(QPainter* qp)
 
     mu::engraving::Page* page = score->pages()[_currentPage];
     QList<const mu::engraving::EngravingItem*> el;
-    for (System* s : page->systems()) {
-        for (MeasureBase* m : s->measures()) {
+    for (engraving::System* s : page->systems()) {
+        for (engraving::MeasureBase* m : s->measures()) {
             m->scanElements(&el, mu::engraving::collectElements, false);
         }
     }
@@ -196,7 +197,7 @@ void ScoreView::paint(QPainter* qp)
     foreach (const mu::engraving::EngravingItem* e, el) {
         PointF pos(e->pagePos());
         p.translate(pos);
-        e->draw(&p);
+        mu::engraving::EngravingItem::renderer()->drawItem(e, &p);
         p.translate(-pos);
     }
 }
@@ -241,5 +242,4 @@ void ScoreView::prevPage()
 {
     setCurrentPage(_currentPage - 1);
 }
-}
-}
+} // namespace mu::plugins::api

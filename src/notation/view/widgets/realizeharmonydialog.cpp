@@ -22,8 +22,8 @@
 
 #include "realizeharmonydialog.h"
 
-#include "libmscore/harmony.h"
-#include "libmscore/staff.h"
+#include "engraving/dom/harmony.h"
+#include "engraving/dom/staff.h"
 
 #include "translation.h"
 
@@ -48,7 +48,7 @@ RealizeHarmonyDialog::RealizeHarmonyDialog(QWidget* parent)
         return;
     }
 
-    std::vector<mu::engraving::EngravingItem*> selectedElements = interaction->selection()->elements();
+    const std::vector<mu::engraving::EngravingItem*>& selectedElements = interaction->selection()->elements();
     QList<mu::engraving::Harmony*> selectedHarmonyList;
 
     for (mu::engraving::EngravingItem* element : selectedElements) {

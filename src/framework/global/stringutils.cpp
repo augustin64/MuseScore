@@ -91,6 +91,21 @@ std::string mu::strings::toLower(const std::string& source)
     return str;
 }
 
+bool mu::strings::startsWith(const std::string& str, const std::string& start)
+{
+    if (str.size() < start.size()) {
+        return false;
+    }
+
+    for (size_t i = 0; i < start.size(); ++i) {
+        if (str.at(i) != start.at(i)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
 bool mu::strings::endsWith(const std::string& str, const std::string& ending)
 {
     if (ending.size() > str.size()) {
@@ -119,4 +134,14 @@ bool mu::strings::lessThanCaseInsensitive(const std::string& lhs, const std::str
     }
 
     return cmp < 0;
+}
+
+bool mu::strings::lessThanCaseInsensitive(const String& lhs, const String& rhs)
+{
+    String lhsLower = lhs.toLower(), rhsLower = rhs.toLower();
+    if (lhsLower == rhsLower) {
+        return lhs < rhs;
+    }
+
+    return lhsLower < rhsLower;
 }

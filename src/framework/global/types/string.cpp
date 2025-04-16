@@ -285,6 +285,39 @@ const std::u16string& String::constStr() const
     return *m_data.get();
 }
 
+struct String::Mutator {
+    std::u16string& s;
+    String* self = nullptr;
+
+    Mutator(std::u16string& s, String* self)
+        : s(s), self(self) {}
+    ~Mutator()
+    {
+#ifdef STRING_DEBUG_HACK
+        self->updateDebugView();
+#endif
+    }
+
+    operator std::u16string& () {
+        return s;
+    }
+
+    void reserve(size_t n) { s.reserve(n); }
+    void resize(size_t n) { s.resize(n); }
+    void clear() { s.clear(); }
+    void insert(size_t p, const std::u16string& v) { s.insert(p, v); }
+    void erase(size_t p, size_t n) { s.erase(p, n); }
+
+    std::u16string& operator=(const std::u16string& v) { return s.operator=(v); }
+    std::u16string& operator=(const char16_t* v) { return s.operator=(v); }
+    std::u16string& operator=(const char16_t v) { return s.operator=(v); }
+
+    std::u16string& operator+=(const std::u16string& v) { return s.operator+=(v); }
+    std::u16string& operator+=(const char16_t* v) { return s.operator+=(v); }
+    std::u16string& operator+=(const char16_t v) { return s.operator+=(v); }
+    char16_t& operator[](size_t i) { return s.operator[](i); }
+};
+
 String::Mutator String::mutStr(bool do_detach)
 {
     if (do_detach) {
@@ -486,6 +519,11 @@ String String::fromUcs4(const char32_t* str, size_t size)
     return s;
 }
 
+String String::fromUcs4(char32_t chr)
+{
+    return fromUcs4(&chr, 1);
+}
+
 std::u32string String::toStdU32String() const
 {
     std::string s;
@@ -493,6 +531,35 @@ std::u32string String::toStdU32String() const
     std::u32string s32;
     UtfCodec::utf8to32(s, s32);
     return s32;
+}
+
+std::wstring String::toStdWString() const
+{
+    const std::u16string& u16 = constStr();
+    std::wstring ws;
+    ws.resize(u16.size());
+
+    static_assert(sizeof(wchar_t) >= sizeof(char16_t));
+
+    for (size_t i = 0; i < ws.size(); ++i) {
+        ws[i] = static_cast<wchar_t>(u16.at(i));
+    }
+
+    return ws;
+}
+
+const String String::fromStdWString(const std::wstring& str)
+{
+    String s;
+    s.mutStr().resize(str.size());
+
+    static_assert(sizeof(wchar_t) >= sizeof(char16_t));
+
+    for (size_t i = 0; i < str.size(); ++i) {
+        s[i] = static_cast<char16_t>(str.at(i));
+    }
+
+    return s;
 }
 
 #ifndef NO_QT_SUPPORT
@@ -556,6 +623,17 @@ bool String::contains(const String& str, CaseSensitivity cs) const
     }
 }
 
+bool String::contains(const std::wregex& re) const
+{
+    std::wstring ws = toStdWString();
+
+    auto words_begin = std::wsregex_iterator(ws.begin(), ws.end(), re);
+    if (words_begin != std::wsregex_iterator()) {
+        return true;
+    }
+    return false;
+}
+
 int String::count(const Char& ch) const
 {
     int count = 0;
@@ -563,6 +641,18 @@ int String::count(const Char& ch) const
         if (constStr().at(i) == ch.unicode()) {
             ++count;
         }
+    }
+    return count;
+}
+
+int String::count(const String& str) const
+{
+    int count = 0;
+    std::string::size_type pos = 0;
+    std::u16string otherStr = str.constStr();
+    while ((pos = constStr().find(otherStr, pos)) != std::string::npos) {
+        ++count;
+        pos += str.size();
     }
     return count;
 }
@@ -842,46 +932,46 @@ static constexpr bool is1To9(char16_t chr)
 
 void String::doArgs(std::u16string& out, const std::vector<std::u16string_view>& args) const
 {
+    struct Part {
+        std::u16string_view substr;
+        size_t argIdxToInsertAfter = mu::nidx;
+    };
+
     const std::u16string& str = constStr();
     const std::u16string_view view(str);
-    std::vector<std::u16string_view> parts;
+    std::vector<Part> parts;
 
     {
-        std::size_t current = view.find(u'%'), previousCut = 0, previousPercent = 0;
+        std::size_t currentPercentIdx = view.find(u'%'), partStartIdx = 0;
 
-        while (current != std::string::npos) {
-            std::u16string_view sub = view.substr(previousCut, current - previousCut);
-            std::size_t next = current + 1;
-            if (next < view.size() && is1To9(view.at(next))) {
-                parts.push_back(std::move(sub));
-                previousCut = next;
+        while (currentPercentIdx != std::string::npos) {
+            std::u16string_view sub = view.substr(partStartIdx, currentPercentIdx - partStartIdx);
+            std::size_t nextCharIdx = currentPercentIdx + 1;
+            if (nextCharIdx < view.size() && is1To9(view.at(nextCharIdx))) {
+                size_t argIdx = view.at(nextCharIdx) - u'1';
+                parts.push_back({ std::move(sub), argIdx });
+                partStartIdx = nextCharIdx + 1;
             }
-            previousPercent = next;
-            current = view.find(u'%', previousPercent);
+            currentPercentIdx = view.find(u'%', nextCharIdx);
         }
 
-        std::u16string_view sub = view.substr(previousCut);
-        parts.push_back(std::move(sub));
+        std::u16string_view sub = view.substr(partStartIdx);
+        parts.push_back({ std::move(sub) });
     }
 
     {
-        for (const std::u16string_view& p : parts) {
-            if (p.empty()) {
-                continue;
+        for (const auto& [substr, argIdxToInsertAfter] : parts) {
+            if (!substr.empty()) {
+                out += substr;
             }
 
-            char16_t first = p.at(0);
-            if (!is1To9(first)) {
-                out += p;
-            } else {
-                size_t idx = first - u'1';
-                if (idx < args.size()) {
-                    out += args.at(idx);
-                    out.append(p.cbegin() + 1, p.cend());
+            if (argIdxToInsertAfter != mu::nidx) {
+                if (argIdxToInsertAfter < args.size()) {
+                    out += args.at(argIdxToInsertAfter);
                 } else {
+                    // When there are 5 args, %6 becomes %1
                     out.push_back(u'%');
-                    out.push_back(first - 1);
-                    out.append(p.cbegin() + 1, p.cend());
+                    out.push_back(u'1' + static_cast<char16_t>(argIdxToInsertAfter - args.size()));
                 }
             }
         }
@@ -1140,6 +1230,11 @@ String StringList::join(const String& sep) const
 void StringList::insert(size_t idx, const String& str)
 {
     std::vector<String>::insert(begin() + idx, str);
+}
+
+void StringList::insert(const_iterator it, const String& str)
+{
+    std::vector<String>::insert(it, str);
 }
 
 void StringList::replace(size_t idx, const String& str)

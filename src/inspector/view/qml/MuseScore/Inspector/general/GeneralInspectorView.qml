@@ -50,7 +50,7 @@ InspectorSectionView {
             rowSpacing: 12
             columnSpacing: 4
 
-            CheckBoxPropertyView {
+            PropertyCheckBox {
                 Layout.fillWidth: true
                 Layout.maximumWidth: parent.width / 2
 
@@ -63,7 +63,7 @@ InspectorSectionView {
                 isIndeterminate: enabled && propertyItem && propertyItem.isUndefined
             }
 
-            CheckBoxPropertyView {
+            PropertyCheckBox {
                 Layout.fillWidth: true
                 Layout.maximumWidth: parent.width / 2
 
@@ -76,7 +76,7 @@ InspectorSectionView {
                 isIndeterminate: enabled && propertyItem && propertyItem.isUndefined
             }
 
-            CheckBoxPropertyView {
+            PropertyCheckBox {
                 Layout.fillWidth: true
                 Layout.maximumWidth: parent.width / 2
 
@@ -89,7 +89,7 @@ InspectorSectionView {
                 isIndeterminate: enabled && propertyItem && propertyItem.isUndefined
             }
 
-            CheckBoxPropertyView {
+            PropertyCheckBox {
                 Layout.fillWidth: true
                 Layout.maximumWidth: parent.width / 2
 
@@ -151,6 +151,8 @@ InspectorSectionView {
 
                 icon: IconCode.POSITION_ARROWS
                 text: qsTrc("inspector", "Appearance")
+
+                enabled: model && !model.appearanceSettingsModel.isEmpty
 
                 popupContent: AppearanceSettings {
                     model: root.model ? root.model.appearanceSettingsModel : null

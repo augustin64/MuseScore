@@ -24,6 +24,7 @@
 
 #include <QObject>
 #include <QTimer>
+
 #include "modularity/ioc.h"
 #include "ui/inavigationcontroller.h"
 #include "async/asyncable.h"
@@ -36,7 +37,7 @@ class DiagnosticNavigationModel : public QObject, public async::Asyncable
 
     Q_PROPERTY(QVariantList sections READ sections NOTIFY sectionsChanged)
 
-    INJECT(diagnostics, ui::INavigationController, navigationController)
+    INJECT(ui::INavigationController, navigationController)
 public:
     explicit DiagnosticNavigationModel(QObject* parent = nullptr);
 

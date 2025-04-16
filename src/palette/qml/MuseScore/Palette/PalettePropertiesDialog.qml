@@ -80,10 +80,35 @@ StyledDialogView {
                 id: repeater
 
                 model: [
-                    { title: qsTrc("palette", "Width"), value: propertiesModel.cellWidth, incrementStep: 1 },
-                    { title: qsTrc("palette", "Height"), value: propertiesModel.cellHeight, incrementStep: 1 },
-                    { title: qsTrc("palette", "Element offset"), value: propertiesModel.elementOffset, measureUnit: qsTrc("global", "sp"), incrementStep: 0.1 },
-                    { title: qsTrc("palette", "Scale"), value: propertiesModel.scaleFactor, incrementStep: 0.1 }
+                    {
+                        title: qsTrc("palette", "Width"),
+                        value: propertiesModel.cellWidth,
+                        incrementStep: 1,
+                        minValue: 1,
+                        maxValue: 500
+                    },
+                    {
+                        title: qsTrc("palette", "Height"),
+                        value: propertiesModel.cellHeight,
+                        incrementStep: 1,
+                        minValue: 1,
+                        maxValue: 500
+                    },
+                    {
+                        title: qsTrc("palette", "Element offset"),
+                        value: propertiesModel.elementOffset,
+                        measureUnit: qsTrc("global", "sp"),
+                        incrementStep: 0.1,
+                        minValue: -10,
+                        maxValue: 10
+                    },
+                    {
+                        title: qsTrc("palette", "Scale"),
+                        value: propertiesModel.scaleFactor,
+                        incrementStep: 0.1,
+                        minValue: 0.1,
+                        maxValue: 15
+                    }
                 ]
 
                 function setValue(index, value) {
@@ -111,6 +136,8 @@ StyledDialogView {
                         currentValue: modelData["value"]
                         measureUnitsSymbol: Boolean(modelData["measureUnit"]) ? modelData["measureUnit"] : ""
                         step: modelData["incrementStep"]
+                        minValue: modelData["minValue"]
+                        maxValue: modelData["maxValue"]
 
                         onValueEdited: function(newValue) {
                             repeater.setValue(model.index, newValue)
@@ -131,29 +158,16 @@ StyledDialogView {
             }
         }
 
-        Row {
+        ButtonBox {
             width: parent.width
-            height: childrenRect.height
 
-            spacing: 12
+            buttons: [ ButtonBoxModel.Cancel, ButtonBoxModel.Ok ]
 
-            FlatButton {
-                text: qsTrc("global", "Cancel")
-
-                width: (parent.width - parent.spacing) / 2
-
-                onClicked: {
+            onStandardButtonClicked: function(buttonId) {
+                if (buttonId === ButtonBoxModel.Cancel) {
                     propertiesModel.reject()
                     root.hide()
-                }
-            }
-
-            FlatButton {
-                text: qsTrc("global", "OK")
-
-                width: (parent.width - parent.spacing) / 2
-
-                onClicked: {
+                } else if (buttonId === ButtonBoxModel.Ok) {
                     root.hide()
                 }
             }

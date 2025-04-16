@@ -35,10 +35,8 @@ void MainWindowTitleProvider::load()
     update();
 
     context()->currentProjectChanged().onNotify(this, [this]() {
-        update();
-
         if (auto currentProject = context()->currentProject()) {
-            currentProject->pathChanged().onNotify(this, [this]() {
+            currentProject->displayNameChanged().onNotify(this, [this]() {
                 update();
             });
 
@@ -46,6 +44,10 @@ void MainWindowTitleProvider::load()
                 update();
             });
         }
+    });
+
+    context()->currentNotationChanged().onNotify(this, [this]() {
+        update();
     });
 }
 
@@ -99,7 +101,7 @@ void MainWindowTitleProvider::update()
     project::INotationProjectPtr project = context()->currentProject();
 
     if (!project) {
-        setTitle(qtrc("appshell", "MuseScore 4"));
+        setTitle(qtrc("appshell", "MuseScore Studio"));
         setFilePath("");
         setFileModified(false);
         return;

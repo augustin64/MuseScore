@@ -37,6 +37,8 @@ Item {
     property alias heightWhenVisible: titleBar.heightWhenVisible
     property bool isHorizontalPanel: false
 
+    property alias navigation: contextMenuButton.navigation
+
     signal handleContextMenuItemRequested(string itemId)
 
     width: parent.width
@@ -53,6 +55,13 @@ Item {
         color: ui.theme.backgroundPrimaryColor
 
         visible: parent.visible
+
+        MouseArea {
+            id: mouseArea
+            anchors.fill: parent
+            acceptedButtons: Qt.NoButton
+            cursorShape: Qt.SizeAllCursor
+        }
 
         Column {
             id: titleBarContent

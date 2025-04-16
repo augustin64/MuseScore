@@ -35,7 +35,10 @@ StyledPopupView {
     padding: 8
     margins: 8
 
-    openPolicy: PopupView.NoActivateFocus
+    openPolicies: PopupView.NoActivateFocus
+
+    //! NOTE: No navigation needed for tooltip
+    navigationSection: null
 
     function calculateSize() {
         contentWidth = Math.min(content.implicitWidth, 300 - margins * 2)

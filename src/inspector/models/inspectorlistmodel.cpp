@@ -24,6 +24,7 @@
 #include "general/generalsettingsmodel.h"
 #include "measures/measuressettingsmodel.h"
 #include "notation/notationsettingsproxymodel.h"
+#include "parts/partssettingsmodel.h"
 #include "text/textsettingsmodel.h"
 #include "score/scoredisplaysettingsmodel.h"
 #include "score/scoreappearancesettingsmodel.h"
@@ -44,15 +45,19 @@ InspectorListModel::InspectorListModel(QObject* parent)
     listenSelectionChanged();
     context()->currentNotationChanged().onNotify(this, [this]() {
         listenSelectionChanged();
+
+        notifyModelsAboutNotationChanged();
     });
 }
 
-void InspectorListModel::buildModelsForSelectedElements(const ElementKeySet& selectedElementKeySet, bool isRangeSelection)
+void InspectorListModel::buildModelsForSelectedElements(const ElementKeySet& selectedElementKeySet, bool isRangeSelection,
+                                                        const QList<mu::engraving::EngravingItem*>& selectedElementList)
 {
-    removeUnusedModels(selectedElementKeySet, isRangeSelection);
+    removeUnusedModels(selectedElementKeySet, isRangeSelection, selectedElementList);
 
     InspectorSectionTypeSet buildingSectionTypeSet = AbstractInspectorModel::sectionTypesByElementKeys(selectedElementKeySet,
-                                                                                                       isRangeSelection);
+                                                                                                       isRangeSelection,
+                                                                                                       selectedElementList);
 
     createModelsBySectionType(buildingSectionTypeSet.values(), selectedElementKeySet);
 
@@ -61,12 +66,17 @@ void InspectorListModel::buildModelsForSelectedElements(const ElementKeySet& sel
 
 void InspectorListModel::buildModelsForEmptySelection()
 {
+    if (context()->currentNotation() == nullptr) {
+        removeUnusedModels({}, false /*isRangeSelection*/, {});
+        return;
+    }
+
     static const QList<InspectorSectionType> persistentSectionList {
         InspectorSectionType::SECTION_SCORE_DISPLAY,
         InspectorSectionType::SECTION_SCORE_APPEARANCE
     };
 
-    removeUnusedModels({}, false /*isRangeSelection*/, persistentSectionList);
+    removeUnusedModels({}, false /*isRangeSelection*/, {}, persistentSectionList);
 
     createModelsBySectionType(persistentSectionList);
 }
@@ -76,6 +86,10 @@ void InspectorListModel::setElementList(const QList<mu::engraving::EngravingItem
     TRACEFUNC;
 
     if (!m_modelList.isEmpty()) {
+        if (context()->currentNotation() == nullptr) {
+            buildModelsForEmptySelection();
+        }
+
         if (!m_repository->needUpdateElementList(selectedElementList, selectionState)) {
             return;
         }
@@ -87,10 +101,10 @@ void InspectorListModel::setElementList(const QList<mu::engraving::EngravingItem
         ElementKeySet newElementKeySet;
 
         for (const mu::engraving::EngravingItem* element : selectedElementList) {
-            newElementKeySet << ElementKey(element->type(), element->subtype());
+            newElementKeySet << AbstractInspectorModel::makeKey(element);
         }
 
-        buildModelsForSelectedElements(newElementKeySet, selectionState == SelectionState::RANGE);
+        buildModelsForSelectedElements(newElementKeySet, selectionState == SelectionState::RANGE, selectedElementList);
     }
 
     m_repository->updateElementList(selectedElementList, selectionState);
@@ -126,6 +140,19 @@ int InspectorListModel::columnCount(const QModelIndex&) const
     return 1;
 }
 
+void InspectorListModel::setInspectorVisible(bool visible)
+{
+    if (m_inspectorVisible == visible) {
+        return;
+    }
+
+    m_inspectorVisible = visible;
+
+    if (visible) {
+        updateElementList();
+    }
+}
+
 void InspectorListModel::createModelsBySectionType(const QList<InspectorSectionType>& sectionTypeList,
                                                    const ElementKeySet& selectedElementKeySet)
 {
@@ -144,29 +171,40 @@ void InspectorListModel::createModelsBySectionType(const QList<InspectorSectionT
             continue;
         }
 
-        beginInsertRows(QModelIndex(), rowCount(), rowCount());
+        int rows = rowCount();
+        beginInsertRows(QModelIndex(), rows, rows);
+
+        AbstractInspectorModel* newModel = nullptr;
 
         switch (sectionType) {
         case InspectorSectionType::SECTION_GENERAL:
-            m_modelList << new GeneralSettingsModel(this, m_repository);
+            newModel = new GeneralSettingsModel(this, m_repository);
             break;
         case InspectorSectionType::SECTION_MEASURES:
-            m_modelList << new MeasuresSettingsModel(this, m_repository);
+            newModel = new MeasuresSettingsModel(this, m_repository);
             break;
         case InspectorSectionType::SECTION_NOTATION:
-            m_modelList << new NotationSettingsProxyModel(this, m_repository, selectedElementKeySet);
+            newModel = new NotationSettingsProxyModel(this, m_repository, selectedElementKeySet);
             break;
         case InspectorSectionType::SECTION_TEXT:
-            m_modelList << new TextSettingsModel(this, m_repository);
+            newModel = new TextSettingsModel(this, m_repository);
             break;
         case InspectorSectionType::SECTION_SCORE_DISPLAY:
-            m_modelList << new ScoreSettingsModel(this, m_repository);
+            newModel = new ScoreSettingsModel(this, m_repository);
             break;
         case InspectorSectionType::SECTION_SCORE_APPEARANCE:
-            m_modelList << new ScoreAppearanceSettingsModel(this, m_repository);
+            newModel = new ScoreAppearanceSettingsModel(this, m_repository);
+            break;
+        case InspectorSectionType::SECTION_PARTS:
+            newModel = new PartsSettingsModel(this, m_repository);
             break;
         case AbstractInspectorModel::InspectorSectionType::SECTION_UNDEFINED:
             break;
+        }
+
+        if (newModel) {
+            newModel->init();
+            m_modelList << newModel;
         }
 
         endInsertRows();
@@ -174,13 +212,14 @@ void InspectorListModel::createModelsBySectionType(const QList<InspectorSectionT
 }
 
 void InspectorListModel::removeUnusedModels(const ElementKeySet& newElementKeySet,
-                                            bool isRangeSelection,
+                                            bool isRangeSelection, const QList<engraving::EngravingItem*>& selectedElementList,
                                             const QList<InspectorSectionType>& exclusions)
 {
     QList<AbstractInspectorModel*> modelsToRemove;
 
     InspectorModelTypeSet allowedModelTypes = AbstractInspectorModel::modelTypesByElementKeys(newElementKeySet);
-    InspectorSectionTypeSet allowedSectionTypes = AbstractInspectorModel::sectionTypesByElementKeys(newElementKeySet, isRangeSelection);
+    InspectorSectionTypeSet allowedSectionTypes = AbstractInspectorModel::sectionTypesByElementKeys(newElementKeySet, isRangeSelection,
+                                                                                                    selectedElementList);
 
     for (AbstractInspectorModel* model : m_modelList) {
         if (exclusions.contains(model->sectionType())) {
@@ -261,24 +300,42 @@ AbstractInspectorModel* InspectorListModel::modelBySectionType(InspectorSectionT
     return nullptr;
 }
 
+void InspectorListModel::notifyModelsAboutNotationChanged()
+{
+    TRACEFUNC;
+
+    for (AbstractInspectorModel* model : m_modelList) {
+        model->onCurrentNotationChanged();
+    }
+}
+
 void InspectorListModel::listenSelectionChanged()
 {
-    auto updateElementList = [this]() {
-        INotationPtr notation = context()->currentNotation();
-        if (!notation) {
-            setElementList({});
-            return;
-        }
-
-        INotationSelectionPtr selection = notation->interaction()->selection();
-        auto elements = selection->elements();
-        setElementList(QList(elements.cbegin(), elements.cend()), selection->state());
-    };
-
     updateElementList();
 
     INotationPtr notation = context()->currentNotation();
-    if (notation) {
-        notation->interaction()->selectionChanged().onNotify(this, updateElementList);
+    if (!notation) {
+        return;
     }
+
+    notation->interaction()->selectionChanged().onNotify(this, [this]() {
+        updateElementList();
+    });
+}
+
+void InspectorListModel::updateElementList()
+{
+    if (!m_inspectorVisible) {
+        return;
+    }
+
+    INotationPtr notation = context()->currentNotation();
+    if (!notation) {
+        setElementList({});
+        return;
+    }
+
+    INotationSelectionPtr selection = notation->interaction()->selection();
+    const std::vector<EngravingItem*>& elements = selection->elements();
+    setElementList(QList(elements.cbegin(), elements.cend()), selection->state());
 }

@@ -68,7 +68,7 @@ StyledDialogView {
                 StyledTextLabel {
                     width: parent.width
 
-                    text: qsTrc("appshell/about", "Copyright 2004 - 2017 the Contributors to the MusicXML Specification, published by the W3C Music Notation Community Group under the W3C Community Final Specification Agreement:")
+                    text: qsTrc("appshell/about", "Copyright © 2004-2021 the Contributors to the MusicXML Specification, published by the Music Notation Community Group under the W3C Community Final Specification Agreement (FSA):")
                     wrapMode: Text.WordWrap
                     maximumLineCount: 3
                 }
@@ -111,17 +111,17 @@ StyledDialogView {
             }
         }
 
-        RowLayout {
-            Layout.alignment: Qt.AlignRight
+        ButtonBox {
+            Layout.fillWidth: true
             Layout.rightMargin: 16
             Layout.bottomMargin: 16
 
-            spacing: 12
+            buttons: [ ButtonBoxModel.Ok ]
 
-            FlatButton {
-                text: qsTrc("global", "OK")
+            navigationPanel.section: root.navigationSection
 
-                onClicked: {
+            onStandardButtonClicked: function(buttonId) {
+                if (buttonId === ButtonBoxModel.Ok) {
                     root.hide()
                 }
             }

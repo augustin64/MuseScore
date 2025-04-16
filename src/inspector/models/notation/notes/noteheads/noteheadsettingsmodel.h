@@ -38,6 +38,7 @@ class NoteheadSettingsModel : public AbstractInspectorModel
     Q_PROPERTY(PropertyItem * headSystem READ headSystem CONSTANT)
     Q_PROPERTY(PropertyItem * dotPosition READ dotPosition CONSTANT)
     Q_PROPERTY(PropertyItem * offset READ offset CONSTANT)
+    Q_PROPERTY(bool isTrillCueNote READ isTrillCueNote NOTIFY isTrillCueNoteChanged)
 
 public:
     explicit NoteheadSettingsModel(QObject* parent, IElementRepositoryService* repository);
@@ -51,14 +52,26 @@ public:
     PropertyItem* headSystem() const;
     PropertyItem* dotPosition() const;
     PropertyItem* offset() const;
+    bool isTrillCueNote() const;
 
     Q_INVOKABLE QVariantList possibleHeadSystemTypes() const;
+
+public slots:
+    void setIsTrillCueNote(bool v);
+
+signals:
+    void isTrillCueNoteChanged(bool isTrillCueNote);
 
 private:
     void createProperties() override;
     void requestElements() override;
     void loadProperties() override;
     void resetProperties() override;
+    void onNotationChanged(const mu::engraving::PropertyIdSet& changedPropertyIdSet,
+                           const mu::engraving::StyleIdSet& changedStyleIdSet) override;
+
+    void loadProperties(const mu::engraving::PropertyIdSet& propertyIdSet);
+    void updateIsTrillCueNote();
 
     PropertyItem* m_isHeadHidden = nullptr;
     PropertyItem* m_isHeadSmall = nullptr;
@@ -69,6 +82,7 @@ private:
     PropertyItem* m_headSystem = nullptr;
     PropertyItem* m_dotPosition = nullptr;
     PointFPropertyItem* m_offset = nullptr;
+    bool m_isTrillCueNote = false;
 };
 }
 

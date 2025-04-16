@@ -26,9 +26,9 @@
 #include "draw/types/geometry.h"
 #include "draw/painter.h"
 #include "draw/types/pen.h"
-#include "engraving/libmscore/actionicon.h"
-#include "engraving/libmscore/engravingitem.h"
-#include "engraving/libmscore/masterscore.h"
+#include "engraving/dom/actionicon.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/masterscore.h"
 #include "engraving/style/defaultstyle.h"
 
 #include "log.h"
@@ -73,7 +73,7 @@ void PaletteCellIconEngine::paintCell(Painter& painter, const RectF& rect, bool 
     painter.setPen(configuration()->elementsColor());
 
     if (element->isActionIcon()) {
-        paintActionIcon(painter, rect, element);
+        paintActionIcon(painter, rect, element, dpi);
         return; // never draw staff for icon elements
     }
 
@@ -103,7 +103,7 @@ void PaletteCellIconEngine::paintBackground(Painter& painter, const RectF& rect,
 
 /// Paint an icon element so that it fills a QRect, preserving aspect ratio, and
 /// leaving a small margin around the edges.
-void PaletteCellIconEngine::paintActionIcon(Painter& painter, const RectF& rect, EngravingItem* element) const
+void PaletteCellIconEngine::paintActionIcon(Painter& painter, const RectF& rect, EngravingItem* element, double dpi) const
 {
     IF_ASSERT_FAILED(element && element->isActionIcon()) {
         return;
@@ -111,12 +111,15 @@ void PaletteCellIconEngine::paintActionIcon(Painter& painter, const RectF& rect,
 
     painter.save();
 
-    ActionIcon* action = toActionIcon(element);
-    action->setFontSize(ActionIcon::DEFAULT_FONT_SIZE * m_cell->mag * m_extraMag);
-    action->layout();
+    double DPIscaling = (mu::engraving::DPI / mu::engraving::DPI_F) / dpi;
 
-    painter.translate(rect.center() - action->bbox().center());
-    action->draw(&painter);
+    ActionIcon* action = toActionIcon(element);
+    action->setFontSize(ActionIcon::DEFAULT_FONT_SIZE * m_cell->mag * m_extraMag * DPIscaling);
+
+    engravingRender()->layoutItem(action);
+
+    painter.translate(rect.center() - action->ldata()->bbox().center());
+    engravingRender()->drawItem(action, &painter);
     painter.restore();
 }
 
@@ -156,9 +159,9 @@ qreal PaletteCellIconEngine::paintStaff(Painter& painter, const RectF& rect, qre
 /// system. If alignToStaff is true then the element is only centered horizontally;
 /// i.e. vertical alignment is unchanged from the default so that item will appear
 /// at the correct height on the staff.
-void PaletteCellIconEngine::paintScoreElement(Painter& painter, EngravingItem* element, qreal spatium, bool alignToStaff, qreal dpi) const
+void PaletteCellIconEngine::paintScoreElement(Painter& painter, EngravingItem* item, qreal spatium, bool alignToStaff, qreal dpi) const
 {
-    IF_ASSERT_FAILED(element && !element->isActionIcon()) {
+    IF_ASSERT_FAILED(item && !item->isActionIcon()) {
         return;
     }
 
@@ -166,11 +169,13 @@ void PaletteCellIconEngine::paintScoreElement(Painter& painter, EngravingItem* e
 
     mu::engraving::MScore::pixelRatio = mu::engraving::DPI / dpi;
 
-    const qreal sizeRatio = spatium / gpaletteScore->spatium();
+    const qreal sizeRatio = spatium / gpaletteScore->style().spatium();
     painter.scale(sizeRatio, sizeRatio); // scale coordinates so element is drawn at correct size
 
-    element->layout(); // calculate bbox
-    PointF origin = element->bbox().center();
+    // calculate bbox
+    engravingRender()->layoutItem(item);
+
+    PointF origin = item->ldata()->bbox().center();
 
     if (alignToStaff) {
         // y = 0 is position of the element's parent.
@@ -184,35 +189,35 @@ void PaletteCellIconEngine::paintScoreElement(Painter& painter, EngravingItem* e
     PaintContext ctx;
     ctx.painter = &painter;
 
-    element->scanElements(&ctx, paintPaletteElement);
+    item->scanElements(&ctx, paintPaletteItem);
     painter.restore();
 }
 
-void PaletteCellIconEngine::paintPaletteElement(void* context, EngravingItem* element)
+void PaletteCellIconEngine::paintPaletteItem(void* context, EngravingItem* item)
 {
     PaintContext* ctx = static_cast<PaintContext*>(context);
     Painter* painter = ctx->painter;
 
     painter->save();
-    painter->translate(element->pos()); // necessary for drawing child elements
+    painter->translate(item->pos()); // necessary for drawing child elements
 
-    Color colorBackup = element->getProperty(Pid::COLOR).value<Color>();
-    Color frameColorBackup = element->getProperty(Pid::FRAME_FG_COLOR).value<Color>();
-    bool colorsInversionEnabledBackup = element->colorsInversionEnabled();
+    Color colorBackup = item->getProperty(Pid::COLOR).value<Color>();
+    Color frameColorBackup = item->getProperty(Pid::FRAME_FG_COLOR).value<Color>();
+    bool colorsInversionEnabledBackup = item->colorsInversionEnabled();
 
-    element->setColorsInverionEnabled(ctx->colorsInversionEnabled);
+    item->setColorsInverionEnabled(ctx->colorsInversionEnabled);
 
     if (!ctx->useElementColors) {
         Color color = configuration()->elementsColor();
-        element->setProperty(Pid::COLOR, color);
-        element->setProperty(Pid::FRAME_FG_COLOR, color);
+        item->setProperty(Pid::COLOR, color);
+        item->setProperty(Pid::FRAME_FG_COLOR, color);
     }
 
-    element->draw(painter);
+    engravingRender()->drawItem(item, painter);
 
-    element->setColorsInverionEnabled(colorsInversionEnabledBackup);
-    element->setProperty(Pid::COLOR, colorBackup);
-    element->setProperty(Pid::FRAME_FG_COLOR, frameColorBackup);
+    item->setColorsInverionEnabled(colorsInversionEnabledBackup);
+    item->setProperty(Pid::COLOR, colorBackup);
+    item->setProperty(Pid::FRAME_FG_COLOR, frameColorBackup);
 
     painter->restore();
 }

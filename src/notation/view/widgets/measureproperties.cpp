@@ -26,12 +26,12 @@
 
 #include "translation.h"
 
-#include "engraving/libmscore/masterscore.h"
-#include "engraving/libmscore/measure.h"
-#include "engraving/libmscore/measurerepeat.h"
-#include "engraving/libmscore/range.h"
-#include "engraving/libmscore/sig.h"
-#include "engraving/libmscore/undo.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/measurerepeat.h"
+#include "engraving/dom/range.h"
+#include "engraving/dom/sig.h"
+#include "engraving/dom/undo.h"
 
 #include "notation/inotationelements.h"
 
@@ -94,6 +94,13 @@ void MeasurePropertiesDialog::initMeasure()
     mu::engraving::Measure* measure = mu::engraving::toMeasure(context.element);
 
     if (!measure) {
+        INotationSelectionPtr selection = m_notation->interaction()->selection();
+        if (selection->isRange()) {
+            measure = selection->range()->measureRange().endMeasure;
+        }
+    }
+
+    IF_ASSERT_FAILED(measure) {
         return;
     }
 

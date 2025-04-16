@@ -39,7 +39,7 @@ namespace mu::autobot {
 class JsModuleLoader;
 class ScriptEngine : public api::IApiEngine
 {
-    INJECT(autobot, io::IFileSystem, fileSystem)
+    INJECT(io::IFileSystem, fileSystem)
 public:
     ScriptEngine();
     ~ScriptEngine();
@@ -55,7 +55,7 @@ public:
     Ret evaluate();
 
     Ret call(const QString& funcName, QJSValue* retVal = nullptr);
-    Ret call(const QString& funcName, const CallData& data, QJSValue* retVal = nullptr);
+    Ret call(const QString& funcName, const QJSValueList& args, QJSValue* retVal = nullptr);
 
     void setGlobalProperty(const QString& name, const QJSValue& val);
     QJSValue globalProperty(const QString& name) const;
@@ -69,6 +69,8 @@ public:
 
     // IApiEngine
     QJSValue newQObject(QObject* o) override;
+    QJSValue newObject() override;
+    QJSValue newArray(size_t length = 0) override;
 
     static void dump(const QString& name, const QJSValue& val);
 
@@ -78,8 +80,7 @@ private:
 
     RetVal<ByteArray> readScriptContent(const io::path_t& scriptPath) const;
     RetVal<QJSValue> evaluateContent(const QByteArray& fileContent, const io::path_t& filePath);
-    Ret jsValueToRet(const QJSValue& val) const;
-    Ret doCall(const QString& funcName, const CallData& data, QJSValue* retVal);
+    Ret doCall(const QString& funcName, const QJSValueList& args, QJSValue* retVal);
 
     struct FuncData {
         QString funcName;

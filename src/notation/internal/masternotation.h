@@ -24,9 +24,7 @@
 
 #include <memory>
 
-#include "modularity/ioc.h"
-#include "types/retval.h"
-#include "project/projecttypes.h"
+#include "async/notification.h"
 
 #include "notation.h"
 #include "../imasternotation.h"
@@ -45,22 +43,23 @@ class MasterNotation : public IMasterNotation, public Notation, public std::enab
 public:
     ~MasterNotation();
 
-    void setMasterScore(mu::engraving::MasterScore* masterScore);
-    Ret setupNewScore(mu::engraving::MasterScore* score, const ScoreCreateOptions& scoreOptions);
-    void applyOptions(mu::engraving::MasterScore* score, const ScoreCreateOptions& scoreOptions, bool createdFromTemplate = false);
+    Ret setupNewScore(engraving::MasterScore* score, const ScoreCreateOptions& options) override;
+    void applyOptions(engraving::MasterScore* score, const ScoreCreateOptions& options, bool createdFromTemplate = false) override;
+    engraving::MasterScore* masterScore() const override;
+    void setMasterScore(engraving::MasterScore* masterScore) override;
 
     INotationPtr notation() override;
-
-    mu::ValNt<bool> needSave() const override;
+    int mscVersion() const override;
 
     IExcerptNotationPtr createEmptyExcerpt(const QString& name = QString()) const override;
 
-    ValCh<ExcerptNotationList> excerpts() const override;
+    const ExcerptNotationList& excerpts() const override;
+    async::Notification excerptsChanged() const override;
     const ExcerptNotationList& potentialExcerpts() const override;
 
     void initExcerpts(const ExcerptNotationList& excerpts) override;
-    void addExcerpts(const ExcerptNotationList& excerpts) override;
-    void removeExcerpts(const ExcerptNotationList& excerpts) override;
+    void setExcerpts(const ExcerptNotationList& excerpts) override;
+    void resetExcerpt(IExcerptNotationPtr excerptNotation) override;
     void sortExcerpts(ExcerptNotationList& excerpts) override;
 
     void setExcerptIsOpen(const INotationPtr excerptNotation, bool open) override;
@@ -73,30 +72,38 @@ public:
 
 private:
 
-    friend class project::NotationProject;
+    friend class NotationCreator;
     explicit MasterNotation();
 
-    mu::engraving::MasterScore* masterScore() const;
+    void initAfterSettingScore(const engraving::MasterScore* score);
 
-    void initExcerptNotations(const std::vector<mu::engraving::Excerpt*>& excerpts);
-    void addExcerptsToMasterScore(const std::vector<mu::engraving::Excerpt*>& excerpts);
-    void doSetExcerpts(ExcerptNotationList excerpts);
+    void initExcerptNotations(const std::vector<engraving::Excerpt*>& excerpts);
+    void addExcerptsToMasterScore(const std::vector<engraving::Excerpt*>& excerpts);
+    void doSetExcerpts(const ExcerptNotationList& excerpts);
     void updateExcerpts();
     void updatePotentialExcerpts() const;
     void unloadExcerpts(ExcerptNotationList& excerpts);
 
-    bool containsExcerpt(const mu::engraving::Excerpt* excerpt) const;
+    bool containsExcerpt(const engraving::Excerpt* excerpt) const;
+
+    void onPartsChanged();
 
     void notifyAboutNeedSaveChanged();
 
     void markScoreAsNeedToSave();
 
-    ValCh<ExcerptNotationList> m_excerpts;
+    ExcerptNotationList m_excerpts;
+    async::Notification m_excerptsChanged;
     INotationPlaybackPtr m_notationPlayback = nullptr;
-    async::Notification m_needSaveNotification;
     async::Notification m_hasPartsChanged;
 
     mutable ExcerptNotationList m_potentialExcerpts;
+
+    // When the user first removes instruments (`Parts`) and then adds new ones,
+    // the new ones might have the same ID as the removed ones. In this case,
+    // we need to regenerate potential excerpts, even though for all part IDs a
+    // potential excerpt already exists.
+    mutable bool m_potentialExcerptsForcedDirty = false;
 };
 
 using MasterNotationPtr = std::shared_ptr<MasterNotation>;

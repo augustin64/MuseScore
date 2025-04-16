@@ -44,16 +44,18 @@ PopupView {
     property alias closeOnEscape: content.closeOnEscape
     property alias navigationSection: content.navigationSection
 
-    property int contentWidth: 240
-    property int contentHeight: content.contentBodyHeight
+    contentWidth: 240
+    contentHeight: content.contentBodyHeight
 
-    closePolicy: PopupView.CloseOnPressOutsideParent
+    closePolicies: PopupView.CloseOnPressOutsideParent
 
     x: (root.parent.width / 2) - (root.width / 2)
     y: root.parent.height
 
     onOpened: {
-        content.navigationSection.requestActive()
+        if (!(openPolicies & PopupView.NoActivateFocus) && content.navigationSection) {
+            content.navigationSection.requestActive()
+        }
     }
 
     onClosed: {

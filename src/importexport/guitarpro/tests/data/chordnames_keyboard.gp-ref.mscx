@@ -1,8 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<museScore version="4.00">
+<museScore version="4.30">
   <Score>
-    <LayerTag id="0" tag="default"></LayerTag>
-    <currentLayer>0</currentLayer>
     <Division>480</Division>
     <showInvisible>1</showInvisible>
     <showUnprintable>1</showUnprintable>
@@ -14,7 +12,6 @@
     <metaTag name="lyricist"></metaTag>
     <metaTag name="movementNumber"></metaTag>
     <metaTag name="movementTitle"></metaTag>
-    <metaTag name="poet"></metaTag>
     <metaTag name="source"></metaTag>
     <metaTag name="translator"></metaTag>
     <metaTag name="workNumber"></metaTag>
@@ -24,7 +21,7 @@
         <StaffType group="pitched">
           <name>stdNormal</name>
           </StaffType>
-        <bracket type="1" span="2" col="0"/>
+        <bracket type="1" span="2" col="0" visible="1"/>
         <barLineSpan>2</barLineSpan>
         </Staff>
       <Staff id="2">
@@ -39,6 +36,44 @@
         <shortName>A-Piano</shortName>
         <trackName></trackName>
         <instrumentId>keyboard.piano</instrumentId>
+        <singleNoteDynamics>0</singleNoteDynamics>
+        <StringData>
+          <frets>24</frets>
+          <string>40</string>
+          <string>45</string>
+          <string>50</string>
+          <string>55</string>
+          <string>59</string>
+          <string>64</string>
+          </StringData>
+        <Articulation name="staccatissimo">
+          <velocity>100</velocity>
+          <gateTime>30</gateTime>
+          </Articulation>
+        <Articulation name="staccato">
+          <velocity>100</velocity>
+          <gateTime>50</gateTime>
+          </Articulation>
+        <Articulation name="portato">
+          <velocity>100</velocity>
+          <gateTime>67</gateTime>
+          </Articulation>
+        <Articulation name="tenuto">
+          <velocity>100</velocity>
+          <gateTime>100</gateTime>
+          </Articulation>
+        <Articulation name="accent">
+          <velocity>120</velocity>
+          <gateTime>100</gateTime>
+          </Articulation>
+        <Articulation name="marcato">
+          <velocity>144</velocity>
+          <gateTime>100</gateTime>
+          </Articulation>
+        <Articulation name="sforzato">
+          <velocity>169</velocity>
+          <gateTime>100</gateTime>
+          </Articulation>
         <Channel>
           <program value="0"/>
           <controller ctrl="7" value="101"/>
@@ -51,7 +86,8 @@
       <Measure>
         <voice>
           <KeySig>
-            <accidental>0</accidental>
+            <concertKey>0</concertKey>
+            <mode>major</mode>
             </KeySig>
           <TimeSig>
             <sigN>4</sigN>
@@ -61,9 +97,9 @@
             <subtype>mf</subtype>
             <velocity>80</velocity>
             </Dynamic>
-          <StaffText>
-            <text>G</text>
-            </StaffText>
+          <Harmony>
+            <root>15</root>
+            </Harmony>
           <Tempo>
             <tempo>2</tempo>
             <text><sym>metNoteQuarterUp</sym> = 120</text>
@@ -74,9 +110,12 @@
               <pitch>67</pitch>
               <tpc>15</tpc>
               <fret>3</fret>
-              <string>-6</string>
+              <string>0</string>
               </Note>
             </Chord>
+          <BarLine>
+            <span>1</span>
+            </BarLine>
           </voice>
         </Measure>
       <Measure>
@@ -87,9 +126,12 @@
               <pitch>69</pitch>
               <tpc>17</tpc>
               <fret>5</fret>
-              <string>-6</string>
+              <string>0</string>
               </Note>
             </Chord>
+          <BarLine>
+            <span>1</span>
+            </BarLine>
           </voice>
         </Measure>
       <Measure>
@@ -100,9 +142,12 @@
               <pitch>71</pitch>
               <tpc>19</tpc>
               <fret>7</fret>
-              <string>-6</string>
+              <string>0</string>
               </Note>
             </Chord>
+          <BarLine>
+            <span>1</span>
+            </BarLine>
           </voice>
         </Measure>
       <Measure>
@@ -113,13 +158,9 @@
               <pitch>72</pitch>
               <tpc>14</tpc>
               <fret>8</fret>
-              <string>-6</string>
+              <string>0</string>
               </Note>
             </Chord>
-          <BarLine>
-            <subtype>end</subtype>
-            <span>1</span>
-            </BarLine>
           </voice>
         </Measure>
       </Staff>
@@ -127,7 +168,8 @@
       <Measure>
         <voice>
           <KeySig>
-            <accidental>0</accidental>
+            <concertKey>0</concertKey>
+            <mode>major</mode>
             </KeySig>
           <TimeSig>
             <sigN>4</sigN>
@@ -137,22 +179,9 @@
             <durationType>measure</durationType>
             <duration>4/4</duration>
             </Rest>
-          </voice>
-        </Measure>
-      <Measure>
-        <voice>
-          <Rest>
-            <durationType>measure</durationType>
-            <duration>4/4</duration>
-            </Rest>
-          </voice>
-        </Measure>
-      <Measure>
-        <voice>
-          <Rest>
-            <durationType>measure</durationType>
-            <duration>4/4</duration>
-            </Rest>
+          <BarLine>
+            <span>1</span>
+            </BarLine>
           </voice>
         </Measure>
       <Measure>
@@ -162,9 +191,27 @@
             <duration>4/4</duration>
             </Rest>
           <BarLine>
-            <subtype>end</subtype>
             <span>1</span>
             </BarLine>
+          </voice>
+        </Measure>
+      <Measure>
+        <voice>
+          <Rest>
+            <durationType>measure</durationType>
+            <duration>4/4</duration>
+            </Rest>
+          <BarLine>
+            <span>1</span>
+            </BarLine>
+          </voice>
+        </Measure>
+      <Measure>
+        <voice>
+          <Rest>
+            <durationType>measure</durationType>
+            <duration>4/4</duration>
+            </Rest>
           </voice>
         </Measure>
       </Staff>

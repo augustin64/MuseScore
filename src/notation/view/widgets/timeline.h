@@ -23,7 +23,7 @@
 #ifndef MU_NOTATION_TIMELINE_H
 #define MU_NOTATION_TIMELINE_H
 
-#include "libmscore/select.h"
+#include "engraving/dom/select.h"
 
 #include "modularity/ioc.h"
 #include "ui/iuiconfiguration.h"
@@ -110,8 +110,8 @@ class Timeline : public QGraphicsView, public mu::async::Asyncable
 {
     Q_OBJECT
 
-    INJECT(notation, ui::IUiConfiguration, uiConfiguration)
-    INJECT(notation, actions::IActionsDispatcher, dispatcher)
+    INJECT(ui::IUiConfiguration, uiConfiguration)
+    INJECT(actions::IActionsDispatcher, dispatcher)
 
 public:
     enum class ItemType {

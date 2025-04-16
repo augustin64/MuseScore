@@ -25,7 +25,7 @@
 
 #include "ui_note_groups.h"
 
-#include "libmscore/groups.h"
+#include "engraving/dom/groups.h"
 
 #include "modularity/ioc.h"
 #include "ipaletteconfiguration.h"
@@ -40,7 +40,7 @@ class NoteGroups : public QGroupBox, Ui::NoteGroups
 {
     Q_OBJECT
 
-    INJECT(palette, IPaletteConfiguration, paletteConfiguration)
+    INJECT(IPaletteConfiguration, paletteConfiguration)
 
     std::vector<engraving::Chord*> chords8;
     std::vector<engraving::Chord*> chords16;

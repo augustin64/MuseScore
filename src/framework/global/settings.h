@@ -42,7 +42,7 @@ class QSettings;
 namespace mu::framework {
 class Settings
 {
-    INJECT(framework, mi::IMultiInstancesProvider, multiInstancesProvider)
+    INJECT(mi::IMultiInstancesProvider, multiInstancesProvider)
 
 public:
     static Settings* instance();
@@ -65,7 +65,11 @@ public:
         Key key;
         Val value;
         Val defaultValue;
+        std::string description;
+
         bool canBeManuallyEdited = false;
+        Val minValue;
+        Val maxValue;
 
         bool isNull() const { return key.isNull(); }
     };
@@ -82,6 +86,8 @@ public:
     Val value(const Key& key) const;
     Val defaultValue(const Key& key) const;
 
+    std::string description(const Key& key) const;
+
     //! NOTE Will be write to global config and sync between all instances
     void setSharedValue(const Key& key, const Val& value);
 
@@ -89,7 +95,11 @@ public:
     void setLocalValue(const Key& key, const Val& value);
 
     void setDefaultValue(const Key& key, const Val& value);
-    void setCanBeManuallyEdited(const Settings::Key& key, bool canBeManuallyEdited);
+
+    void setDescription(const Key& key, const std::string& value);
+
+    void setCanBeManuallyEdited(const Settings::Key& key, bool canBeManuallyEdited, const Val& minValue = Val(),
+                                const Val& maxValue = Val());
 
     void beginTransaction(bool notifyToOtherInstances = true);
     void commitTransaction(bool notifyToOtherInstances = true);

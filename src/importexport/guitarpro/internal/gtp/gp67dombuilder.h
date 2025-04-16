@@ -1,13 +1,14 @@
-#ifndef GPDOMBUILDER_H
-#define GPDOMBUILDER_H
+#ifndef MU_IMPORTEXPORT_GP67DOMBUILDER_H
+#define MU_IMPORTEXPORT_GP67DOMBUILDER_H
 
 #include <memory>
 
 #include "igpdombuilder.h"
 #include "gpdommodel.h"
 #include "inoteproperty.h"
+#include "gptrack.h"
 
-namespace mu::engraving {
+namespace mu::iex::guitarpro {
 class GP67DomBuilder : public IGPDomBuilder
 {
 public:
@@ -21,7 +22,7 @@ protected:
     void buildGPScore(XmlDomNode* scoreNode);
     void buildGPMasterTracks(XmlDomNode* masterTrack);
     void buildGPAudioTracks(XmlDomNode* audioTrack);
-    void buildGPTracks(XmlDomNode* tracksNode);
+    void buildGPTracks(XmlDomNode* tracksNode, XmlDomNode* versionNode);
     void buildGPMasterBars(XmlDomNode* masterBars);
     void buildGPBars(XmlDomNode* bars);
     void buildGPVoices(XmlDomNode* voicesNode);
@@ -32,10 +33,9 @@ protected:
     void breakLyricsOnBeatsIfNeed();
     bool isLyricsOnBeats() const;
 
-    virtual std::pair<int, std::unique_ptr<GPTrack> > createGPTrack(XmlDomNode* trackNode) = 0;
+    virtual std::pair<int, std::unique_ptr<GPTrack> > createGPTrack(XmlDomNode* trackNode, XmlDomNode* versionNode) = 0;
 
     std::unique_ptr<GPMasterTracks> createGPMasterTrack(XmlDomNode* metadata);
-    std::unique_ptr<GPAudioTrack> createGPAudioTrack(XmlDomNode* metadata);
     std::unique_ptr<GPMasterBar> createGPMasterBar(XmlDomNode* masterBarNode);
     std::pair<int, std::unique_ptr<GPBar> > createGPBar(XmlDomNode* barNode);
     std::pair<int, std::unique_ptr<GPVoice> > createGPVoice(XmlDomNode* voiceNode);
@@ -52,8 +52,9 @@ protected:
     std::vector<GPMasterTracks::Automation> readTempoMap(XmlDomNode* currentNode);
     GPTrack::RSE readTrackRSE(XmlDomNode* trackChildNode) const;
     GPMasterBar::KeySig readKeySig(XmlDomNode* keyNode) const;
+    bool readUseFlats(XmlDomNode* keyNode) const;
     GPMasterBar::TimeSig readTimeSig(XmlDomNode* timeNode) const;
-    void readTrackProperties(XmlDomNode* propertiesNode, GPTrack* track) const;
+    void readTrackProperties(XmlDomNode* propertiesNode, GPTrack* track, bool ignoreTuningFlats) const;
     void readBeatProperties(const XmlDomNode& propertiesNode, GPBeat* beat) const;
     void readDiagram(const XmlDomNode& items, GPTrack* track) const;
     void readLyrics(const XmlDomNode& items, GPTrack* track) const;
@@ -71,5 +72,5 @@ protected:
 
     std::unique_ptr<GPDomModel> _gpDom;
 };
-} // end Ms namespace
-#endif // GPDOMBUILDER_H
+} // mu::iex::guitarpro
+#endif // MU_IMPORTEXPORT_GP67DOMBUILDER_H

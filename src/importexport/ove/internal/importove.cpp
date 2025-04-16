@@ -27,50 +27,48 @@
 
 #include "engraving/engravingerrors.h"
 
-#include "libmscore/factory.h"
-#include "libmscore/sig.h"
-#include "libmscore/tempo.h"
-#include "libmscore/arpeggio.h"
-#include "libmscore/articulation.h"
-#include "libmscore/barline.h"
-#include "libmscore/box.h"
-#include "libmscore/bracket.h"
-#include "libmscore/breath.h"
-#include "libmscore/chord.h"
-#include "libmscore/clef.h"
-#include "libmscore/drumset.h"
-#include "libmscore/dynamic.h"
-#include "libmscore/hairpin.h"
-#include "libmscore/harmony.h"
-#include "libmscore/glissando.h"
-#include "libmscore/keysig.h"
-#include "libmscore/layoutbreak.h"
-#include "libmscore/lyrics.h"
-#include "libmscore/measure.h"
-#include "libmscore/note.h"
-#include "libmscore/accidental.h"
-#include "libmscore/ottava.h"
-#include "libmscore/part.h"
-#include "libmscore/pedal.h"
-#include "libmscore/pitchspelling.h"
-#include "libmscore/measurerepeat.h"
-#include "libmscore/rest.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/segment.h"
-#include "libmscore/slur.h"
-#include "libmscore/tie.h"
-#include "libmscore/staff.h"
-#include "libmscore/tempotext.h"
-#include "libmscore/text.h"
-#include "libmscore/timesig.h"
-#include "libmscore/tuplet.h"
-#include "libmscore/tremolo.h"
-#include "libmscore/volta.h"
-#include "libmscore/chordlist.h"
-#include "libmscore/rehearsalmark.h"
-#include "libmscore/marker.h"
-#include "libmscore/jump.h"
-#include "libmscore/bracketItem.h"
+#include "engraving/dom/factory.h"
+#include "engraving/dom/sig.h"
+#include "engraving/dom/arpeggio.h"
+#include "engraving/dom/articulation.h"
+#include "engraving/dom/box.h"
+#include "engraving/dom/bracket.h"
+#include "engraving/dom/breath.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/clef.h"
+#include "engraving/dom/drumset.h"
+#include "engraving/dom/dynamic.h"
+#include "engraving/dom/hairpin.h"
+#include "engraving/dom/harmony.h"
+#include "engraving/dom/glissando.h"
+#include "engraving/dom/keysig.h"
+#include "engraving/dom/layoutbreak.h"
+#include "engraving/dom/lyrics.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/accidental.h"
+#include "engraving/dom/ottava.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/pedal.h"
+#include "engraving/dom/pitchspelling.h"
+#include "engraving/dom/measurerepeat.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/slur.h"
+#include "engraving/dom/tie.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/tempotext.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/timesig.h"
+#include "engraving/dom/tuplet.h"
+#include "engraving/dom/tremolo.h"
+#include "engraving/dom/volta.h"
+#include "engraving/dom/chordlist.h"
+#include "engraving/dom/rehearsalmark.h"
+#include "engraving/dom/marker.h"
+#include "engraving/dom/jump.h"
+#include "engraving/dom/bracketItem.h"
 
 #include "modularity/ioc.h"
 #include "importexport/ove/ioveconfiguration.h"
@@ -388,7 +386,7 @@ void OveToMScore::convertHeader()
     QList<QString> annotates = m_ove->getAnnotates();
     if (!annotates.empty() && !annotates[0].isEmpty()) {
         QString annotate = annotates[0];
-        ove::addText(vbox, m_score, annotate, TextStyleType::POET);
+        ove::addText(vbox, m_score, annotate, TextStyleType::LYRICIST);
     }
 
     QList<QString> writers = m_ove->getWriters();
@@ -400,7 +398,7 @@ void OveToMScore::convertHeader()
 
     if (writers.size() > 1) {
         QString lyricist = writers[1];
-        ove::addText(vbox, m_score, lyricist, TextStyleType::POET);
+        ove::addText(vbox, m_score, lyricist, TextStyleType::LYRICIST);
     }
 
     if (vbox) {
@@ -737,7 +735,7 @@ void OveToMScore::convertTrackElements(int track)
                     }
 
                     if (y_off != 0) {
-                        ottava->setOffset(mu::PointF(0, y_off * m_score->spatium()));
+                        ottava->setOffset(mu::PointF(0, y_off * m_score->style().spatium()));
                     }
 
                     ottava->setTick(Fraction::fromTicks(absTick));
@@ -823,6 +821,7 @@ void OveToMScore::convertSignatures()
         int partStaffCount = m_ove->getStaffCount(i);
 
         for (j = 0; j < partStaffCount; ++j) {
+            Staff& staff = *m_score->staff(staffCount + j);
             for (k = 0; k < m_ove->getMeasureCount(); ++k) {
                 ovebase::MeasureData* measureData = m_ove->getMeasureData(i, j, k);
 
@@ -830,15 +829,26 @@ void OveToMScore::convertSignatures()
                     ovebase::Key* keyPtr = measureData->getKey();
 
                     if (k == 0 || keyPtr->getKey() != keyPtr->getPreviousKey()) {
-                        int tick = m_mtt->getTick(k, 0);
+                        Fraction tick = Fraction::fromTicks(m_mtt->getTick(k, 0));
                         int keyValue = keyPtr->getKey();
-                        Measure* measure = m_score->tick2measure(Fraction::fromTicks(tick));
+                        Measure* measure = m_score->tick2measure(tick);
                         if (measure) {
                             KeySigEvent ke;
-                            ke.setKey(Key(keyValue));
-                            m_score->staff(staffCount + j)->setKey(Fraction::fromTicks(tick), ke);
+                            Key key = Key(keyValue);
+                            Key cKey = key;
+                            Interval v = staff.part()->instrument(tick)->transpose();
+                            if (!v.isZero() && !m_score->style().styleB(Sid::concertPitch)) {
+                                cKey = transposeKey(key, v);
+                                // if there are more than 6 accidentals in transposing key, it cannot be PreferSharpFlat::AUTO
+                                if ((key > 6 || key < -6) && staff.part()->preferSharpFlat() == PreferSharpFlat::AUTO) {
+                                    staff.part()->setPreferSharpFlat(PreferSharpFlat::NONE);
+                                }
+                            }
+                            ke.setConcertKey(cKey);
+                            ke.setKey(key);
+                            staff.setKey(tick, ke);
 
-                            Segment* s = measure->getSegment(SegmentType::KeySig, Fraction::fromTicks(tick));
+                            Segment* s = measure->getSegment(SegmentType::KeySig, tick);
                             KeySig* keysig = Factory::createKeySig(s);
                             keysig->setTrack((staffCount + j) * VOICES);
                             keysig->setKeySigEvent(ke);
@@ -1422,7 +1432,6 @@ void OveToMScore::convertMeasureMisc(Measure* measure, int part, int staff, int 
 // beam in grace
 int getGraceLevel(const QList<ovebase::NoteContainer*>& containers, int tick, int unit)
 {
-    int graceCount = 0;
     int level = 0; // normal chord rest
 
     for (int i = 0; i < containers.size(); ++i) {
@@ -1431,12 +1440,9 @@ int getGraceLevel(const QList<ovebase::NoteContainer*>& containers, int tick, in
             break;
         }
 
-        if (container->getIsGrace() && container->getTick() == tick) {
-            ++graceCount;
-
-            if (unit <= container->start()->getOffset()) {
-                ++level;
-            }
+        if (container->getIsGrace() && container->getTick() == tick
+            && unit <= container->start()->getOffset()) {
+            ++level;
         }
     }
 
@@ -1540,9 +1546,9 @@ void OveToMScore::convertNotes(Measure* measure, int part, int staff, int track)
                 if (!isRestDefaultLine(notePtr, container->getNoteType()) && notePtr->getLine() != 0) {
                     double yOffset = -(double)(notePtr->getLine());
                     int stepOffset = cr->staff()->staffType(cr->tick())->stepOffset();
-                    int lineOffset = static_cast<mu::engraving::Rest*>(cr)->computeLineOffset(5);
+                    int lineOffset = toRest(cr)->computeVoiceOffset(5, toRest(cr)->mutldata());
                     yOffset -= qreal(lineOffset + stepOffset);
-                    yOffset *= m_score->spatium() / 2.0;
+                    yOffset *= m_score->style().spatium() / 2.0;
                     cr->ryoffset() = yOffset;
                     cr->setAutoplace(false);
                 }

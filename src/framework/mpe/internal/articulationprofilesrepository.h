@@ -35,7 +35,7 @@
 namespace mu::mpe {
 class ArticulationProfilesRepository : public IArticulationProfilesRepository, public async::Asyncable
 {
-    INJECT(mpe, io::IFileSystem, fileSystem)
+    INJECT(io::IFileSystem, fileSystem)
 
 public:
     ArticulationProfilesRepository() = default;

@@ -31,9 +31,12 @@
 
 #include "internal/updateconfiguration.h"
 #include "internal/updatescenario.h"
-#include "internal/updateservice.h"
 #include "internal/updateactioncontroller.h"
 #include "internal/updateuiactions.h"
+#include "internal/appupdateservice.h"
+
+#include "internal/musesoundscheckupdatescenario.h"
+#include "internal/musesoundscheckupdateservice.h"
 
 #include "view/updatemodel.h"
 
@@ -42,11 +45,6 @@
 using namespace mu::update;
 using namespace mu::modularity;
 using namespace mu::ui;
-
-static std::shared_ptr<UpdateScenario> s_scenario = std::make_shared<UpdateScenario>();
-static std::shared_ptr<UpdateService> s_service = std::make_shared<UpdateService>();
-static std::shared_ptr<UpdateConfiguration> s_configuration = std::make_shared<UpdateConfiguration>();
-static std::shared_ptr<UpdateActionController> s_actionController = std::make_shared<UpdateActionController>();
 
 static void update_init_qrc()
 {
@@ -60,22 +58,34 @@ std::string UpdateModule::moduleName() const
 
 void UpdateModule::registerExports()
 {
-    ioc()->registerExport<IUpdateScenario>(moduleName(), s_scenario);
-    ioc()->registerExport<IUpdateService>(moduleName(), s_service);
-    ioc()->registerExport<IUpdateConfiguration>(moduleName(), s_configuration);
+    m_scenario = std::make_shared<UpdateScenario>();
+    m_configuration = std::make_shared<UpdateConfiguration>();
+    m_actionController = std::make_shared<UpdateActionController>();
+    m_appUpdateService = std::make_shared<AppUpdateService>();
+
+    m_museSoundsCheckUpdateScenario = std::make_shared<MuseSoundsCheckUpdateScenario>();
+    m_museSamplerUpdateService = std::make_shared<MuseSoundsCheckUpdateService>();
+
+    ioc()->registerExport<IUpdateScenario>(moduleName(), m_scenario);
+    ioc()->registerExport<IUpdateConfiguration>(moduleName(), m_configuration);
+    ioc()->registerExport<IAppUpdateService>(moduleName(), m_appUpdateService);
+
+    ioc()->registerExport<IMuseSoundsCheckUpdateScenario>(moduleName(), m_museSoundsCheckUpdateScenario);
+    ioc()->registerExport<IMuseSoundsCheckUpdateService>(moduleName(), m_museSamplerUpdateService);
 }
 
 void UpdateModule::resolveImports()
 {
-    auto ar = ioc()->resolve<ui::IUiActionsRegister>(moduleName());
+    auto ar = ioc()->resolve<IUiActionsRegister>(moduleName());
     if (ar) {
-        ar->reg(std::make_shared<UpdateUiActions>(s_actionController));
+        ar->reg(std::make_shared<UpdateUiActions>(m_actionController));
     }
 
     auto ir = ioc()->resolve<IInteractiveUriRegister>(moduleName());
     if (ir) {
-        ir->registerQmlUri(Uri("musescore://update/releaseinfo"), "MuseScore/Update/ReleaseInfoDialog.qml");
+        ir->registerQmlUri(Uri("musescore://update/releaseinfo"), "MuseScore/Update/AppReleaseInfoDialog.qml");
         ir->registerQmlUri(Uri("musescore://update"), "MuseScore/Update/UpdateProgressDialog.qml");
+        ir->registerQmlUri(Uri("musescore://update/musesoundsreleaseinfo"), "MuseScore/Update/MuseSoundsReleaseInfoDialog.qml");
     }
 }
 
@@ -93,15 +103,16 @@ void UpdateModule::registerUiTypes()
 
 void UpdateModule::onInit(const framework::IApplication::RunMode& mode)
 {
-    if (framework::IApplication::RunMode::Converter == mode) {
+    if (mode != framework::IApplication::RunMode::GuiApp) {
         return;
     }
 
-    s_configuration->init();
-    s_actionController->init();
+    m_configuration->init();
+    m_actionController->init();
 }
 
 void UpdateModule::onDelayedInit()
 {
-    s_scenario->delayedInit();
+    m_scenario->delayedInit();
+    m_museSoundsCheckUpdateScenario->delayedInit();
 }

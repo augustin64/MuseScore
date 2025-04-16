@@ -300,6 +300,7 @@
     <key>rest</key>
     <seq>0</seq>
     <seq>À</seq> <!-- AZERTY for 0 -->
+    <seq>Num+0</seq>
     </SC>
   <SC>
     <key>realtime-advance</key>
@@ -324,6 +325,7 @@
   <SC>
     <key>sharp</key>
     <seq>+</seq>
+    <seq>Num++</seq>
     </SC>
   <SC>
     <key>nat</key>
@@ -332,6 +334,7 @@
   <SC>
     <key>flat</key>
     <seq>-</seq>
+    <seq>Num+-</seq>
     </SC>
   <SC>
     <key>stretch+</key>
@@ -364,10 +367,6 @@
   <SC>
     <key>top-chord</key>
     <seq>Ctrl+Alt+Up</seq>
-    </SC>
-  <SC>
-    <key>top-staff</key>
-    <seq></seq>
     </SC>
   <SC>
     <key>first-element</key>
@@ -530,14 +529,6 @@
     <seq>Shift+.</seq>
     </SC>
   <SC>
-    <key>add-8va</key>
-    <seq>Ctrl+Y,Ctrl+O,Ctrl+A</seq>
-    </SC>
-  <SC>
-    <key>add-8vb</key>
-    <seq>Ctrl+Y,Ctrl+O,Ctrl+B</seq>
-    </SC>
-  <SC>
     <key>notation-escape</key>
     <seq>Esc</seq>
     </SC>
@@ -616,50 +607,61 @@
     <key>note-longa</key>
     <seq>9</seq>
     <seq>Ç</seq> <!-- AZERTY for 9 -->
+    <seq>Num+9</seq>
     </SC>
   <SC>
     <key>note-breve</key>
     <seq>8</seq>
     <seq>_</seq> <!-- AZERTY for 8 -->
+    <seq>Num+8</seq>
     </SC>
   <SC>
     <key>pad-note-1</key>
     <seq>7</seq>
     <seq>È</seq> <!-- AZERTY for 7 -->
+    <seq>Num+7</seq>
     </SC>
   <SC>
     <key>pad-note-2</key>
     <seq>6</seq>
     <seq>-</seq> <!-- AZERTY for 6 -->
+    <seq>Num+6</seq>
     </SC>
   <SC>
     <key>pad-note-4</key>
     <seq>5</seq>
     <seq>(</seq> <!-- AZERTY for 5 -->
+    <seq>Num+5</seq>
     </SC>
   <SC>
     <key>pad-note-8</key>
     <seq>4</seq>
     <seq>'</seq> <!-- AZERTY for 4 -->
+    <seq>Num+4</seq>
     </SC>
   <SC>
     <key>pad-note-16</key>
     <seq>3</seq>
     <seq>&quot;</seq> <!-- AZERTY for 3 -->
+    <seq>Num+3</seq>
     </SC>
   <SC>
     <key>pad-note-32</key>
     <seq>2</seq>
     <seq>É</seq> <!-- AZERTY for 2 -->
+    <seq>Num+2</seq>
     </SC>
   <SC>
     <key>pad-note-64</key>
     <seq>1</seq>
     <seq>&amp;</seq> <!-- AZERTY for 1 -->
+    <seq>Num+1</seq>
     </SC>
   <SC>
     <key>pad-dot</key>
     <seq>.</seq>
+    <seq>Num+.</seq>
+    <seq>Num+,</seq>
     </SC>
   <SC>
     <key>tie</key>
@@ -668,6 +670,7 @@
   <SC>
     <key>acciaccatura</key>
     <seq>/</seq>
+    <seq>Num+/</seq>
     </SC>
   <SC>
     <key>voice-1</key>
@@ -766,14 +769,6 @@
     <seq>Ctrl+A</seq>
     </SC>
   <SC>
-    <key>clef-violin</key>
-    <seq>Ctrl+Y,Ctrl+1</seq>
-    </SC>
-  <SC>
-    <key>clef-bass</key>
-    <seq>Ctrl+Y,Ctrl+2</seq>
-    </SC>
-  <SC>
     <key>system-break</key>
     <seq>Return</seq>
     </SC>
@@ -793,22 +788,6 @@
   <SC>
     <key>show-keys</key>
     <seq>Shift+F2</seq>
-    </SC>
-  <SC>
-    <key>rest-1</key>
-    <seq>Shift+R, Shift+S</seq>
-    </SC>
-  <SC>
-    <key>rest-2</key>
-    <seq>Shift+R, Shift+M</seq>
-    </SC>
-  <SC>
-    <key>rest-4</key>
-    <seq>Shift+R, Shift+R</seq>
-    </SC>
-  <SC>
-    <key>rest-8</key>
-    <seq>Shift+R, Shift+Q</seq>
     </SC>
   <SC>
     <key>backspace</key>
@@ -1170,5 +1149,13 @@
     <key>notation-context-menu</key>
     <seq>Shift+F10</seq>
     <seq>Ctrl+Shift+F10</seq>
+    </SC>
+  <SC>
+    <key>standard-bend</key>
+    <seq>Alt+B</seq>
+    </SC>
+  <SC>
+    <key>grace-note-bend</key>
+    <seq>Ctrl+Alt+B</seq>
     </SC>
   </Shortcuts>

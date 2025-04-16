@@ -22,7 +22,7 @@
 #ifndef MU_CONVERTER_ICONVERTERCONTROLLER_H
 #define MU_CONVERTER_ICONVERTERCONTROLLER_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "types/ret.h"
 #include "io/path.h"
 
@@ -33,9 +33,11 @@ class IConverterController : MODULE_EXPORT_INTERFACE
 public:
     virtual ~IConverterController() = default;
 
-    virtual Ret fileConvert(const io::path_t& in, const io::path_t& out, const io::path_t& stylePath = io::path_t(),
-                            bool forceMode = false) = 0;
-    virtual Ret batchConvert(const io::path_t& batchJobFile, const io::path_t& stylePath = io::path_t(), bool forceMode = false) = 0;
+    virtual Ret fileConvert(const io::path_t& in, const io::path_t& out,
+                            const io::path_t& stylePath = io::path_t(), bool forceMode = false, const String& soundProfile = String()) = 0;
+    virtual Ret batchConvert(const io::path_t& batchJobFile,
+                             const io::path_t& stylePath = io::path_t(), bool forceMode = false, const String& soundProfile = String()) = 0;
+
     virtual Ret convertScoreParts(const io::path_t& in, const io::path_t& out,
                                   const io::path_t& stylePath = io::path_t(), bool forceMode = false) = 0;
 

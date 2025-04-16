@@ -22,7 +22,7 @@
 #ifndef MU_SYSTEM_IFILESYSTEM_H
 #define MU_SYSTEM_IFILESYSTEM_H
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "types/bytearray.h"
 #include "types/datetime.h"
 #include "types/retval.h"
@@ -38,12 +38,14 @@ public:
     virtual ~IFileSystem() = default;
 
     virtual Ret exists(const io::path_t& path) const = 0;
-    virtual Ret remove(const io::path_t& path) const = 0;
-    virtual Ret removeFolderIfEmpty(const io::path_t& path) const = 0;
-    virtual Ret copy(const io::path_t& src, const io::path_t& dst, bool replace = false) const = 0;
-    virtual Ret move(const io::path_t& src, const io::path_t& dst, bool replace = false) const = 0;
+    virtual Ret remove(const io::path_t& path, bool onlyIfEmpty = false) = 0; // remove file or dir
+    virtual Ret clear(const io::path_t& path) = 0; // clear dir
+    virtual Ret copy(const io::path_t& src, const io::path_t& dst, bool replace = false) = 0;
+    virtual Ret move(const io::path_t& src, const io::path_t& dst, bool replace = false) = 0;
 
     virtual Ret makePath(const io::path_t& path) const = 0;
+
+    virtual EntryType entryType(const io::path_t& path) const = 0;
 
     virtual RetVal<uint64_t> fileSize(const io::path_t& path) const = 0;
 
@@ -58,7 +60,7 @@ public:
     virtual bool setPermissionsAllowedForAll(const io::path_t& path) const = 0;
 
     virtual RetVal<ByteArray> readFile(const io::path_t& filePath) const = 0;
-    virtual bool readFile(const io::path_t& filePath, ByteArray& data) const = 0;
+    virtual Ret readFile(const io::path_t& filePath, ByteArray& data) const = 0;
     virtual Ret writeFile(const io::path_t& filePath, const ByteArray& data) const = 0;
 
     //! NOTE File info
@@ -67,7 +69,7 @@ public:
     virtual io::path_t absoluteFilePath(const io::path_t& filePath) const = 0;
     virtual DateTime birthTime(const io::path_t& filePath) const = 0;
     virtual DateTime lastModified(const io::path_t& filePath) const = 0;
-    virtual bool isWritable(const io::path_t& filePath) const = 0;
+    virtual Ret isWritable(const io::path_t& filePath) const = 0;
 };
 }
 

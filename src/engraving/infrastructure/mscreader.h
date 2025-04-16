@@ -22,6 +22,7 @@
 #ifndef MU_ENGRAVING_MSCREADER_H
 #define MU_ENGRAVING_MSCREADER_H
 
+#include "types/ret.h"
 #include "types/string.h"
 #include "io/path.h"
 #include "io/iodevice.h"
@@ -51,16 +52,16 @@ public:
     void setParams(const Params& params);
     const Params& params() const;
 
-    bool open();
+    Ret open();
     void close();
     bool isOpened() const;
 
     ByteArray readStyleFile() const;
     ByteArray readScoreFile() const;
 
-    std::vector<String> excerptNames() const;
-    ByteArray readExcerptStyleFile(const String& name) const;
-    ByteArray readExcerptFile(const String& name) const;
+    std::vector<String> excerptFileNames() const;
+    ByteArray readExcerptStyleFile(const String& excerptFileName) const;
+    ByteArray readExcerptFile(const String& excerptFileName) const;
 
     ByteArray readChordListFile() const;
     ByteArray readThumbnailFile() const;
@@ -77,7 +78,7 @@ private:
     struct IReader {
         virtual ~IReader() = default;
 
-        virtual bool open(io::IODevice* device, const io::path_t& filePath) = 0;
+        virtual Ret open(io::IODevice* device, const io::path_t& filePath) = 0;
         virtual void close() = 0;
         virtual bool isOpened() const = 0;
         //! NOTE In the case of reading from a directory,
@@ -85,17 +86,19 @@ private:
         //! but only one file among others (`.mscx` from MU 3.x)
         virtual bool isContainer() const = 0;
         virtual StringList fileList() const = 0;
+        virtual bool fileExists(const String& fileName) const = 0;
         virtual ByteArray fileData(const String& fileName) const = 0;
     };
 
     struct ZipFileReader : public IReader
     {
         ~ZipFileReader() override;
-        bool open(io::IODevice* device, const io::path_t& filePath) override;
+        Ret open(io::IODevice* device, const io::path_t& filePath) override;
         void close() override;
         bool isOpened() const override;
         bool isContainer() const override;
         StringList fileList() const override;
+        bool fileExists(const String& fileName) const override;
         ByteArray fileData(const String& fileName) const override;
     private:
         io::IODevice* m_device = nullptr;
@@ -105,11 +108,12 @@ private:
 
     struct DirReader : public IReader
     {
-        bool open(io::IODevice* device, const io::path_t& filePath) override;
+        Ret open(io::IODevice* device, const io::path_t& filePath) override;
         void close() override;
         bool isOpened() const override;
         bool isContainer() const override;
         StringList fileList() const override;
+        bool fileExists(const String& fileName) const override;
         ByteArray fileData(const String& fileName) const override;
     private:
         io::path_t m_rootPath;
@@ -117,11 +121,12 @@ private:
 
     struct XmlFileReader : public IReader
     {
-        bool open(io::IODevice* device, const io::path_t& filePath) override;
+        Ret open(io::IODevice* device, const io::path_t& filePath) override;
         void close() override;
         bool isOpened() const override;
         bool isContainer() const override;
         StringList fileList() const override;
+        bool fileExists(const String& fileName) const override;
         ByteArray fileData(const String& fileName) const override;
     private:
         io::IODevice* m_device = nullptr;
@@ -129,6 +134,7 @@ private:
     };
 
     IReader* reader() const;
+    bool fileExists(const String& fileName) const;
     ByteArray fileData(const String& fileName) const;
 
     String mainFileName() const;

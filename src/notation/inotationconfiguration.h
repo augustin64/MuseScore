@@ -23,8 +23,9 @@
 #define MU_NOTATION_INOTATIONCONFIGURATION_H
 
 #include <QColor>
+#include <optional>
 
-#include "modularity/imoduleexport.h"
+#include "modularity/imoduleinterface.h"
 #include "async/channel.h"
 #include "types/retval.h"
 #include "io/path.h"
@@ -118,6 +119,9 @@ public:
     virtual bool isAutomaticallyPanEnabled() const = 0;
     virtual void setIsAutomaticallyPanEnabled(bool enabled) = 0;
 
+    virtual bool isSmoothPanning() const = 0;
+    virtual void setIsSmoothPanning(bool value) = 0;
+
     virtual bool isPlayRepeatsEnabled() const = 0;
     virtual void setIsPlayRepeatsEnabled(bool enabled) = 0;
     virtual async::Notification isPlayRepeatsChanged() const = 0;
@@ -145,14 +149,17 @@ public:
     virtual bool colorNotesOutsideOfUsablePitchRange() const = 0;
     virtual void setColorNotesOutsideOfUsablePitchRange(bool value) = 0;
 
+    virtual bool warnGuitarBends() const = 0;
+    virtual void setWarnGuitarBends(bool value) = 0;
+
     virtual int delayBetweenNotesInRealTimeModeMilliseconds() const = 0;
     virtual void setDelayBetweenNotesInRealTimeModeMilliseconds(int delayMs) = 0;
 
     virtual int notePlayDurationMilliseconds() const = 0;
     virtual void setNotePlayDurationMilliseconds(int durationMs) = 0;
 
-    virtual void setTemplateModeEnabled(bool enabled) = 0;
-    virtual void setTestModeEnabled(bool enabled) = 0;
+    virtual void setTemplateModeEnabled(std::optional<bool> enabled) = 0;
+    virtual void setTestModeEnabled(std::optional<bool> enabled) = 0;
 
     virtual io::path_t instrumentListPath() const = 0;
 
@@ -161,6 +168,8 @@ public:
 
     virtual io::paths_t userScoreOrderListPaths() const = 0;
     virtual void setUserScoreOrderListPaths(const io::paths_t& paths) = 0;
+
+    virtual io::path_t stringTuningsPresetsPath() const = 0;
 
     virtual bool isSnappedToGrid(framework::Orientation gridOrientation) const = 0;
     virtual void setIsSnappedToGrid(framework::Orientation gridOrientation, bool isSnapped) = 0;
@@ -173,6 +182,9 @@ public:
 
     virtual bool needToShowAddFiguredBassErrorMessage() const = 0;
     virtual void setNeedToShowAddFiguredBassErrorMessage(bool show) = 0;
+
+    virtual bool needToShowAddGuitarBendErrorMessage() const = 0;
+    virtual void setNeedToShowAddGuitarBendErrorMessage(bool show) = 0;
 
     virtual bool needToShowMScoreError(const std::string& errorKey) const = 0;
     virtual void setNeedToShowMScoreError(const std::string& errorKey, bool show) = 0;

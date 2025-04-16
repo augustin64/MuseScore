@@ -41,11 +41,11 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/types/pixmap.h
     ${CMAKE_CURRENT_LIST_DIR}/types/font.cpp
     ${CMAKE_CURRENT_LIST_DIR}/types/font.h
+    ${CMAKE_CURRENT_LIST_DIR}/types/drawdata.h
 
     ${CMAKE_CURRENT_LIST_DIR}/painter.cpp
     ${CMAKE_CURRENT_LIST_DIR}/painter.h
     ${CMAKE_CURRENT_LIST_DIR}/ipaintprovider.h
-    ${CMAKE_CURRENT_LIST_DIR}/buffereddrawtypes.h
     ${CMAKE_CURRENT_LIST_DIR}/bufferedpaintprovider.cpp
     ${CMAKE_CURRENT_LIST_DIR}/bufferedpaintprovider.h
     ${CMAKE_CURRENT_LIST_DIR}/svgrenderer.cpp
@@ -57,10 +57,14 @@ set(MODULE_SRC
 
     ${CMAKE_CURRENT_LIST_DIR}/utils/drawlogger.cpp
     ${CMAKE_CURRENT_LIST_DIR}/utils/drawlogger.h
-    ${CMAKE_CURRENT_LIST_DIR}/utils/drawjson.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/utils/drawjson.h
-    ${CMAKE_CURRENT_LIST_DIR}/utils/drawcomp.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/utils/drawcomp.h
+    ${CMAKE_CURRENT_LIST_DIR}/utils/drawdatajson.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/utils/drawdatajson.h
+    ${CMAKE_CURRENT_LIST_DIR}/utils/drawdatacomp.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/utils/drawdatacomp.h
+    ${CMAKE_CURRENT_LIST_DIR}/utils/drawdatarw.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/utils/drawdatarw.h
+    ${CMAKE_CURRENT_LIST_DIR}/utils/drawdatapaint.cpp
+    ${CMAKE_CURRENT_LIST_DIR}/utils/drawdatapaint.h
     )
 
 if (DRAW_NO_INTERNAL)
@@ -79,11 +83,18 @@ else()
         ${CMAKE_CURRENT_LIST_DIR}/internal/qimagepainterprovider.h
         )
 
-    if (USE_SYSTEM_FREETYPE)
-         set(MODULE_LINK freetype)
-    else (USE_SYSTEM_FREETYPE)
-         set(MODULE_LINK mscore_freetype)
-    endif (USE_SYSTEM_FREETYPE)
+    include(cmake/SetupFreeType.cmake)
+    set(MODULE_INCLUDE ${FREETYPE_INCLUDE_DIRS})
+    set(MODULE_LINK ${FREETYPE_LIBRARIES})
+
+endif()
+
+if (MUE_ENABLE_DRAW_TRACE)
+    set(MODULE_DEF ${MODULE_DEF} -DMUE_ENABLE_DRAW_TRACE)
 endif()
 
 include(SetupModule)
+
+if (MUE_BUILD_UNIT_TESTS)
+    add_subdirectory(tests)
+endif()

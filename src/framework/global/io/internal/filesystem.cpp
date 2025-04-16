@@ -45,23 +45,56 @@ Ret FileSystem::exists(const io::path_t& path) const
     return make_ret(Err::NoError);
 }
 
-Ret FileSystem::remove(const io::path_t& path_) const
+Ret FileSystem::remove(const io::path_t& path_, bool onlyIfEmpty)
 {
     QString path = path_.toQString();
     QFileInfo fileInfo(path);
     if (fileInfo.exists()) {
-        return fileInfo.isDir() ? removeDir(path) : removeFile(path);
+        return fileInfo.isDir() ? removeDir(path, onlyIfEmpty) : removeFile(path);
     }
 
     return make_ret(Err::NoError);
 }
 
-Ret FileSystem::removeFolderIfEmpty(const io::path_t& path) const
+Ret FileSystem::clear(const io::path_t& path_)
 {
-    return removeDir(path, false);
+    QString path = path_.toQString();
+    if (!QFileInfo::exists(path)) {
+        return true;
+    }
+
+    Ret ret = make_ret(Err::NoError);
+    QDirIterator di(path, QDir::AllEntries | QDir::Hidden | QDir::System | QDir::NoDotAndDotDot);
+    while (di.hasNext()) {
+        di.next();
+        const QFileInfo& fi = di.fileInfo();
+        const QString& filePath = di.filePath();
+        if (fi.isDir() && !fi.isSymLink()) {
+            ret = removeDir(filePath); // recursive
+        } else {
+            bool ok = QFile::remove(filePath);
+            if (!ok) { // Read-only files prevent directory deletion on Windows, retry with Write permission.
+                const QFile::Permissions permissions = QFile::permissions(filePath);
+                if (!(permissions & QFile::WriteUser)) {
+                    ok = QFile::setPermissions(filePath, permissions | QFile::WriteUser)
+                         && QFile::remove(filePath);
+                }
+            }
+
+            if (!ok) {
+                ret = make_ret(Err::FSRemoveError);
+            }
+        }
+
+        if (!ret) {
+            break;
+        }
+    }
+
+    return ret;
 }
 
-Ret FileSystem::copy(const io::path_t& src, const io::path_t& dst, bool replace) const
+Ret FileSystem::copy(const io::path_t& src, const io::path_t& dst, bool replace)
 {
     QFileInfo srcFileInfo(src.toQString());
     if (!srcFileInfo.exists()) {
@@ -84,7 +117,7 @@ Ret FileSystem::copy(const io::path_t& src, const io::path_t& dst, bool replace)
     return ret;
 }
 
-Ret FileSystem::move(const io::path_t& src, const io::path_t& dst, bool replace) const
+Ret FileSystem::move(const io::path_t& src, const io::path_t& dst, bool replace)
 {
     QFileInfo srcFileInfo(src.toQString());
     if (!srcFileInfo.exists()) {
@@ -141,33 +174,49 @@ RetVal<ByteArray> FileSystem::readFile(const io::path_t& filePath) const
     return result;
 }
 
-bool FileSystem::readFile(const io::path_t& filePath, ByteArray& data) const
+Ret FileSystem::readFile(const io::path_t& filePath, ByteArray& data) const
 {
+    Ret ret = make_ok();
+
     QFile file(filePath.toQString());
     if (!file.open(QIODevice::ReadOnly)) {
-        return false;
+        ret = make_ret(Err::FSReadError);
+        ret.setText(file.errorString().toStdString());
+        return ret;
     }
 
     qint64 size = file.size();
     data.resize(static_cast<size_t>(size));
 
-    file.read(reinterpret_cast<char*>(data.data()), size);
+    if (file.read(reinterpret_cast<char*>(data.data()), size) == -1) {
+        ret = make_ret(Err::FSReadError);
+        ret.setText(file.errorString().toStdString());
+    }
+
     file.close();
 
-    return make_ret(Err::NoError);
+    return ret;
 }
 
 Ret FileSystem::writeFile(const io::path_t& filePath, const ByteArray& data) const
 {
+    Ret ret = make_ok();
+
     QFile file(filePath.toQString());
     if (!file.open(QIODevice::WriteOnly)) {
-        return make_ret(Err::FSWriteError);
+        ret = make_ret(Err::FSWriteError);
+        ret.setText(file.errorString().toStdString());
+        return ret;
     }
 
-    file.write(reinterpret_cast<const char*>(data.constData()), static_cast<qint64>(data.size()));
+    if (file.write(reinterpret_cast<const char*>(data.constData()), static_cast<qint64>(data.size())) == -1) {
+        ret = make_ret(Err::FSWriteError);
+        ret.setText(file.errorString().toStdString());
+    }
+
     file.close();
 
-    return true;
+    return ret;
 }
 
 Ret FileSystem::makePath(const io::path_t& path) const
@@ -177,6 +226,18 @@ Ret FileSystem::makePath(const io::path_t& path) const
     }
 
     return make_ret(Err::NoError);
+}
+
+EntryType FileSystem::entryType(const io::path_t& path) const
+{
+    QFileInfo fi(path.toQString());
+    if (fi.isFile()) {
+        return EntryType::File;
+    } else if (fi.isDir()) {
+        return EntryType::Dir;
+    }
+
+    return EntryType::Undefined;
 }
 
 RetVal<uint64_t> FileSystem::fileSize(const io::path_t& path) const
@@ -202,7 +263,7 @@ RetVal<io::paths_t> FileSystem::scanFiles(const io::path_t& rootDir, const std::
     }
 
     QDirIterator::IteratorFlags flags = QDirIterator::NoIteratorFlags;
-    QDir::Filters filters = QDir::NoDotAndDotDot | QDir::NoSymLinks | QDir::Readable;
+    QDir::Filters filters = QDir::NoDotAndDotDot | QDir::Readable;
 
     switch (mode) {
     case ScanMode::FilesInCurrentDir:
@@ -242,11 +303,11 @@ Ret FileSystem::removeFile(const io::path_t& path) const
     return make_ret(Err::NoError);
 }
 
-Ret FileSystem::removeDir(const io::path_t& path, bool recursively) const
+Ret FileSystem::removeDir(const io::path_t& path, bool onlyIfEmpty) const
 {
     QDir dir(path.toQString());
 
-    if (!recursively && !dir.isEmpty()) {
+    if (onlyIfEmpty && !dir.isEmpty()) {
         return make_ret(Err::FSDirNotEmptyError);
     }
 
@@ -336,7 +397,31 @@ DateTime FileSystem::lastModified(const io::path_t& filePath) const
     return DateTime::fromQDateTime(QFileInfo(filePath.toQString()).lastModified());
 }
 
-bool FileSystem::isWritable(const io::path_t& filePath) const
+Ret FileSystem::isWritable(const io::path_t& filePath) const
 {
-    return QFileInfo(filePath.toQString()).isWritable();
+    Ret ret = make_ok();
+
+    QFileInfo fileInfo(filePath.toQString());
+
+    if (!fileInfo.exists()) {
+        QFile file(filePath.toQString());
+
+        if (!file.open(QFile::WriteOnly)) {
+            ret = make_ret(Err::FSWriteError);
+            ret.setText(file.errorString().toStdString());
+        }
+
+        file.close();
+        file.remove();
+    } else if (!fileInfo.isWritable()) {
+        QFile file(filePath.toQString());
+        file.open(QFile::WriteOnly);
+
+        ret = make_ret(Err::FSWriteError);
+        ret.setText(file.errorString().toStdString());
+
+        file.close();
+    }
+
+    return ret;
 }

@@ -31,8 +31,8 @@
 namespace mu::project {
 class ProjectMigrator : public IProjectMigrator
 {
-    INJECT(project, IProjectConfiguration, configuration)
-    INJECT(project, framework::IInteractive, interactive)
+    INJECT(IProjectConfiguration, configuration)
+    INJECT(framework::IInteractive, interactive)
 public:
     ProjectMigrator() = default;
 
@@ -47,6 +47,7 @@ private:
     bool applyLelandStyle(mu::engraving::MasterScore* score);
     bool applyEdwinStyle(mu::engraving::MasterScore* score);
     bool resetAllElementsPositions(mu::engraving::MasterScore* score);
+    bool resetCrossBeams(mu::engraving::MasterScore* score);
     void resetStyleSettings(mu::engraving::MasterScore* score);
 
     bool m_resetStyleSettings{ false };

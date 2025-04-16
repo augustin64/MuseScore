@@ -22,16 +22,13 @@
 
 #include "drumsetpalette.h"
 
-#include "engraving/libmscore/factory.h"
-#include "engraving/libmscore/chord.h"
-#include "engraving/libmscore/note.h"
-#include "engraving/libmscore/drumset.h"
-#include "engraving/libmscore/score.h"
-#include "engraving/libmscore/staff.h"
-#include "engraving/libmscore/part.h"
-#include "engraving/libmscore/stem.h"
-#include "engraving/libmscore/mscore.h"
-#include "engraving/libmscore/undo.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/factory.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/drumset.h"
+#include "engraving/dom/stem.h"
+#include "engraving/dom/mscore.h"
 
 #include "translation.h"
 #include "log.h"
@@ -93,7 +90,7 @@ void DrumsetPalette::updateDrumset()
 
     TRACEFUNC;
 
-    double _spatium = gpaletteScore->spatium();
+    double _spatium = gpaletteScore->style().spatium();
 
     for (int pitch = 0; pitch < 128; ++pitch) {
         if (!m_drumset->isValid(pitch)) {
@@ -119,9 +116,6 @@ void DrumsetPalette::updateDrumset()
         chord->setStemDirection(dir);
         chord->setIsUiItem(true);
         chord->setTrack(voice);
-        Stem* stem = Factory::createStem(chord.get());
-        stem->setBaseLength(Millimetre((up ? -3.0 : 3.0) * _spatium));
-        chord->add(stem);
         Note* note = Factory::createNote(chord.get());
         note->setMark(true);
         note->setParent(chord.get());
@@ -138,8 +132,13 @@ void DrumsetPalette::updateDrumset()
             noteheadSym = note->noteHead(true, noteHead, NoteHeadType::HEAD_QUARTER);
         }
 
-        note->setCachedNoteheadSym(noteheadSym);     // we use the cached notehead so we don't recompute it at each layout
+        note->mutldata()->cachedNoteheadSym.set_value(noteheadSym);     // we use the cached notehead so we don't recompute it at each layout
         chord->add(note);
+
+        Stem* stem = Factory::createStem(chord.get());
+        stem->setParent(chord.get());
+        stem->setBaseLength(Millimetre((up ? -3.0 : 3.0) * _spatium));
+        chord->add(stem);
 
         int shortcutCode = m_drumset->shortcut(pitch);
         QString shortcut = shortcutCode != 0 ? QChar(shortcutCode) : QString();
@@ -196,7 +195,18 @@ void DrumsetPalette::previewSound(const Chord* chord, bool newChordSelected, con
 
     Chord* preview = chord->clone();
     preview->setParent(inputState.segment);
-    preview->setStaffIdx(engraving::track2staff(inputState.currentTrack));
+    preview->setTrack(inputState.currentTrack);
+
+    const std::vector<Note*>& previewNotes = preview->notes();
+    const std::vector<Note*>& chordNotes = chord->notes();
+    IF_ASSERT_FAILED(previewNotes.size() == chordNotes.size()) {
+        return;
+    }
+
+    for (size_t i = 0; i < previewNotes.size(); ++i) {
+        SymId symId = chordNotes.at(i)->ldata()->cachedNoteheadSym.value();
+        previewNotes.at(i)->mutldata()->cachedNoteheadSym.set_value(symId);
+    }
 
     playback()->playElements({ preview });
 

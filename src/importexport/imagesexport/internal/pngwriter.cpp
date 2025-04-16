@@ -25,10 +25,6 @@
 #include <cmath>
 #include <QImage>
 
-#include "libmscore/masterscore.h"
-#include "libmscore/page.h"
-#include "engraving/infrastructure/paint.h"
-
 #include "log.h"
 
 using namespace mu::iex::imagesexport;
@@ -48,7 +44,15 @@ mu::Ret PngWriter::write(INotationPtr notation, QIODevice& destinationDevice, co
     }
 
     const float CANVAS_DPI = configuration()->exportPngDpiResolution();
-    const SizeF pageSizeInch = notation->painting()->pageSizeInch();
+
+    INotationPainting::Options opt;
+    opt.fromPage = options.value(OptionKey::PAGE_NUMBER, Val(0)).toInt();
+    opt.toPage = opt.fromPage;
+    opt.trimMarginPixelSize = configuration()->trimMarginPixelSize();
+    opt.deviceDpi = CANVAS_DPI;
+    opt.printPageBackground = false; // Printed by us using image.fill
+
+    const SizeF pageSizeInch = notation->painting()->pageSizeInch(opt);
 
     int width = std::lrint(pageSizeInch.width() * CANVAS_DPI);
     int height = std::lrint(pageSizeInch.height() * CANVAS_DPI);
@@ -57,17 +61,11 @@ mu::Ret PngWriter::write(INotationPtr notation, QIODevice& destinationDevice, co
     image.setDotsPerMeterX(std::lrint((CANVAS_DPI * 1000) / mu::engraving::INCH));
     image.setDotsPerMeterY(std::lrint((CANVAS_DPI * 1000) / mu::engraving::INCH));
 
-    const bool TRANSPARENT_BACKGROUND = options.value(OptionKey::TRANSPARENT_BACKGROUND, Val(false)).toBool();
+    const bool TRANSPARENT_BACKGROUND = options.value(OptionKey::TRANSPARENT_BACKGROUND,
+                                                      Val(configuration()->exportPngWithTransparentBackground())).toBool();
     image.fill(TRANSPARENT_BACKGROUND ? Qt::transparent : Qt::white);
 
     mu::draw::Painter painter(&image, "pngwriter");
-
-    INotationPainting::Options opt;
-    opt.fromPage = options.value(OptionKey::PAGE_NUMBER, Val(0)).toInt();
-    opt.toPage = opt.fromPage;
-    opt.trimMarginPixelSize = configuration()->trimMarginPixelSize();
-    opt.deviceDpi = CANVAS_DPI;
-    opt.printPageBackground = false; //Already printed
 
     notation->painting()->paintPng(&painter, opt);
 

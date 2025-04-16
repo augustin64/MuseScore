@@ -26,10 +26,9 @@
 #include "engraving/types/symnames.h"
 #include "engraving/infrastructure/smufl.h"
 
-#include "libmscore/masterscore.h"
-#include "infrastructure/symbolfonts.h"
-#include "libmscore/engravingitem.h"
-#include "libmscore/symbol.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/engravingitem.h"
+#include "engraving/dom/symbol.h"
 
 #include "palettewidget.h"
 
@@ -57,9 +56,9 @@ void SymbolDialog::createSymbolPalette()
 void SymbolDialog::createSymbols()
 {
     int currentIndex = fontList->currentIndex();
-    const SymbolFont* f = &SymbolFonts::scoreFonts()[currentIndex];
+    const IEngravingFontPtr f = engravingFonts()->fonts()[currentIndex];
     // init the font if not done yet
-    SymbolFonts::fontByName(f->name());
+    engravingFonts()->fontByName(f->name());
     m_symbolsWidget->clear();
     for (auto name : Smufl::smuflRanges().at(range)) {
         SymId id = SymNames::symIdByName(name);
@@ -83,9 +82,9 @@ SymbolDialog::SymbolDialog(const QString& s, QWidget* parent)
     range = s;          // smufl symbol range
     int idx = 0;
     int currentIndex = 0;
-    for (const SymbolFont& f : SymbolFonts::scoreFonts()) {
-        fontList->addItem(f.name());
-        if (f.name() == "Leland" || f.name() == "Bravura") {
+    for (const IEngravingFontPtr& f : engravingFonts()->fonts()) {
+        fontList->addItem(QString::fromStdString(f->name()));
+        if (f->name() == "Leland" || f->name() == "Bravura") {
             currentIndex = idx;
         }
         ++idx;

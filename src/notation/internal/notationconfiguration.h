@@ -35,10 +35,10 @@
 namespace mu::notation {
 class NotationConfiguration : public INotationConfiguration, public async::Asyncable
 {
-    INJECT(notation, framework::IGlobalConfiguration, globalConfiguration)
-    INJECT(notation, io::IFileSystem, fileSystem)
-    // INJECT(notation, ui::IUiConfiguration, uiConfiguration)
-    INJECT(notation, engraving::IEngravingConfiguration, engravingConfiguration)
+    INJECT(framework::IGlobalConfiguration, globalConfiguration)
+    INJECT(io::IFileSystem, fileSystem)
+    // INJECT(ui::IUiConfiguration, uiConfiguration)
+    INJECT(engraving::IEngravingConfiguration, engravingConfiguration)
 
 public:
     void init();
@@ -122,6 +122,9 @@ public:
     bool isAutomaticallyPanEnabled() const override;
     void setIsAutomaticallyPanEnabled(bool enabled) override;
 
+    bool isSmoothPanning() const override;
+    void setIsSmoothPanning(bool value) override;
+
     bool isPlayRepeatsEnabled() const override;
     void setIsPlayRepeatsEnabled(bool enabled) override;
     async::Notification isPlayRepeatsChanged() const override;
@@ -149,14 +152,17 @@ public:
     bool colorNotesOutsideOfUsablePitchRange() const override;
     void setColorNotesOutsideOfUsablePitchRange(bool value) override;
 
+    bool warnGuitarBends() const override;
+    void setWarnGuitarBends(bool value) override;
+
     int delayBetweenNotesInRealTimeModeMilliseconds() const override;
     void setDelayBetweenNotesInRealTimeModeMilliseconds(int delayMs) override;
 
     int notePlayDurationMilliseconds() const override;
     void setNotePlayDurationMilliseconds(int durationMs) override;
 
-    void setTemplateModeEnabled(bool enabled) override;
-    void setTestModeEnabled(bool enabled) override;
+    void setTemplateModeEnabled(std::optional<bool> enabled) override;
+    void setTestModeEnabled(std::optional<bool> enabled) override;
 
     io::path_t instrumentListPath() const override;
 
@@ -165,6 +171,8 @@ public:
 
     io::paths_t userScoreOrderListPaths() const override;
     void setUserScoreOrderListPaths(const io::paths_t& paths) override;
+
+    io::path_t stringTuningsPresetsPath() const override;
 
     bool isSnappedToGrid(framework::Orientation gridOrientation) const override;
     void setIsSnappedToGrid(framework::Orientation gridOrientation, bool isSnapped) override;
@@ -177,6 +185,9 @@ public:
 
     bool needToShowAddFiguredBassErrorMessage() const override;
     void setNeedToShowAddFiguredBassErrorMessage(bool show) override;
+
+    bool needToShowAddGuitarBendErrorMessage() const override;
+    void setNeedToShowAddGuitarBendErrorMessage(bool show) override;
 
     bool needToShowMScoreError(const std::string& errorKey) const override;
     void setNeedToShowMScoreError(const std::string& errorKey, bool show) override;

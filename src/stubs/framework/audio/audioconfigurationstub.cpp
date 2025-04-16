@@ -24,6 +24,11 @@
 using namespace mu::audio;
 using namespace mu;
 
+std::vector<std::string> AudioConfigurationStub::availableAudioApiList() const
+{
+    return {};
+}
+
 std::string AudioConfigurationStub::currentAudioApi() const
 {
     return std::string();
@@ -33,7 +38,21 @@ void AudioConfigurationStub::setCurrentAudioApi(const std::string&)
 {
 }
 
-int AudioConfigurationStub::audioChannelsCount() const
+std::string AudioConfigurationStub::audioOutputDeviceId() const
+{
+    return "";
+}
+
+void AudioConfigurationStub::setAudioOutputDeviceId(const std::string&)
+{
+}
+
+async::Notification AudioConfigurationStub::audioOutputDeviceIdChanged() const
+{
+    return async::Notification();
+}
+
+audioch_t AudioConfigurationStub::audioChannelsCount() const
 {
     return 2;
 }
@@ -43,38 +62,65 @@ unsigned int AudioConfigurationStub::driverBufferSize() const
     return 0;
 }
 
-bool AudioConfigurationStub::isShowControlsInMixer() const
+void AudioConfigurationStub::setDriverBufferSize(unsigned int)
 {
-    return false;
 }
 
-void AudioConfigurationStub::setIsShowControlsInMixer(bool)
+async::Notification AudioConfigurationStub::driverBufferSizeChanged() const
 {
+    return async::Notification();
+}
+
+samples_t AudioConfigurationStub::renderStep() const
+{
+    return 0;
+}
+
+unsigned int AudioConfigurationStub::sampleRate() const
+{
+    return 0;
+}
+
+void AudioConfigurationStub::setSampleRate(unsigned int)
+{
+}
+
+async::Notification AudioConfigurationStub::sampleRateChanged() const
+{
+    return async::Notification();
+}
+
+size_t AudioConfigurationStub::minTrackCountForMultithreading() const
+{
+    return 0;
 }
 
 // synthesizers
-std::vector<io::path_t> AudioConfigurationStub::soundFontPaths() const
+AudioInputParams AudioConfigurationStub::defaultAudioInputParams() const
 {
-    return std::vector<io::path_t>();
+    return {};
 }
 
-const synth::SynthesizerState& AudioConfigurationStub::synthesizerState() const
+io::paths_t AudioConfigurationStub::soundFontDirectories() const
 {
-    static synth::SynthesizerState s;
-    return s;
+    return {};
 }
 
-Ret AudioConfigurationStub::saveSynthesizerState(const synth::SynthesizerState&)
+io::paths_t AudioConfigurationStub::userSoundFontDirectories() const
 {
-    return make_ret(Ret::Code::NotImplemented);
+    return {};
 }
 
-async::Notification AudioConfigurationStub::synthesizerStateChanged() const
+void AudioConfigurationStub::setUserSoundFontDirectories(const io::paths_t&)
 {
-    return async::Notification();
 }
 
-async::Notification AudioConfigurationStub::synthesizerStateGroupChanged(const std::string&) const
+async::Channel<io::paths_t> AudioConfigurationStub::soundFontDirectoriesChanged() const
 {
-    return async::Notification();
+    return async::Channel<io::paths_t>();
+}
+
+io::path_t AudioConfigurationStub::knownAudioPluginsFilePath() const
+{
+    return {};
 }

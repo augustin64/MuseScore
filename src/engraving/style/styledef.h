@@ -28,8 +28,7 @@
 
 #include "types/string.h"
 #include "types/propertyvalue.h"
-#include "libmscore/property.h"
-#include "config.h"
+#include "dom/property.h"
 
 namespace mu::engraving {
 // Needs to be duplicated here and in symid.h since moc doesn't handle macros from #include'd files
@@ -197,8 +196,6 @@ enum class Sid {
     stemLengthSmall,
     shortStemStartLocation,
     shortestStem,
-    minStaffSizeForAutoStems,
-    smallStaffStemDirection,
     beginRepeatLeftMargin,
     minNoteDistance,
     barNoteDistance,
@@ -242,6 +239,8 @@ enum class Sid {
     articulationAnchorDefault,
     articulationAnchorLuteFingering,
     articulationAnchorOther,
+    articulationStemHAlign,
+    articulationKeepTogether,
     lastSystemFillLimit,
 
     hairpinPlacement,
@@ -298,6 +297,12 @@ enum class Sid {
     pedalFrameRound,
     pedalFrameFgColor,
     pedalFrameBgColor,
+    pedalText,
+    pedalHookText,
+    pedalContinueText,
+    pedalContinueHookText,
+    pedalEndText,
+    pedalRosetteEndText,
 
     trillPlacement,
     trillPosAbove,
@@ -421,6 +426,7 @@ enum class Sid {
     smallStaffMag,
     smallClefMag,
     genClef,
+    hideTabClefAfterFirst,
     genKeysig,
     genCourtesyTimesig,
     genCourtesyKeysig,
@@ -446,6 +452,7 @@ enum class Sid {
     chordModifierMag,
     chordModifierAdjust,
     concertPitch,
+    multiVoiceRestTwoSpaceOffset,
     createMultiMeasureRests,
     minEmptyMeasures,
     minMMRestWidth,
@@ -481,8 +488,15 @@ enum class Sid {
     SlurMidWidth,
     SlurDottedWidth,
     MinTieLength,
+    MinStraightGlissandoLength,
+    MinWigglyGlissandoLength,
     SlurMinDistance,
     HeaderToLineStartDistance, // determines start point of "dangling" lines (ties, gliss, lyrics...) at start of system
+
+    tiePlacementSingleNote,
+    tiePlacementChord,
+    tieMinShoulderHeight,
+    tieMaxShoulderHeight,
 
     SectionPause,
     MusicalSymbolFont,
@@ -640,10 +654,15 @@ enum class Sid {
 
     autoplaceHairpinDynamicsDistance,
 
+    dynamicsOverrideFont,
+    dynamicsFont,
+    dynamicsSize,
     dynamicsPlacement,
     dynamicsPosAbove,
     dynamicsPosBelow,
-
+    avoidBarLines,
+    snapToDynamics,
+    centerOnNotehead,
     dynamicsMinDistance,
     autoplaceVerticalAlignRange,
 
@@ -812,6 +831,47 @@ enum class Sid {
     stringNumberFrameFgColor,
     stringNumberFrameBgColor,
     stringNumberOffset,
+    preferSameStringForTranspose,
+
+    stringTuningsFontSize,
+
+    harpPedalDiagramFontFace,
+    harpPedalDiagramFontSize,
+    harpPedalDiagramLineSpacing,
+    harpPedalDiagramFontSpatiumDependent,
+    harpPedalDiagramFontStyle,
+    harpPedalDiagramColor,
+    harpPedalDiagramAlign,
+    harpPedalDiagramFrameType,
+    harpPedalDiagramFramePadding,
+    harpPedalDiagramFrameWidth,
+    harpPedalDiagramFrameRound,
+    harpPedalDiagramFrameFgColor,
+    harpPedalDiagramFrameBgColor,
+    harpPedalDiagramOffset,
+    harpPedalDiagramPlacement,
+    harpPedalDiagramPosAbove,
+    harpPedalDiagramPosBelow,
+    harpPedalDiagramMinDistance,
+
+    harpPedalTextDiagramFontFace,
+    harpPedalTextDiagramFontSize,
+    harpPedalTextDiagramLineSpacing,
+    harpPedalTextDiagramFontSpatiumDependent,
+    harpPedalTextDiagramFontStyle,
+    harpPedalTextDiagramColor,
+    harpPedalTextDiagramAlign,
+    harpPedalTextDiagramFrameType,
+    harpPedalTextDiagramFramePadding,
+    harpPedalTextDiagramFrameWidth,
+    harpPedalTextDiagramFrameRound,
+    harpPedalTextDiagramFrameFgColor,
+    harpPedalTextDiagramFrameBgColor,
+    harpPedalTextDiagramOffset,
+    harpPedalTextDiagramPlacement,
+    harpPedalTextDiagramPosAbove,
+    harpPedalTextDiagramPosBelow,
+    harpPedalTextDiagramMinDistance,
 
     longInstrumentFontFace,
     longInstrumentFontSize,
@@ -881,12 +941,15 @@ enum class Sid {
     expressionAlign,
     expressionPlacement,
     expressionOffset,
+    expressionPosAbove,
+    expressionPosBelow,
     expressionFrameType,
     expressionFramePadding,
     expressionFrameWidth,
     expressionFrameRound,
     expressionFrameFgColor,
     expressionFrameBgColor,
+    expressionMinDistance,
 
     tempoFontFace,
     tempoFontSize,
@@ -906,6 +969,25 @@ enum class Sid {
     tempoFrameRound,
     tempoFrameFgColor,
     tempoFrameBgColor,
+
+    tempoChangeFontFace,
+    tempoChangeFontSize,
+    tempoChangeLineSpacing,
+    tempoChangeFontSpatiumDependent,
+    tempoChangeFontStyle,
+    tempoChangeColor,
+    tempoChangeAlign,
+    tempoChangeSystemFlag,
+    tempoChangePlacement,
+    tempoChangePosAbove,
+    tempoChangePosBelow,
+    tempoChangeMinDistance,
+    tempoChangeFrameType,
+    tempoChangeFramePadding,
+    tempoChangeFrameWidth,
+    tempoChangeFrameRound,
+    tempoChangeFrameFgColor,
+    tempoChangeFrameBgColor,
     tempoChangeLineWidth,
     tempoChangeLineStyle,
     tempoChangeDashLineLen,
@@ -1116,6 +1198,8 @@ enum class Sid {
     glissandoFrameBgColor,
     glissandoLineWidth,
     glissandoText,
+    glissandoStyle,
+    glissandoStyleHarp,
 
     bendFontFace,
     bendFontSize,
@@ -1133,6 +1217,15 @@ enum class Sid {
     bendFrameBgColor,
     bendLineWidth,
     bendArrowWidth,
+
+    guitarBendLineWidth,
+    guitarBendLineWidthTab,
+    guitarBendHeightAboveTABStaff,
+    guitarBendPartialBendHeight,
+    guitarBendUseFull,
+    guitarBendArrowWidth,
+    guitarBendArrowHeight,
+    useCueSizeFretForGraceBends,
 
     headerFontFace,
     headerFontSize,
@@ -1513,6 +1606,10 @@ enum class Sid {
     wahShowTabCommon,
     golpeShowTabSimple,
     golpeShowTabCommon,
+
+    tabShowTiedFret,
+    tabParenthesizeTiedFret,
+    parenthesizeTiedFretIfArticulation,
 
     chordlineThickness,
 

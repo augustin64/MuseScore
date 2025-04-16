@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<museScore version="4.00">
+<museScore version="4.20">
   <Style>
     <pageWidth>8.26772</pageWidth>
     <pageHeight>11.6929</pageHeight>
@@ -126,8 +126,6 @@
     <stemLengthSmall>2.25</stemLengthSmall>
     <shortStemStartLocation>1</shortStemStartLocation>
     <shortestStem>2.5</shortestStem>
-    <minStaffSizeForAutoStems>4</minStaffSizeForAutoStems>
-    <smallStaffStemDirection>1</smallStaffStemDirection>
     <beginRepeatLeftMargin>1</beginRepeatLeftMargin>
     <minNoteDistance>0.5</minNoteDistance>
     <barNoteDistance>1.2</barNoteDistance>
@@ -345,7 +343,7 @@
     <concertPitch>0</concertPitch>
     <createMultiMeasureRests>0</createMultiMeasureRests>
     <minEmptyMeasures>2</minEmptyMeasures>
-    <minMMRestWidth>4</minMMRestWidth>
+    <minMMRestWidth>6</minMMRestWidth>
     <mmRestNumberPos>-0.5</mmRestNumberPos>
     <mmRestNumberMaskHBar>1</mmRestNumberMaskHBar>
     <multiMeasureRestMargin>1.2</multiMeasureRestMargin>
@@ -365,8 +363,8 @@
     <tenutoGateTime>100</tenutoGateTime>
     <staccatoGateTime>50</staccatoGateTime>
     <slurGateTime>100</slurGateTime>
-    <ArpeggioNoteDistance>0.5</ArpeggioNoteDistance>
-    <ArpeggioAccidentalDistance>0.5</ArpeggioAccidentalDistance>
+    <ArpeggioNoteDistance>0.4</ArpeggioNoteDistance>
+    <ArpeggioAccidentalDistance>0.3</ArpeggioAccidentalDistance>
     <ArpeggioAccidentalDistanceMin>0.33</ArpeggioAccidentalDistanceMin>
     <ArpeggioLineWidth>0.18</ArpeggioLineWidth>
     <ArpeggioHookLen>0.8</ArpeggioHookLen>
@@ -1256,8 +1254,8 @@
     <palmMuteTextAlign>left,center</palmMuteTextAlign>
     <palmMuteHookHeight>0.6</palmMuteHookHeight>
     <palmMutePlacement>1</palmMutePlacement>
-    <palmMutePosAbove x="0" y="-4"/>
-    <palmMutePosBelow x="0" y="4"/>
+    <palmMutePosAbove x="0" y="0"/>
+    <palmMutePosBelow x="0" y="0"/>
     <palmMuteLineWidth>0.11</palmMuteLineWidth>
     <palmMuteLineStyle>2</palmMuteLineStyle>
     <palmMuteBeginTextOffset x="0" y="0.15"/>

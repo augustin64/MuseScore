@@ -28,13 +28,14 @@
 #include "internal/encoders/flacencoder.h"
 #include "internal/encoders/wavencoder.h"
 
+#include "audioerrors.h"
+
 #include "defer.h"
 
 using namespace mu;
 using namespace mu::audio;
 using namespace mu::audio::soundtrack;
 
-static constexpr int WRITE_STEPS = 2;
 static constexpr int PREPARE_STEP = 0;
 static constexpr int ENCODE_STEP = 1;
 
@@ -62,7 +63,7 @@ SoundTrackWriter::SoundTrackWriter(const io::path_t& destination, const SoundTra
     });
 }
 
-bool SoundTrackWriter::write()
+Ret SoundTrackWriter::write()
 {
     TRACEFUNC;
 
@@ -78,23 +79,35 @@ bool SoundTrackWriter::write()
     DEFER {
         m_encoderPtr->flush();
 
-        AudioEngine::instance()->setMode(RenderMode::RealTimeMode);
+        AudioEngine::instance()->setMode(RenderMode::IdleMode);
 
         m_source->setSampleRate(AudioEngine::instance()->sampleRate());
         m_source->setIsActive(false);
+
+        m_isAborted = false;
     };
 
-    if (!prepareInputBuffer()) {
-        return false;
+    Ret ret = generateAudioData();
+    if (!ret) {
+        return ret;
     }
 
-    auto outputSize = m_encoderPtr->encode(m_inputBuffer.size() / sizeof(float), m_inputBuffer.data());
-    LOGI() << String("inputBuffer size %1, output size %2").arg(m_inputBuffer.size()).arg(outputSize);
-    if (outputSize == 0) {
-        return false;
+    size_t bytes = m_encoderPtr->encode(m_inputBuffer.size() / sizeof(float), m_inputBuffer.data());
+
+    if (m_isAborted) {
+        return make_ret(Ret::Code::Cancel);
     }
 
-    return true;
+    if (bytes == 0) {
+        return make_ret(Err::ErrorEncode);
+    }
+
+    return make_ok();
+}
+
+void SoundTrackWriter::abort()
+{
+    m_isAborted = true;
 }
 
 framework::Progress SoundTrackWriter::progress()
@@ -109,12 +122,17 @@ encode::AbstractAudioEncoderPtr SoundTrackWriter::createEncoder(const SoundTrack
     case SoundTrackType::OGG: return std::make_unique<encode::OggEncoder>();
     case SoundTrackType::FLAC: return std::make_unique<encode::FlacEncoder>();
     case SoundTrackType::WAV: return std::make_unique<encode::WavEncoder>();
-    default: return nullptr;
+    case SoundTrackType::Undefined: break;
     }
+
+    UNREACHABLE;
+    return nullptr;
 }
 
-bool SoundTrackWriter::prepareInputBuffer()
+Ret SoundTrackWriter::generateAudioData()
 {
+    TRACEFUNC;
+
     size_t inputBufferOffset = 0;
     size_t inputBufferMaxOffset = m_inputBuffer.size();
 
@@ -122,7 +140,7 @@ bool SoundTrackWriter::prepareInputBuffer()
 
     samples_t renderStep = config()->renderStep();
 
-    while (inputBufferOffset < inputBufferMaxOffset) {
+    while (inputBufferOffset < inputBufferMaxOffset && !m_isAborted) {
         m_source->process(m_intermBuffer.data(), renderStep);
 
         size_t samplesToCopy = std::min(m_intermBuffer.size(), inputBufferMaxOffset - inputBufferOffset);
@@ -135,12 +153,16 @@ bool SoundTrackWriter::prepareInputBuffer()
         sendStepProgress(PREPARE_STEP, inputBufferOffset, inputBufferMaxOffset);
     }
 
-    if (inputBufferOffset == 0) {
-        LOGI() << "No audio to export";
-        return false;
+    if (m_isAborted) {
+        return make_ret(Ret::Code::Cancel);
     }
 
-    return true;
+    if (inputBufferOffset == 0) {
+        LOGI() << "No audio to export";
+        return make_ret(Err::NoAudioToExport);
+    }
+
+    return make_ok();
 }
 
 void SoundTrackWriter::sendStepProgress(int step, int64_t current, int64_t total)

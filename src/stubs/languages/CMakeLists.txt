@@ -31,9 +31,8 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/languagesconfigurationstub.h
     ${CMAKE_CURRENT_LIST_DIR}/languagesservicestub.cpp
     ${CMAKE_CURRENT_LIST_DIR}/languagesservicestub.h
-    ${CMAKE_CURRENT_LIST_DIR}/languageunpackerstub.cpp
-    ${CMAKE_CURRENT_LIST_DIR}/languageunpackerstub.h
     )
 
-include(${PROJECT_SOURCE_DIR}/build/module.cmake)
+set(MODULE_IS_STUB ON)
+include(SetupModule)
 

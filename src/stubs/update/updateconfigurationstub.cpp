@@ -28,6 +28,15 @@ bool UpdateConfigurationStub::isAppUpdatable() const
     return false;
 }
 
+bool UpdateConfigurationStub::allowUpdateOnPreRelease() const
+{
+    return false;
+}
+
+void UpdateConfigurationStub::setAllowUpdateOnPreRelease(bool)
+{
+}
+
 bool UpdateConfigurationStub::needCheckForUpdate() const
 {
     return false;
@@ -42,18 +51,37 @@ std::string UpdateConfigurationStub::skippedReleaseVersion() const
     return "";
 }
 
-void UpdateConfigurationStub::setSkippedReleaseVersion(const std::string&) const
+void UpdateConfigurationStub::setSkippedReleaseVersion(const std::string&)
 {
 }
 
-std::string UpdateConfigurationStub::checkForUpdateUrl() const
+std::string UpdateConfigurationStub::lastShownMuseSoundsReleaseVersion() const
 {
     return "";
 }
 
-mu::network::RequestHeaders UpdateConfigurationStub::checkForUpdateHeaders() const
+void UpdateConfigurationStub::setLastShownMuseSoundsReleaseVersion(const std::string&)
 {
-    return network::RequestHeaders();
+}
+
+std::string UpdateConfigurationStub::checkForAppUpdateUrl() const
+{
+    return "";
+}
+
+std::string UpdateConfigurationStub::previousAppReleasesNotesUrl() const
+{
+    return "";
+}
+
+std::string UpdateConfigurationStub::checkForMuseSamplerUpdateUrl() const
+{
+    return "";
+}
+
+mu::network::RequestHeaders UpdateConfigurationStub::updateHeaders() const
+{
+    return mu::network::RequestHeaders();
 }
 
 std::string UpdateConfigurationStub::museScoreUrl() const
@@ -66,7 +94,7 @@ std::string UpdateConfigurationStub::museScorePrivacyPolicyUrl() const
     return "";
 }
 
-mu::io::path_t UpdateConfigurationStub::userAppDataPath() const
+mu::io::path_t UpdateConfigurationStub::updateDataPath() const
 {
     return "";
 }

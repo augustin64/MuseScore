@@ -22,14 +22,20 @@
 
 #include "masternotationparts.h"
 
-#include "libmscore/masterscore.h"
-#include "libmscore/scoreorder.h"
-#include "libmscore/excerpt.h"
-#include "libmscore/undo.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/scoreorder.h"
+#include "engraving/dom/excerpt.h"
+#include "engraving/dom/undo.h"
+#include "engraving/dom/utils.h"
 
 #include "log.h"
 
 using namespace mu::notation;
+
+static NotationParts* get_impl(const INotationPartsPtr& parts)
+{
+    return static_cast<NotationParts*>(parts.get());
+}
 
 MasterNotationParts::MasterNotationParts(IGetScore* getScore, INotationInteractionPtr interaction, INotationUndoStackPtr undoStack)
     : NotationParts(getScore, interaction, undoStack)
@@ -51,6 +57,45 @@ void MasterNotationParts::endGlobalEdit()
 {
     undoStack()->unlock();
     NotationParts::apply();
+}
+
+void MasterNotationParts::setParts(const PartInstrumentList& partList, const ScoreOrder& order)
+{
+    TRACEFUNC;
+
+    mu::engraving::KeyList keyList = score()->keyList();
+
+    endInteractionWithScore();
+    startGlobalEdit();
+
+    doSetScoreOrder(order);
+    removeMissingParts(partList);
+    insertNewParts(partList, keyList);
+    updateSoloist(partList);
+    sortParts(partList);
+    setBracketsAndBarlines();
+
+    for (INotationPartsPtr excerptParts : excerptsParts()) {
+        auto impl = get_impl(excerptParts);
+
+        impl->removeMissingParts(partList);
+
+        PartInstrumentList excerptPartList;
+        for (mu::engraving::Part* part: impl->score()->parts()) {
+            PartInstrument pi;
+            pi.isExistingPart = true;
+            pi.partId = part->id();
+            excerptPartList << pi;
+        }
+
+        impl->sortParts(excerptPartList);
+
+        impl->setBracketsAndBarlines();
+    }
+
+    endGlobalEdit();
+
+    m_partChangedNotifier.changed();
 }
 
 void MasterNotationParts::removeParts(const IDList& partsIds)
@@ -99,9 +144,10 @@ bool MasterNotationParts::appendStaff(Staff* staff, const ID& destinationPartId)
     NotationParts::appendStaff(staff, destinationPartId);
 
     for (INotationPartsPtr parts : excerptsParts()) {
-        Staff* excerptStaff = mu::engraving::toStaff(staff->linkedClone());
-        if (!parts->appendStaff(excerptStaff, destinationPartId)) {
-            excerptStaff->unlink();
+        Staff* excerptStaff = staff->clone();
+        if (parts->appendStaff(excerptStaff, destinationPartId)) {
+            excerptStaff->linkTo(staff);
+        } else {
             delete excerptStaff;
         }
     }
@@ -154,7 +200,12 @@ void MasterNotationParts::replaceInstrument(const InstrumentKey& instrumentKey, 
 
     if (isMainInstrument) {
         if (mu::engraving::Excerpt* excerpt = findExcerpt(part->id())) {
-            String newName = mu::engraving::Excerpt::formatName(part->partName(), score()->masterScore()->excerpts());
+            StringList allExcerptLowerNames;
+            for (const mu::engraving::Excerpt* excerpt2 : score()->masterScore()->excerpts()) {
+                allExcerptLowerNames.push_back(excerpt2->name().toLower());
+            }
+
+            String newName = mu::engraving::formatUniqueExcerptName(part->partName(), allExcerptLowerNames);
             excerpt->excerptScore()->undo(new mu::engraving::ChangeExcerptTitle(excerpt, newName));
         }
     }
@@ -162,16 +213,16 @@ void MasterNotationParts::replaceInstrument(const InstrumentKey& instrumentKey, 
     endGlobalEdit();
 }
 
-void MasterNotationParts::replaceDrumset(const InstrumentKey& instrumentKey, const Drumset& newDrumset)
+void MasterNotationParts::replaceDrumset(const InstrumentKey& instrumentKey, const Drumset& newDrumset, bool undoable)
 {
     TRACEFUNC;
 
     startGlobalEdit();
 
-    NotationParts::replaceDrumset(instrumentKey, newDrumset);
+    NotationParts::replaceDrumset(instrumentKey, newDrumset, undoable);
 
     for (INotationPartsPtr parts : excerptsParts()) {
-        parts->replaceDrumset(instrumentKey, newDrumset);
+        parts->replaceDrumset(instrumentKey, newDrumset, undoable);
     }
 
     endGlobalEdit();

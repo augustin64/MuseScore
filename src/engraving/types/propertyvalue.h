@@ -64,6 +64,8 @@ enum class P_TYPE {
     SYMID,
     COLOR,
     ORNAMENT_STYLE,
+    ORNAMENT_INTERVAL,
+    ORNAMENT_SHOW_ACCIDENTAL,
     GLISS_STYLE,
 
     // Layout
@@ -76,6 +78,7 @@ enum class P_TYPE {
     ORIENTATION,
     BEAM_MODE,
     ACCIDENTAL_ROLE,
+    TIE_PLACEMENT,
 
     // Sound
     FRACTION,
@@ -92,6 +95,7 @@ enum class P_TYPE {
     NOTEHEAD_SCHEME,
     NOTEHEAD_GROUP,
     CLEF_TYPE,
+    CLEF_TO_BARLINE_POS,
     DYNAMIC_TYPE,
     DYNAMIC_RANGE,
     DYNAMIC_SPEED,
@@ -200,6 +204,9 @@ public:
     PropertyValue(const AccidentalRole& v)
         : m_type(P_TYPE::ACCIDENTAL_ROLE), m_data(make_data<AccidentalRole>(v)) {}
 
+    PropertyValue(TiePlacement v)
+        : m_type(P_TYPE::TIE_PLACEMENT), m_data(make_data<TiePlacement>(v)) {}
+
     // Sound
     PropertyValue(const Fraction& v)
         : m_type(P_TYPE::FRACTION), m_data(make_data<Fraction>(v)) {}
@@ -232,6 +239,9 @@ public:
     PropertyValue(ClefType v)
         : m_type(P_TYPE::CLEF_TYPE), m_data(make_data<ClefType>(v)) {}
 
+    PropertyValue(ClefToBarlinePosition v)
+        : m_type(P_TYPE::CLEF_TO_BARLINE_POS), m_data(make_data<ClefToBarlinePosition>(v)) {}
+
     PropertyValue(DynamicType v)
         : m_type(P_TYPE::DYNAMIC_TYPE), m_data(make_data<DynamicType>(v)) {}
     PropertyValue(DynamicRange v)
@@ -262,6 +272,12 @@ public:
     // Other
     PropertyValue(const GroupNodes& v)
         : m_type(P_TYPE::GROUPS), m_data(make_data<GroupNodes>(v)) {}
+
+    PropertyValue(const OrnamentInterval& v)
+        : m_type(P_TYPE::ORNAMENT_INTERVAL), m_data(make_data<OrnamentInterval>(v)) {}
+
+    PropertyValue(const OrnamentShowAccidental& v)
+        : m_type(P_TYPE::ORNAMENT_SHOW_ACCIDENTAL), m_data(make_data<OrnamentShowAccidental>(v)) {}
 
     bool isValid() const;
 

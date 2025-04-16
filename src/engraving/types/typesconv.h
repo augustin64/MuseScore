@@ -39,6 +39,9 @@ public:
     static String toXml(const std::vector<int>& v);
     static std::vector<int> fromXml(const String& tag, const std::vector<int>& def);
 
+    static String toXml(const std::vector<string_idx_t>& v);
+    static std::vector<string_idx_t> fromXml(const String& tag, const std::vector<string_idx_t>& def);
+
     static const TranslatableString& userName(ElementType v);
     static AsciiStringView toXml(ElementType v);
     static ElementType fromXml(const AsciiStringView& tag, ElementType def, bool silent = false);
@@ -47,6 +50,11 @@ public:
     static Align fromXml(const String& str, Align def);
     static AlignH fromXml(const AsciiStringView& str, AlignH def);
     static AlignV fromXml(const AsciiStringView& str, AlignV def);
+
+    static String toXml(OrnamentInterval interval);
+    static OrnamentInterval fromXml(const String& str, OrnamentInterval def);
+    static IntervalStep fromXml(const AsciiStringView& tag, IntervalStep def);
+    static IntervalType fromXml(const AsciiStringView& tag, IntervalType def);
 
     static String translatedUserName(SymId v);
     static AsciiStringView toXml(SymId v);
@@ -77,6 +85,7 @@ public:
     static DynamicType dynamicType(SymId v);
     static DynamicType dynamicType(const AsciiStringView& string);
     static AsciiStringView toXml(DynamicType v);
+    static bool dynamicValid(const AsciiStringView& tag);
     static DynamicType fromXml(const AsciiStringView& tag, DynamicType def);
     static String translatedUserName(DynamicRange v);
     static String toXml(DynamicRange v);
@@ -210,8 +219,19 @@ public:
     static AsciiStringView toXml(VibratoType v);
     static VibratoType fromXml(const AsciiStringView& tag, VibratoType def);
 
+    static const TranslatableString& userName(ArticulationTextType v);
+    static String text(ArticulationTextType v);
+    static AsciiStringView toXml(ArticulationTextType v);
+    static ArticulationTextType fromXml(const AsciiStringView& tag, ArticulationTextType def);
+
+    static AsciiStringView toXml(LyricsSyllabic v);
+    static LyricsSyllabic fromXml(const AsciiStringView& tag, LyricsSyllabic def);
+
     static const char* userName(Key v, bool isAtonal = false, bool isCustom = false);
     static String translatedUserName(Key v, bool isAtonal = false, bool isCustom = false);
+
+    static AsciiStringView toXml(TiePlacement interval);
+    static TiePlacement fromXml(const AsciiStringView& str, TiePlacement def);
 };
 }
 

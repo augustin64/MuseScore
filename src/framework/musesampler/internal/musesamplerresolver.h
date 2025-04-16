@@ -33,7 +33,7 @@
 namespace mu::musesampler {
 class MuseSamplerResolver : public audio::synth::ISynthResolver::IResolver, public IMuseSamplerInfo
 {
-    INJECT(musesampler, IMuseSamplerConfiguration, configuration)
+    INJECT(IMuseSamplerConfiguration, configuration)
 
 public:
     void init();
@@ -41,17 +41,22 @@ public:
     audio::synth::ISynthesizerPtr resolveSynth(const audio::TrackId trackId, const audio::AudioInputParams& params) const override;
     bool hasCompatibleResources(const audio::PlaybackSetupData& setup) const override;
     audio::AudioResourceMetaList resolveResources() const override;
+    audio::SoundPresetList resolveSoundPresets(const audio::AudioResourceMeta& resourceMeta) const override;
     void refresh() override;
     void clearSources() override;
 
     std::string version() const override;
     bool isInstalled() const override;
 
+    float defaultReverbLevel(const String& instrumentSoundId) const override;
+
+    ByteArray drumMapping(int instrumentId) const override;
+    std::vector<Instrument> instruments() const override;
+
 private:
-    bool checkLibrary() const;
-    bool isVersionSupported() const;
-    bool isVersionAboveMinSupported() const;
-    bool isVersionBelowMaxSupported() const;
+    bool doInit(const io::path_t& libPath);
+
+    void loadSoundPresetAttributes(audio::SoundPresetAttributes& attributes, int instrumentId, const char* presetCode) const;
 
     String buildMuseInstrumentId(const String& category, const String& name, int uniqueId) const;
 

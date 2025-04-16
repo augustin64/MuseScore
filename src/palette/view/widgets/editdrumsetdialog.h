@@ -28,8 +28,9 @@
 #include "global/iinteractive.h"
 #include "context/iglobalcontext.h"
 #include "notation/inotationconfiguration.h"
+#include "engraving/iengravingfontsprovider.h"
 
-#include "libmscore/drumset.h"
+#include "engraving/dom/drumset.h"
 
 namespace mu::palette {
 //---------------------------------------------------------
@@ -40,9 +41,10 @@ class EditDrumsetDialog : public QDialog, private Ui::EditDrumsetDialog
 {
     Q_OBJECT
 
-    INJECT(palette, framework::IInteractive, interactive)
-    INJECT(palette, context::IGlobalContext, globalContext)
-    INJECT(palette, notation::INotationConfiguration, notationConfiguration)
+    INJECT(framework::IInteractive, interactive)
+    INJECT(context::IGlobalContext, globalContext)
+    INJECT(notation::INotationConfiguration, notationConfiguration)
+    INJECT_STATIC(engraving::IEngravingFontsProvider, engravingFonts)
 
 public:
     EditDrumsetDialog(QWidget* parent = nullptr);
@@ -72,6 +74,8 @@ private:
 
     void setEnabledPitchControls(bool enable);
     void fillNoteheadsComboboxes(bool customGroup, int pitch);
+
+    void notifyAboutNoteInputStateChanged();
 
     notation::INotationPtr m_notation;
     notation::InstrumentKey m_instrumentKey;

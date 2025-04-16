@@ -32,7 +32,7 @@ namespace mu::notation {
 class Notation;
 class NotationViewState : public INotationViewState, public async::Asyncable
 {
-    INJECT_STATIC(notation, INotationConfiguration, configuration)
+    INJECT_STATIC(INotationConfiguration, configuration)
 
 public:
     explicit NotationViewState(Notation* notation);
@@ -55,14 +55,11 @@ public:
     ViewMode viewMode() const override;
     void setViewMode(const ViewMode& mode) override;
 
-    bool needSave() const override;
-    async::Notification needSaveChanged() const override;
+    async::Notification stateChanged() const override;
 
     void makeDefault() override;
 
 private:
-    void setNeedSave(bool needSave);
-
     bool m_isMatrixInited = false;
     draw::Transform m_matrix;
     async::Channel<draw::Transform, NotationPaintView*> m_matrixChanged;
@@ -71,8 +68,7 @@ private:
 
     notation::ViewMode m_viewMode = notation::ViewMode::PAGE;
 
-    bool m_needSave = false;
-    async::Notification m_needSaveNotification;
+    async::Notification m_stateChanged;
 };
 }
 

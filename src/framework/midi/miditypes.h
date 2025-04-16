@@ -30,7 +30,7 @@
 #include <map>
 #include <functional>
 #include <set>
-#include <cassert>
+
 #include "async/channel.h"
 #include "types/retval.h"
 #include "midievent.h"
@@ -59,6 +59,19 @@ struct Program {
     {
         return bank == other.bank
                && program == other.program;
+    }
+
+    bool operator<(const Program& other) const
+    {
+        if (bank < other.bank) {
+            return true;
+        }
+
+        if (bank == other.bank) {
+            return program < other.program;
+        }
+
+        return false;
     }
 };
 using Programs = std::vector<midi::Program>;

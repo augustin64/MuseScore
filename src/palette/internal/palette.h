@@ -26,7 +26,8 @@
 
 #include "palettecell.h"
 
-#include "libmscore/engravingitem.h"
+#include "engraving/rendering/isinglerenderer.h"
+#include "engraving/dom/engravingitem.h"
 
 #include "types/translatablestring.h"
 #include "actions/actiontypes.h"
@@ -49,9 +50,10 @@ class Palette : public QObject
 {
     Q_GADGET
 
-    INJECT_STATIC(palette, IPaletteConfiguration, configuration)
-    INJECT_STATIC(palette, ui::IUiActionsRegister, actionsRegister)
-    INJECT(palette, framework::IInteractive, interactive)
+    INJECT_STATIC(IPaletteConfiguration, configuration)
+    INJECT_STATIC(ui::IUiActionsRegister, actionsRegister)
+    INJECT_STATIC(engraving::rendering::ISingleRenderer, engravingRender)
+    INJECT(framework::IInteractive, interactive)
 
 public:
     enum class Type {
@@ -83,6 +85,9 @@ public:
         Guitar,
         Keyboard,
         Pitch,
+        Harp,
+        StringTunings,
+        Playback,
         Custom
     };
     Q_ENUM(Type)
@@ -108,15 +113,18 @@ public:
                                  const QPointF& offset = QPointF(), const QString& tag = "");
     PaletteCellPtr insertElement(size_t idx, engraving::ElementPtr element, const TranslatableString& name, qreal mag = 1.0,
                                  const QPointF& offset = QPointF(), const QString& tag = "");
+    PaletteCellPtr insertActionIcon(size_t idx, engraving::ActionIconType type, actions::ActionCode code, double mag = 1.0);
     // TODO: Remove QString overload
     PaletteCellPtr appendElement(engraving::ElementPtr element, const QString& name, qreal mag = 1.0,
                                  const QPointF& offset = QPointF(), const QString& tag = "");
     PaletteCellPtr appendElement(engraving::ElementPtr element, const TranslatableString& name, qreal mag = 1.0,
                                  const QPointF& offset = QPointF(), const QString& tag = "");
-    PaletteCellPtr appendActionIcon(engraving::ActionIconType type, actions::ActionCode code);
+    PaletteCellPtr appendActionIcon(engraving::ActionIconType type, actions::ActionCode code, double mag = 1.0);
 
     bool insertCell(size_t idx, PaletteCellPtr cell);
     bool insertCells(size_t idx, std::vector<PaletteCellPtr> cells);
+    bool removeCell(PaletteCellPtr cell);
+    bool removeCells(std::vector<PaletteCellPtr> cells);
 
     const std::vector<PaletteCellPtr>& cells() const { return m_cells; }
     int cellsCount() const { return int(m_cells.size()); }
@@ -159,8 +167,8 @@ public:
     bool isExpanded() const { return m_isExpanded; }
     void setExpanded(bool val) { m_isExpanded = val; }
 
-    bool read(engraving::XmlReader&);
-    void write(engraving::XmlWriter&) const;
+    bool read(engraving::XmlReader&, bool pasteMode);
+    void write(engraving::XmlWriter&, bool pasteMode) const;
     static PalettePtr fromMimeData(const QByteArray& data);
     QByteArray toMimeData() const;
 

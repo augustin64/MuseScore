@@ -54,6 +54,16 @@ IF %BUILD_MODE% == stable_build  ( SET PACKAGE_TYPE="msi") ELSE (
 SET DO_SIGN=OFF
 IF %PACKAGE_TYPE% == "msi" ( 
     SET DO_SIGN=ON
+)
+IF %PACKAGE_TYPE% == "portable" ( 
+    IF %BUILD_MODE% == testing_build (
+        SET DO_SIGN=ON
+    )
+    IF %BUILD_MODE% == stable_build (
+        SET DO_SIGN=ON
+    )
+)
+IF %DO_SIGN% == ON (
     IF %SIGN_CERTIFICATE_ENCRYPT_SECRET% == "" ( 
         SET DO_SIGN=OFF
         ECHO "warning: not set SIGN_CERTIFICATE_ENCRYPT_SECRET"
@@ -82,7 +92,7 @@ ECHO "PACKAGE_TYPE: %PACKAGE_TYPE%"
 
 :: For MSI
 SET SIGN="build\ci\windows\sign.bat"
-SET UUIDGEN="C:\Program Files (x86)\Windows Kits\10\bin\x64\uuidgen.exe"
+SET UUIDGEN="C:\Program Files (x86)\Windows Kits\10\bin\10.0.20348.0\x64\uuidgen.exe"
 SET WIX_DIR=%WIX%
 
 IF %PACKAGE_TYPE% == "portable" ( GOTO PACK_PORTABLE) ELSE (
@@ -99,9 +109,9 @@ IF %PACKAGE_TYPE% == "dir" (  GOTO PACK_DIR ) ELSE (
 :PACK_7z
 ECHO "Start 7z packing..."
 IF %BUILD_MODE% == nightly_build ( 
-    SET ARTIFACT_NAME=MuseScoreNightly-%BUILD_NUMBER%-%BUILD_BRANCH%-%BUILD_REVISION%-%TARGET_PROCESSOR_ARCH%
+    SET ARTIFACT_NAME=MuseScore-Studio-Nightly-%BUILD_NUMBER%-%BUILD_BRANCH%-%BUILD_REVISION%-%TARGET_PROCESSOR_ARCH%
 ) ELSE (
-    SET ARTIFACT_NAME=MuseScore-%BUILD_VERSION%-%TARGET_PROCESSOR_ARCH%
+    SET ARTIFACT_NAME=MuseScore-Studio-%BUILD_VERSION%-%TARGET_PROCESSOR_ARCH%
 )
 
 RENAME %INSTALL_DIR% %ARTIFACT_NAME%
@@ -139,18 +149,14 @@ SET /p PACKAGE_UUID=<uuid.txt
 ECHO on
 ECHO "PACKAGE_UUID: %PACKAGE_UUID%"
 ECHO off
-sed -i 's/00000000-0000-0000-0000-000000000000/%PACKAGE_UUID%/' build/Packaging.cmake
-sed -i 's/11111111-1111-1111-1111-111111111111/%UPGRADE_UUID%/' build/Packaging.cmake
 
-SET PACKAGE_FILE_ASSOCIATION=OFF
-IF %BUILD_MODE% == stable_build ( 
-    SET PACKAGE_FILE_ASSOCIATION=ON
-)
 cd "%BUILD_DIR%" 
-cmake -DPACKAGE_FILE_ASSOCIATION=%PACKAGE_FILE_ASSOCIATION% ..
+cmake -DCPACK_WIX_PRODUCT_GUID=%PACKAGE_UUID% ^
+    -DCPACK_WIX_UPGRADE_GUID=%UPGRADE_UUID% ^
+    ..
 
 SET PATH=%WIX_DIR%;%PATH% 
-cmake --build . --target package || GOTO END_ERROR
+cmake --build . --target package || SET WIX_ERROR=1
 cd ..
 
 ECHO "Create logs dir"
@@ -166,15 +172,19 @@ ECHO "Copy from %WIX_LOGS_PATH% to %ARTIFACTS_DIR%\logs\WIX"
 ECHO .msi > excludedmsi.txt
 XCOPY /Y /EXCLUDE:excludedmsi.txt %WIX_LOGS_PATH% %ARTIFACTS_DIR%\logs\WIX
 
+IF DEFINED WIX_ERROR (
+    GOTO END_ERROR
+)
+
 :: find the MSI file without the hardcoded version
 for /r %%i in (%BUILD_DIR%\*.msi) do (
     SET "FILEPATH=%%i"d
 )
 
 IF %BUILD_MODE% == nightly_build ( 
-    SET ARTIFACT_NAME=MuseScoreNightly-%BUILD_NUMBER%-%BUILD_BRANCH%-%BUILD_REVISION%-%TARGET_PROCESSOR_ARCH%.msi
+    SET ARTIFACT_NAME=MuseScore-Studio-Nightly-%BUILD_NUMBER%-%BUILD_BRANCH%-%BUILD_REVISION%-%TARGET_PROCESSOR_ARCH%.msi
 ) ELSE (
-    SET ARTIFACT_NAME=MuseScore-%BUILD_VERSION%-%TARGET_PROCESSOR_ARCH%.msi
+    SET ARTIFACT_NAME=MuseScore-Studio-%BUILD_VERSION%-%TARGET_PROCESSOR_ARCH%.msi
 )
 
 ECHO "Copy from %FILEPATH% to %ARTIFACT_NAME%"
@@ -218,7 +228,11 @@ for /r %%i in (.\*.paf.exe) do (
   SET "FILEPATH=%%i"
 )
 
-SET ARTIFACT_NAME=MuseScore-%BUILD_VERSION%-%TARGET_PROCESSOR_ARCH%.paf.exe
+IF %BUILD_MODE% == nightly_build ( 
+    SET ARTIFACT_NAME=MuseScore-Studio-Nightly-%BUILD_NUMBER%-%BUILD_BRANCH%-%BUILD_REVISION%-%TARGET_PROCESSOR_ARCH%.paf.exe
+) ELSE (
+    SET ARTIFACT_NAME=MuseScore-Studio-%BUILD_VERSION%-%TARGET_PROCESSOR_ARCH%.paf.exe
+)
 
 ECHO "Copy from %FILEPATH% to %ARTIFACT_NAME%"
 COPY %FILEPATH% %ARTIFACTS_DIR%\%ARTIFACT_NAME% /Y 

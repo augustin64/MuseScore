@@ -28,13 +28,16 @@ namespace mu::io {
 class FileSystem : public IFileSystem
 {
 public:
+
     Ret exists(const io::path_t& path) const override;
-    Ret remove(const io::path_t& path) const override;
-    Ret removeFolderIfEmpty(const io::path_t& path) const override;
-    Ret copy(const io::path_t& src, const io::path_t& dst, bool replace = false) const override;
-    Ret move(const io::path_t& src, const io::path_t& dst, bool replace = false) const override;
+    Ret remove(const io::path_t& path, bool onlyIfEmpty = false) override;
+    Ret clear(const io::path_t& path) override;
+    Ret copy(const io::path_t& src, const io::path_t& dst, bool replace = false) override;
+    Ret move(const io::path_t& src, const io::path_t& dst, bool replace = false) override;
 
     Ret makePath(const io::path_t& path) const override;
+
+    EntryType entryType(const io::path_t& path) const override;
 
     RetVal<uint64_t> fileSize(const io::path_t& path) const override;
 
@@ -42,7 +45,7 @@ public:
                                   ScanMode mode = ScanMode::FilesInCurrentDirAndSubdirs) const override;
 
     RetVal<ByteArray> readFile(const io::path_t& filePath) const override;
-    bool readFile(const io::path_t& filePath, ByteArray& data) const override;
+    Ret readFile(const io::path_t& filePath, ByteArray& data) const override;
     Ret writeFile(const io::path_t& filePath, const ByteArray& data) const override;
 
     void setAttribute(const io::path_t& path, Attribute attribute) const override;
@@ -53,11 +56,11 @@ public:
     io::path_t absoluteFilePath(const io::path_t& filePath) const override;
     DateTime birthTime(const io::path_t& filePath) const override;
     DateTime lastModified(const io::path_t& filePath) const override;
-    bool isWritable(const path_t& filePath) const override;
+    Ret isWritable(const path_t& filePath) const override;
 
 private:
     Ret removeFile(const io::path_t& path) const;
-    Ret removeDir(const io::path_t& path, bool recursively = true) const;
+    Ret removeDir(const io::path_t& path, bool onlyIfEmpty = false) const;
     Ret copyRecursively(const io::path_t& src, const io::path_t& dst) const;
 };
 }

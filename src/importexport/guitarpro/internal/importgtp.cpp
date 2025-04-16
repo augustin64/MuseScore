@@ -29,64 +29,66 @@
 #include "realfn.h"
 #include "translation.h"
 
-#include "rw/xml.h"
-#include "types/typesconv.h"
+#include "engraving/types/typesconv.h"
+#include "engraving/types/symid.h"
 
-#include <libmscore/factory.h>
-#include <libmscore/measurebase.h>
-#include <libmscore/text.h>
-#include <libmscore/box.h>
-#include <libmscore/staff.h>
-#include <libmscore/part.h>
-#include <libmscore/measure.h>
-#include <libmscore/timesig.h>
-#include <libmscore/tremolo.h>
-#include <libmscore/rest.h>
-#include <libmscore/chord.h>
-#include <libmscore/note.h>
-#include <libmscore/stringdata.h>
-#include <libmscore/clef.h>
-#include <libmscore/lyrics.h>
-#include <libmscore/tempotext.h>
-#include <libmscore/slur.h>
-#include <libmscore/tie.h>
-#include <libmscore/tuplet.h>
-#include <libmscore/barline.h>
-#include <libmscore/excerpt.h>
-#include <libmscore/stafftype.h>
-#include <libmscore/bracket.h>
-#include <libmscore/articulation.h>
-#include <libmscore/keysig.h>
-#include <libmscore/harmony.h>
-#include "libmscore/stretchedbend.h"
-#include <libmscore/tremolobar.h>
-#include <libmscore/segment.h>
-#include <libmscore/rehearsalmark.h>
-#include <libmscore/dynamic.h>
-#include <libmscore/arpeggio.h>
-#include <libmscore/volta.h>
-#include <libmscore/fret.h>
-#include <libmscore/instrtemplate.h>
-#include <libmscore/glissando.h>
-#include <libmscore/chordline.h>
-#include <libmscore/instrtemplate.h>
-#include <libmscore/hairpin.h>
-#include <libmscore/ottava.h>
-#include <libmscore/notedot.h>
-#include <libmscore/stafftext.h>
-#include <types/symid.h>
-#include <libmscore/textline.h>
-#include <libmscore/letring.h>
-#include <libmscore/palmmute.h>
-#include <libmscore/vibrato.h>
-#include <libmscore/masterscore.h>
+#include "engraving/rw/xmlwriter.h"
+
+#include "engraving/dom/arpeggio.h"
+#include "engraving/dom/articulation.h"
+#include "engraving/dom/barline.h"
+#include "engraving/dom/bend.h"
+#include "engraving/dom/box.h"
+#include "engraving/dom/bracket.h"
+#include "engraving/dom/chord.h"
+#include "engraving/dom/chordline.h"
+#include "engraving/dom/clef.h"
+#include "engraving/dom/dynamic.h"
+#include "engraving/dom/excerpt.h"
+#include "engraving/dom/factory.h"
+#include "engraving/dom/fret.h"
+#include "engraving/dom/glissando.h"
+#include "engraving/dom/hairpin.h"
+#include "engraving/dom/harmony.h"
+#include "engraving/dom/instrchange.h"
+#include "engraving/dom/instrtemplate.h"
+#include "engraving/dom/keysig.h"
+#include "engraving/dom/letring.h"
+#include "engraving/dom/lyrics.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/measurebase.h"
+#include "engraving/dom/note.h"
+#include "engraving/dom/notedot.h"
+#include "engraving/dom/ottava.h"
+#include "engraving/dom/palmmute.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/rehearsalmark.h"
+#include "engraving/dom/rest.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/slur.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/stafftext.h"
+#include "engraving/dom/stafftype.h"
+#include "engraving/dom/stretchedbend.h"
+#include "engraving/dom/stringdata.h"
+#include "engraving/dom/tempotext.h"
+#include "engraving/dom/text.h"
+#include "engraving/dom/textline.h"
+#include "engraving/dom/tie.h"
+#include "engraving/dom/timesig.h"
+#include "engraving/dom/tuplet.h"
+#include "engraving/dom/tremolo.h"
+#include "engraving/dom/tremolobar.h"
+#include "engraving/dom/volta.h"
+#include "engraving/dom/vibrato.h"
 
 #include "log.h"
 
 using namespace mu::io;
 using namespace mu::engraving;
 
-namespace mu::engraving {
+namespace mu::iex::guitarpro {
 //---------------------------------------------------------
 //   errmsg
 //---------------------------------------------------------
@@ -101,19 +103,6 @@ const char* const GuitarPro::errmsg[] = {
 #ifdef _MSC_VER
 #pragma optimize("", off)
 #endif
-
-//---------------------------------------------------------
-//   GpBar
-//---------------------------------------------------------
-
-GpBar::GpBar()
-{
-    barLine = BarLineType::NORMAL;
-    keysig  = GP_INVALID_KEYSIG;
-    timesig = Fraction(4, 4);
-    repeatFlags = Repeat::NONE;
-    repeats = 2;
-}
 
 //---------------------------------------------------------
 //   GuitarPro
@@ -147,15 +136,29 @@ void GuitarPro::skip(int64_t len)
 //---------------------------------------------------------
 //   createTuningString
 //---------------------------------------------------------
+static const std::unordered_map<uint64_t, std::string> flatPresets = {
+    // 63 58 54 49 44 39
+    { 0x3f3a36312c27, { "Eb Ab Db Gb Bb Eb" } },
+    // 60 55 51 46 41 36
+    { 0x3c37332e2924, { "C F Bb Eb G C" } },
+    // 63 58 54 49 44 37
+    { 0x3f3a36312c25, { "Db Ab Db Gb Bb Eb" } },
+};
 
-void GuitarPro::createTuningString(int strings, int tuning[])
+bool GuitarPro::createTuningString(int strings, int tuning[])
 {
+    bool useFlats = false;
     const char* tune[] = { "C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B" };
-    //TODO-ws  score->tuning.clear();
     std::vector<int> pitch;
+    uint64_t k = 0;
     for (int i = 0; i < strings; ++i) {
         pitch.push_back(tuning[i]);
-        //score->tuning += tune[tuning[i] % 12];
+        k |= (uint64_t)tuning[i] << 8 * i;
+    }
+    if (auto preset = flatPresets.find(k); preset != flatPresets.end()) {
+        tunings.push_back(preset->second);
+        useFlats = true;
+        return useFlats;
     }
     std::string t;
     for (auto i : pitch) {
@@ -163,6 +166,13 @@ void GuitarPro::createTuningString(int strings, int tuning[])
         t += " ";
     }
     tunings.push_back(t);
+    return useFlats;
+}
+
+void GuitarPro::initDynamics(size_t stavesNum)
+{
+    previousDynamicByTrack.resize(stavesNum * mu::engraving::VOICES);
+    std::fill(previousDynamicByTrack.begin(), previousDynamicByTrack.end(), INVALID_DYNAMIC);
 }
 
 //---------------------------------------------------------
@@ -292,230 +302,400 @@ int GuitarPro::readInt()
 
 void GuitarPro::initGuitarProDrumset()
 {
-    gpDrumset = new Drumset;
-    for (int i = 0; i < 128; ++i) {
-        gpDrumset->drum(i).notehead = NoteHeadGroup::HEAD_INVALID;
-        gpDrumset->drum(i).line     = 0;
-        gpDrumset->drum(i).shortcut = 0;
-        gpDrumset->drum(i).voice    = 0;
-        gpDrumset->drum(i).stemDirection = DirectionV::UP;
+    using namespace mu::engraving;
+
+    if (!gpDrumset) {
+        gpDrumset = new Drumset();
+        for (int i = 0; i < 128; ++i) {
+            gpDrumset->drum(i).notehead = NoteHeadGroup::HEAD_INVALID;
+            gpDrumset->drum(i).line     = 0;
+            gpDrumset->drum(i).shortcut = 0;
+            gpDrumset->drum(i).voice    = 0;
+            gpDrumset->drum(i).stemDirection = DirectionV::UP;
+        }
+        // new drumset determined via guitar pro (third argument specifies position on staff, 10 = C3, 9 = D3, 8 = E3,...)
+
+        gpDrumset->drum(27) = DrumInstrument(TConv::userName(DrumNum(27)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(28) = DrumInstrument(TConv::userName(DrumNum(28)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(29) = DrumInstrument(TConv::userName(DrumNum(29)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+
+        gpDrumset->drum(30) = DrumInstrument(TConv::userName(DrumNum(30)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(31) = DrumInstrument(TConv::userName(DrumNum(31)), NoteHeadGroup::HEAD_CROSS, 3, DirectionV::UP);
+        gpDrumset->drum(32) = DrumInstrument(TConv::userName(DrumNum(32)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(33) = DrumInstrument(TConv::userName(DrumNum(33)), NoteHeadGroup::HEAD_CROSS, 3, DirectionV::UP);
+        gpDrumset->drum(34) = DrumInstrument(TConv::userName(DrumNum(34)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(35) = DrumInstrument(TConv::userName(DrumNum(35)), NoteHeadGroup::HEAD_NORMAL, 8, DirectionV::UP);
+        gpDrumset->drum(36) = DrumInstrument(TConv::userName(DrumNum(36)), NoteHeadGroup::HEAD_NORMAL, 7, DirectionV::UP);
+        gpDrumset->drum(37) = DrumInstrument(TConv::userName(DrumNum(37)), NoteHeadGroup::HEAD_CROSS, 3, DirectionV::UP);
+        gpDrumset->drum(38) = DrumInstrument(TConv::userName(DrumNum(38)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(39) = DrumInstrument(TConv::userName(DrumNum(39)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+
+        gpDrumset->drum(40) = DrumInstrument(TConv::userName(DrumNum(40)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(41) = DrumInstrument(TConv::userName(DrumNum(41)), NoteHeadGroup::HEAD_NORMAL, 6, DirectionV::UP);
+        gpDrumset->drum(42) = DrumInstrument(TConv::userName(DrumNum(42)), NoteHeadGroup::HEAD_CROSS, -1, DirectionV::UP);
+        gpDrumset->drum(43) = DrumInstrument(TConv::userName(DrumNum(43)), NoteHeadGroup::HEAD_NORMAL, 6, DirectionV::UP);
+        gpDrumset->drum(44) = DrumInstrument(TConv::userName(DrumNum(44)), NoteHeadGroup::HEAD_CROSS, 9, DirectionV::UP);
+        gpDrumset->drum(45) = DrumInstrument(TConv::userName(DrumNum(45)), NoteHeadGroup::HEAD_NORMAL, 5, DirectionV::UP);
+        gpDrumset->drum(46) = DrumInstrument(TConv::userName(DrumNum(46)), NoteHeadGroup::HEAD_XCIRCLE, -1, DirectionV::UP);
+        gpDrumset->drum(47) = DrumInstrument(TConv::userName(DrumNum(47)), NoteHeadGroup::HEAD_NORMAL, 4, DirectionV::UP);
+        gpDrumset->drum(48) = DrumInstrument(TConv::userName(DrumNum(48)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
+        gpDrumset->drum(49) = DrumInstrument(TConv::userName(DrumNum(49)), NoteHeadGroup::HEAD_CROSS, -2, DirectionV::UP);
+
+        gpDrumset->drum(50) = DrumInstrument(TConv::userName(DrumNum(50)), NoteHeadGroup::HEAD_NORMAL, 1, DirectionV::UP);
+        gpDrumset->drum(51) = DrumInstrument(TConv::userName(DrumNum(51)), NoteHeadGroup::HEAD_CROSS, 0, DirectionV::UP);
+        gpDrumset->drum(52) = DrumInstrument(TConv::userName(DrumNum(52)), NoteHeadGroup::HEAD_HEAVY_CROSS_HAT, -3, DirectionV::UP);
+        gpDrumset->drum(53) = DrumInstrument(TConv::userName(DrumNum(53)), NoteHeadGroup::HEAD_DIAMOND, 0, DirectionV::UP);
+        gpDrumset->drum(54) = DrumInstrument(TConv::userName(DrumNum(54)), NoteHeadGroup::HEAD_CROSS, 2, DirectionV::UP);
+        gpDrumset->drum(55) = DrumInstrument(TConv::userName(DrumNum(55)), NoteHeadGroup::HEAD_CROSS, -2, DirectionV::UP);
+        gpDrumset->drum(56) = DrumInstrument(TConv::userName(DrumNum(56)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::UP);
+        gpDrumset->drum(57) = DrumInstrument(TConv::userName(DrumNum(57)), NoteHeadGroup::HEAD_CROSS, -1, DirectionV::UP);
+        gpDrumset->drum(58) = DrumInstrument(TConv::userName(DrumNum(58)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(59) = DrumInstrument(TConv::userName(DrumNum(59)), NoteHeadGroup::HEAD_CROSS, 2, DirectionV::UP);
+
+        gpDrumset->drum(60) = DrumInstrument(TConv::userName(DrumNum(60)), NoteHeadGroup::HEAD_NORMAL, 8, DirectionV::UP);
+        gpDrumset->drum(61) = DrumInstrument(TConv::userName(DrumNum(61)), NoteHeadGroup::HEAD_NORMAL, 9, DirectionV::UP);
+        gpDrumset->drum(62) = DrumInstrument(TConv::userName(DrumNum(62)), NoteHeadGroup::HEAD_CROSS, 5, DirectionV::UP);
+        gpDrumset->drum(63) = DrumInstrument(TConv::userName(DrumNum(63)), NoteHeadGroup::HEAD_CROSS, 4, DirectionV::UP);
+        gpDrumset->drum(64) = DrumInstrument(TConv::userName(DrumNum(64)), NoteHeadGroup::HEAD_CROSS, 6, DirectionV::UP);
+        gpDrumset->drum(65) = DrumInstrument(TConv::userName(DrumNum(65)), NoteHeadGroup::HEAD_CROSS, 8, DirectionV::UP);
+        gpDrumset->drum(66) = DrumInstrument(TConv::userName(DrumNum(66)), NoteHeadGroup::HEAD_CROSS, 9, DirectionV::UP);
+        gpDrumset->drum(67) = DrumInstrument(TConv::userName(DrumNum(67)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(68) = DrumInstrument(TConv::userName(DrumNum(68)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(69) = DrumInstrument(TConv::userName(DrumNum(69)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+
+        gpDrumset->drum(70) = DrumInstrument(TConv::userName(DrumNum(70)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(71) = DrumInstrument(TConv::userName(DrumNum(71)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(72) = DrumInstrument(TConv::userName(DrumNum(72)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(73) = DrumInstrument(TConv::userName(DrumNum(73)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(74) = DrumInstrument(TConv::userName(DrumNum(74)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(75) = DrumInstrument(TConv::userName(DrumNum(75)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(76) = DrumInstrument(TConv::userName(DrumNum(76)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(77) = DrumInstrument(TConv::userName(DrumNum(77)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(78) = DrumInstrument(TConv::userName(DrumNum(78)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(79) = DrumInstrument(TConv::userName(DrumNum(79)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+
+        gpDrumset->drum(80) = DrumInstrument(TConv::userName(DrumNum(80)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(81) = DrumInstrument(TConv::userName(DrumNum(81)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(82) = DrumInstrument(TConv::userName(DrumNum(82)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(83) = DrumInstrument(TConv::userName(DrumNum(83)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(84) = DrumInstrument(TConv::userName(DrumNum(84)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(85) = DrumInstrument(TConv::userName(DrumNum(85)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(86) = DrumInstrument(TConv::userName(DrumNum(86)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+        gpDrumset->drum(87) = DrumInstrument(TConv::userName(DrumNum(87)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+
+        gpDrumset->drum(91) = DrumInstrument(TConv::userName(DrumNum(91)), NoteHeadGroup::HEAD_DIAMOND, 3, DirectionV::UP);
+        gpDrumset->drum(92) = DrumInstrument(TConv::userName(DrumNum(46)), NoteHeadGroup::HEAD_CROSS, -1, DirectionV::UP);
+        gpDrumset->drum(93) = DrumInstrument(TConv::userName(DrumNum(93)), NoteHeadGroup::HEAD_CROSS, 0, DirectionV::UP);
+
+        //Additional clutch presets (midi by default can't play this)
+        gpDrumset->drum(99) = DrumInstrument(TConv::userName(DrumNum(99)), NoteHeadGroup::HEAD_TRIANGLE_UP, 1, DirectionV::UP);
+        gpDrumset->drum(102)= DrumInstrument(TConv::userName(DrumNum(102)), NoteHeadGroup::HEAD_TRIANGLE_UP, -1, DirectionV::UP);
     }
-    // new drumset determined via guitar pro (third argument specifies position on staff, 10 = C3, 9 = D3, 8 = E3,...)
+}
 
-    gpDrumset->drum(27) = DrumInstrument(TConv::userName(DrumNum(27)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(28) = DrumInstrument(TConv::userName(DrumNum(28)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(29) = DrumInstrument(TConv::userName(DrumNum(29)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
+void GuitarPro::initGuitarProPercussionSet(const mu::iex::guitarpro::GpDrumSet& ds)
+{
+    using namespace mu::engraving;
+    switch (ds.idx) {
+    case DrumSetType::DRUMS:
+        break;
+    case DrumSetType::AGOGO:
+        if (!gpAgogoSet) {
+            gpAgogoSet = new Drumset;
+            gpAgogoSet->drum(67) = DrumInstrument(TConv::userName(DrumNum(67)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+            gpAgogoSet->drum(68) = DrumInstrument(TConv::userName(DrumNum(68)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
+        }
+        break;
+    case DrumSetType::HAND_CLAP:
+        if (!gpHandClapSet) {
+            gpHandClapSet = new Drumset;
+            gpHandClapSet->drum(39) = DrumInstrument(TConv::userName(DrumNum(39)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::TAMBOURINE:
+        if (!gpTambourineSet) {
+            gpTambourineSet = new Drumset;
+            gpTambourineSet->drum(54) = DrumInstrument(TConv::userName(DrumNum(54)), NoteHeadGroup::HEAD_TRIANGLE_UP, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::COWBELL:
+        if (!gpCowbellSet) {
+            gpCowbellSet = new Drumset;
+            gpCowbellSet->drum(56) = DrumInstrument(TConv::userName(DrumNum(56)), NoteHeadGroup::HEAD_TRIANGLE_UP, 2, DirectionV::DOWN);
+            gpCowbellSet->drum(99) = DrumInstrument(TConv::userName(DrumNum(99)), NoteHeadGroup::HEAD_TRIANGLE_UP, 4, DirectionV::UP);
+            gpCowbellSet->drum(102) = DrumInstrument(TConv::userName(DrumNum(102)), NoteHeadGroup::HEAD_TRIANGLE_UP, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::VIBRASLAP:
+        if (!gpVibraslapSet) {
+            gpVibraslapSet = new Drumset;
+            gpVibraslapSet->drum(58) = DrumInstrument(TConv::userName(DrumNum(58)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::BONGOS:
+        if (!gpBongosSet) {
+            gpBongosSet = new Drumset;
+            gpBongosSet->drum(60) = DrumInstrument(TConv::userName(DrumNum(60)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
+            gpBongosSet->drum(61) = DrumInstrument(TConv::userName(DrumNum(61)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::CONGAS:
+        if (!gpCongasSet) {
+            gpCongasSet = new Drumset;
+            gpCongasSet->drum(62) = DrumInstrument(TConv::userName(DrumNum(62)), NoteHeadGroup::HEAD_CROSS, 0, DirectionV::DOWN);
+            gpCongasSet->drum(63) = DrumInstrument(TConv::userName(DrumNum(63)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+            gpCongasSet->drum(64) = DrumInstrument(TConv::userName(DrumNum(64)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
+        }
+        break;
+    case DrumSetType::TIMBALE:
+        if (!gpTimbalesSet) {
+            gpTimbalesSet = new Drumset;
+            gpTimbalesSet->drum(65) = DrumInstrument(TConv::userName(DrumNum(65)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+            gpTimbalesSet->drum(66) = DrumInstrument(TConv::userName(DrumNum(66)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
+        }
+        break;
+    case DrumSetType::CABASA:
+        if (!gpCabasaSet) {
+            gpCabasaSet = new Drumset;
+            gpCabasaSet->drum(69) = DrumInstrument(TConv::userName(DrumNum(69)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::MARACAS:
+        if (!gpMaracasSet) {
+            gpMaracasSet = new Drumset;
+            gpMaracasSet->drum(70) = DrumInstrument(TConv::userName(DrumNum(70)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::WHISTLE:
+        if (!gpWhistleSet) {
+            gpWhistleSet = new Drumset;
+            gpWhistleSet->drum(71) = DrumInstrument(TConv::userName(DrumNum(71)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+            gpWhistleSet->drum(72) = DrumInstrument(TConv::userName(DrumNum(72)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
+        }
+        break;
+    case DrumSetType::GUIRO:
+        if (!gpGuiroSet) {
+            gpGuiroSet = new Drumset;
+            gpGuiroSet->drum(73) = DrumInstrument(TConv::userName(DrumNum(73)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
+            gpGuiroSet->drum(74) = DrumInstrument(TConv::userName(DrumNum(74)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::CLAVES:
+        if (!gpClavesSet) {
+            gpClavesSet = new Drumset;
+            gpClavesSet->drum(75) = DrumInstrument(TConv::userName(DrumNum(75)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::WOODBLOCK:
+        if (!gpWoodblockSet) {
+            gpWoodblockSet = new Drumset;
+            gpWoodblockSet->drum(76) = DrumInstrument(TConv::userName(DrumNum(76)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
+            gpWoodblockSet->drum(77) = DrumInstrument(TConv::userName(DrumNum(77)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::CUICA:
+        if (!gpCuicaSet) {
+            gpCuicaSet = new Drumset;
+            gpCuicaSet->drum(78) = DrumInstrument(TConv::userName(DrumNum(78)), NoteHeadGroup::HEAD_CROSS, 0, DirectionV::DOWN);
+            gpCuicaSet->drum(79) = DrumInstrument(TConv::userName(DrumNum(79)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::TRIANGLE:
+        if (!gpTriangleSet) {
+            gpTriangleSet = new Drumset;
+            gpTriangleSet->drum(80) = DrumInstrument(TConv::userName(DrumNum(80)), NoteHeadGroup::HEAD_CROSS, 0, DirectionV::DOWN);
+            gpTriangleSet->drum(81) = DrumInstrument(TConv::userName(DrumNum(81)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::SHAKER:
+        if (!gpShakerSet) {
+            gpShakerSet = new Drumset;
+            gpShakerSet->drum(82) = DrumInstrument(TConv::userName(DrumNum(82)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::JINGLE_BELL:
+        if (!gpJingleBellSet) {
+            gpJingleBellSet = new Drumset;
+            gpJingleBellSet->drum(83) = DrumInstrument(TConv::userName(DrumNum(83)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::BELL_TREE:
+        if (!gpBellTreeSet) {
+            gpBellTreeSet = new Drumset;
+            gpBellTreeSet->drum(84) = DrumInstrument(TConv::userName(DrumNum(84)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::CASTANETS:
+        if (!gpCastanetsSet) {
+            gpCastanetsSet = new Drumset;
+            gpCastanetsSet->drum(85) = DrumInstrument(TConv::userName(DrumNum(85)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+        }
+        break;
+    case DrumSetType::SURDO:
+        if (!gpSurdoSet) {
+            gpSurdoSet = new Drumset;
+            gpSurdoSet->drum(86) = DrumInstrument(TConv::userName(DrumNum(86)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::DOWN);
+            gpSurdoSet->drum(87) = DrumInstrument(TConv::userName(DrumNum(87)), NoteHeadGroup::HEAD_CROSS, 0, DirectionV::DOWN);
+        }
+        break;
+    }
+}
 
-    gpDrumset->drum(30) = DrumInstrument(TConv::userName(DrumNum(30)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(31) = DrumInstrument(TConv::userName(DrumNum(31)), NoteHeadGroup::HEAD_CROSS, 3, DirectionV::UP);
-    gpDrumset->drum(32) = DrumInstrument(TConv::userName(DrumNum(32)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(33) = DrumInstrument(TConv::userName(DrumNum(33)), NoteHeadGroup::HEAD_CROSS, 3, DirectionV::UP);
-    gpDrumset->drum(34) = DrumInstrument(TConv::userName(DrumNum(34)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(35) = DrumInstrument(TConv::userName(DrumNum(35)), NoteHeadGroup::HEAD_NORMAL, 7, DirectionV::UP);
-    gpDrumset->drum(36) = DrumInstrument(TConv::userName(DrumNum(36)), NoteHeadGroup::HEAD_NORMAL, 7, DirectionV::UP);
-    gpDrumset->drum(37) = DrumInstrument(TConv::userName(DrumNum(37)), NoteHeadGroup::HEAD_CROSS, 3, DirectionV::UP);
-    gpDrumset->drum(38) = DrumInstrument(TConv::userName(DrumNum(38)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(39) = DrumInstrument(TConv::userName(DrumNum(39)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-
-    gpDrumset->drum(40) = DrumInstrument(TConv::userName(DrumNum(40)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(41) = DrumInstrument(TConv::userName(DrumNum(41)), NoteHeadGroup::HEAD_NORMAL, 6, DirectionV::UP);
-    gpDrumset->drum(42) = DrumInstrument(TConv::userName(DrumNum(42)), NoteHeadGroup::HEAD_CROSS, -1, DirectionV::UP);
-    gpDrumset->drum(43) = DrumInstrument(TConv::userName(DrumNum(43)), NoteHeadGroup::HEAD_NORMAL, 6, DirectionV::UP);
-    gpDrumset->drum(44) = DrumInstrument(TConv::userName(DrumNum(44)), NoteHeadGroup::HEAD_CROSS, 9, DirectionV::UP);
-    gpDrumset->drum(45) = DrumInstrument(TConv::userName(DrumNum(45)), NoteHeadGroup::HEAD_NORMAL, 5, DirectionV::UP);
-    gpDrumset->drum(46) = DrumInstrument(TConv::userName(DrumNum(46)), NoteHeadGroup::HEAD_XCIRCLE, -1, DirectionV::UP);
-    gpDrumset->drum(47) = DrumInstrument(TConv::userName(DrumNum(47)), NoteHeadGroup::HEAD_NORMAL, 4, DirectionV::UP);
-    gpDrumset->drum(48) = DrumInstrument(TConv::userName(DrumNum(48)), NoteHeadGroup::HEAD_NORMAL, 2, DirectionV::UP);
-    gpDrumset->drum(49) = DrumInstrument(TConv::userName(DrumNum(49)), NoteHeadGroup::HEAD_CROSS, -2, DirectionV::UP);
-
-    gpDrumset->drum(50) = DrumInstrument(TConv::userName(DrumNum(50)), NoteHeadGroup::HEAD_NORMAL, 1, DirectionV::UP);
-    gpDrumset->drum(51) = DrumInstrument(TConv::userName(DrumNum(51)), NoteHeadGroup::HEAD_CROSS, 0, DirectionV::UP);
-    gpDrumset->drum(52) = DrumInstrument(TConv::userName(DrumNum(52)), NoteHeadGroup::HEAD_HEAVY_CROSS_HAT, -3, DirectionV::UP);
-    gpDrumset->drum(53) = DrumInstrument(TConv::userName(DrumNum(53)), NoteHeadGroup::HEAD_DIAMOND, 0, DirectionV::UP);
-    gpDrumset->drum(54) = DrumInstrument(TConv::userName(DrumNum(54)), NoteHeadGroup::HEAD_CROSS, 2, DirectionV::UP);
-    gpDrumset->drum(55) = DrumInstrument(TConv::userName(DrumNum(55)), NoteHeadGroup::HEAD_CROSS, -2, DirectionV::UP);
-    gpDrumset->drum(56) = DrumInstrument(TConv::userName(DrumNum(56)), NoteHeadGroup::HEAD_NORMAL, 0, DirectionV::UP);
-    gpDrumset->drum(57) = DrumInstrument(TConv::userName(DrumNum(57)), NoteHeadGroup::HEAD_CROSS, -1, DirectionV::UP);
-    gpDrumset->drum(58) = DrumInstrument(TConv::userName(DrumNum(58)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(59) = DrumInstrument(TConv::userName(DrumNum(59)), NoteHeadGroup::HEAD_CROSS, 2, DirectionV::UP);
-
-    gpDrumset->drum(60) = DrumInstrument(TConv::userName(DrumNum(60)), NoteHeadGroup::HEAD_NORMAL, 8, DirectionV::UP);
-    gpDrumset->drum(61) = DrumInstrument(TConv::userName(DrumNum(61)), NoteHeadGroup::HEAD_NORMAL, 9, DirectionV::UP);
-    gpDrumset->drum(62) = DrumInstrument(TConv::userName(DrumNum(62)), NoteHeadGroup::HEAD_CROSS, 5, DirectionV::UP);
-    gpDrumset->drum(63) = DrumInstrument(TConv::userName(DrumNum(63)), NoteHeadGroup::HEAD_CROSS, 4, DirectionV::UP);
-    gpDrumset->drum(64) = DrumInstrument(TConv::userName(DrumNum(64)), NoteHeadGroup::HEAD_CROSS, 6, DirectionV::UP);
-    gpDrumset->drum(65) = DrumInstrument(TConv::userName(DrumNum(65)), NoteHeadGroup::HEAD_CROSS, 8, DirectionV::UP);
-    gpDrumset->drum(66) = DrumInstrument(TConv::userName(DrumNum(66)), NoteHeadGroup::HEAD_CROSS, 9, DirectionV::UP);
-    gpDrumset->drum(67) = DrumInstrument(TConv::userName(DrumNum(67)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(68) = DrumInstrument(TConv::userName(DrumNum(68)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(69) = DrumInstrument(TConv::userName(DrumNum(69)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-
-    gpDrumset->drum(70) = DrumInstrument(TConv::userName(DrumNum(70)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(71) = DrumInstrument(TConv::userName(DrumNum(71)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(72) = DrumInstrument(TConv::userName(DrumNum(72)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(73) = DrumInstrument(TConv::userName(DrumNum(73)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(74) = DrumInstrument(TConv::userName(DrumNum(74)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(75) = DrumInstrument(TConv::userName(DrumNum(75)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(76) = DrumInstrument(TConv::userName(DrumNum(76)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(77) = DrumInstrument(TConv::userName(DrumNum(77)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(78) = DrumInstrument(TConv::userName(DrumNum(78)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(79) = DrumInstrument(TConv::userName(DrumNum(79)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-
-    gpDrumset->drum(80) = DrumInstrument(TConv::userName(DrumNum(80)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(81) = DrumInstrument(TConv::userName(DrumNum(81)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(82) = DrumInstrument(TConv::userName(DrumNum(82)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(83) = DrumInstrument(TConv::userName(DrumNum(83)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(84) = DrumInstrument(TConv::userName(DrumNum(84)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(85) = DrumInstrument(TConv::userName(DrumNum(85)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(86) = DrumInstrument(TConv::userName(DrumNum(86)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-    gpDrumset->drum(87) = DrumInstrument(TConv::userName(DrumNum(87)), NoteHeadGroup::HEAD_NORMAL, 3, DirectionV::UP);
-
-    gpDrumset->drum(91) = DrumInstrument(TConv::userName(DrumNum(91)), NoteHeadGroup::HEAD_DIAMOND, 3, DirectionV::UP);
-    gpDrumset->drum(93) = DrumInstrument(TConv::userName(DrumNum(93)), NoteHeadGroup::HEAD_CROSS, 0, DirectionV::UP);
-
-    //Additional clutch presets (midi by default can't play this)
-    gpDrumset->drum(99) = DrumInstrument(TConv::userName(DrumNum(99)), NoteHeadGroup::HEAD_TRIANGLE_UP, 1, DirectionV::UP);
-    gpDrumset->drum(102)= DrumInstrument(TConv::userName(DrumNum(102)), NoteHeadGroup::HEAD_TRIANGLE_UP, -1, DirectionV::UP);
+void GuitarPro::setInstrumentDrumset(mu::engraving::Instrument* instrument, const GpDrumSet& ds)
+{
+    switch (ds.idx) {
+    case DrumSetType::DRUMS:
+        instrument->setDrumset(gpDrumset);
+        break;
+    case DrumSetType::AGOGO:
+        instrument->setDrumset(gpAgogoSet);
+        break;
+    case DrumSetType::HAND_CLAP:
+        instrument->setDrumset(gpHandClapSet);
+        break;
+    case DrumSetType::TAMBOURINE:
+        instrument->setDrumset(gpTambourineSet);
+        break;
+    case DrumSetType::COWBELL:
+        instrument->setDrumset(gpCowbellSet);
+        break;
+    case DrumSetType::VIBRASLAP:
+        instrument->setDrumset(gpVibraslapSet);
+        break;
+    case DrumSetType::BONGOS:
+        instrument->setDrumset(gpBongosSet);
+        break;
+    case DrumSetType::CONGAS:
+        instrument->setDrumset(gpCongasSet);
+        break;
+    case DrumSetType::TIMBALE:
+        instrument->setDrumset(gpTimbalesSet);
+        break;
+    case DrumSetType::CABASA:
+        instrument->setDrumset(gpCabasaSet);
+        break;
+    case DrumSetType::MARACAS:
+        instrument->setDrumset(gpMaracasSet);
+        break;
+    case DrumSetType::WHISTLE:
+        instrument->setDrumset(gpWhistleSet);
+        break;
+    case DrumSetType::GUIRO:
+        instrument->setDrumset(gpGuiroSet);
+        break;
+    case DrumSetType::CLAVES:
+        instrument->setDrumset(gpClavesSet);
+        break;
+    case DrumSetType::WOODBLOCK:
+        instrument->setDrumset(gpWoodblockSet);
+        break;
+    case DrumSetType::CUICA:
+        instrument->setDrumset(gpCuicaSet);
+        break;
+    case DrumSetType::TRIANGLE:
+        instrument->setDrumset(gpTriangleSet);
+        break;
+    case DrumSetType::SHAKER:
+        instrument->setDrumset(gpShakerSet);
+        break;
+    case DrumSetType::JINGLE_BELL:
+        instrument->setDrumset(gpJingleBellSet);
+        break;
+    case DrumSetType::BELL_TREE:
+        instrument->setDrumset(gpBellTreeSet);
+        break;
+    case DrumSetType::CASTANETS:
+        instrument->setDrumset(gpCastanetsSet);
+        break;
+    case DrumSetType::SURDO:
+        instrument->setDrumset(gpSurdoSet);
+        break;
+    }
 }
 
 //---------------------------------------------------------
 //   addPalmMate
 //---------------------------------------------------------
 
-void GuitarPro::addPalmMute(Note* note)
+void GuitarPro::addPalmMute(ChordRest* cr, bool hasPalmMute)
 {
-    track_idx_t track = note->track();
-    while (_palmMutes.size() < track + 1) {
-        _palmMutes.push_back(0);
-    }
-
-    Chord* chord = note->chord();
-    if (_palmMutes[track]) {
-        PalmMute* pm = _palmMutes[track];
-        Chord* lastChord = toChord(pm->endCR());
-        if (lastChord == note->chord()) {
-            return;
-        }
-        //
-        // extend the current palm mute or start a new one
-        //
-        Fraction tick = note->chord()->segment()->tick();
-        if (pm->tick2() < tick) {
-            _palmMutes[track] = 0;
-        } else {
-            pm->setTick2(chord->tick() + chord->actualTicks());
-            pm->setEndElement(chord);
-        }
-    }
-    if (!_palmMutes[track]) {
-        PalmMute* pm = new PalmMute(score->dummy());
-        _palmMutes[track] = pm;
-        Segment* segment = chord->segment();
-        Fraction tick = segment->tick();
-
-        pm->setTick(tick);
-        pm->setTick2(tick + chord->actualTicks());
-        pm->setTrack(track);
-        pm->setTrack2(track);
-        pm->setStartElement(chord);
-        pm->setEndElement(chord);
-        score->addElement(pm);
-    }
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::PALM_MUTE, ContiniousElementsBuilder::ImportType::PALM_MUTE,
+                                                        hasPalmMute);
 }
 
 //---------------------------------------------------------
 //   addLetRing
 //---------------------------------------------------------
 
-void GuitarPro::addLetRing(Note* note)
+void GuitarPro::addLetRing(ChordRest* cr, bool hasLetRing)
 {
-    track_idx_t track = note->track();
-    while (_letRings.size() < track + 1) {
-        _letRings.push_back(0);
-    }
-
-    Chord* chord = note->chord();
-    if (_letRings[track]) {
-        LetRing* lr      = _letRings[track];
-        Chord* lastChord = toChord(lr->endCR());
-        if (lastChord == note->chord()) {
-            return;
-        }
-        //
-        // extend the current "let ring" or start a new one
-        //
-        Fraction tick = note->chord()->segment()->tick();
-        if (lr->tick2() < tick) {
-            _letRings[track] = 0;
-        } else {
-            lr->setTick2(chord->tick() + chord->actualTicks());
-            lr->setEndElement(chord);
-        }
-    }
-    if (!_letRings[track]) {
-        LetRing* lr = new LetRing(score->dummy());
-        _letRings[track] = lr;
-        Segment* segment = chord->segment();
-        Fraction tick = segment->tick();
-
-        lr->setTick(tick);
-        lr->setTick2(tick + chord->actualTicks());
-        lr->setTrack(track);
-        lr->setTrack2(track);
-        lr->setStartElement(chord);
-        lr->setEndElement(chord);
-        score->addElement(lr);
-    }
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::LET_RING, ContiniousElementsBuilder::ImportType::LET_RING,
+                                                        hasLetRing);
 }
 
 //---------------------------------------------------------
-//   addVibrato
+//   addTrill
 //---------------------------------------------------------
 
-void GuitarPro::addVibrato(Note* note, VibratoType type)
+void GuitarPro::addTrill(ChordRest* cr, bool hasTrill)
 {
-    track_idx_t track = note->track();
-    while (_vibratos.size() < track + 1) {
-        _vibratos.push_back(0);
-    }
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::TRILL, ContiniousElementsBuilder::ImportType::TRILL, hasTrill);
+}
 
-    Chord* chord = note->chord();
-    if (_vibratos[track]) {
-        Vibrato* v      = _vibratos[track];
-        if (v->vibratoType() == type) {
-            Chord* lastChord = toChord(v->endCR());
-            if (lastChord == note->chord()) {
-                return;
-            }
-            //
-            // extend the current "vibrato" or start a new one
-            //
-            Fraction tick = note->chord()->segment()->tick();
-            if (v->tick2() < tick) {
-                _vibratos[track] = 0;
-            } else {
-                v->setTick2(chord->tick() + chord->actualTicks());
-                v->setEndElement(chord);
-            }
-        } else {
-            _vibratos[track] = 0;
-        }
-    }
-    if (!_vibratos[track]) {
-        Vibrato* v = new Vibrato(score->dummy());
-        v->setVibratoType(type);
-        _vibratos[track] = v;
-        Segment* segment = chord->segment();
-        Fraction tick = segment->tick();
+//---------------------------------------------------------
+//   addRasgueado
+//---------------------------------------------------------
 
-        v->setTick(tick);
-        v->setTick2(tick + chord->actualTicks());
-        v->setTrack(track);
-        v->setTrack2(track);
-        v->setStartElement(chord);
-        v->setEndElement(chord);
-        score->addElement(v);
-    }
+void GuitarPro::addRasgueado(ChordRest* cr, bool hasRasgueado)
+{
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::RASGUEADO, ContiniousElementsBuilder::ImportType::RASGUEADO,
+                                                        hasRasgueado);
+}
+
+//---------------------------------------------------------
+//   addVibratoLeftHand
+//---------------------------------------------------------
+
+void GuitarPro::addVibratoLeftHand(ChordRest* cr, bool hasVibratoLeftHand)
+{
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::VIBRATO,
+                                                        ContiniousElementsBuilder::ImportType::VIBRATO_LEFT_HAND_SLIGHT, hasVibratoLeftHand,
+                                                        ContiniousElementsBuilder::VibratoSubType::LEFT_HAND_SLIGHT);
+}
+
+//---------------------------------------------------------
+//   addVibratoWTremBar
+//---------------------------------------------------------
+
+void GuitarPro::addVibratoWTremBar(ChordRest* cr, bool hasVibratoWTremBar)
+{
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::VIBRATO,
+                                                        ContiniousElementsBuilder::ImportType::VIBRATO_W_TREM_BAR_SLIGHT,
+                                                        hasVibratoWTremBar, ContiniousElementsBuilder::VibratoSubType::W_TREM_BAR_SLIGHT);
+}
+
+//---------------------------------------------------------
+//   addHarmonicMarks
+//---------------------------------------------------------
+
+void GuitarPro::addHarmonicMarks(ChordRest* cr, bool hasHarmonicArtificial, bool hasHarmonicPinch, bool hasHarmonicTap,
+                                 bool hasHarmonicSemi)
+{
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::HARMONIC_MARK,
+                                                        ContiniousElementsBuilder::ImportType::HARMONIC_ARTIFICIAL,
+                                                        hasHarmonicArtificial, ContiniousElementsBuilder::HarmonicMarkSubType::ARTIFICIAL);
+
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::HARMONIC_MARK,
+                                                        ContiniousElementsBuilder::ImportType::HARMONIC_PINCH,
+                                                        hasHarmonicPinch, ContiniousElementsBuilder::HarmonicMarkSubType::PINCH);
+
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::HARMONIC_MARK,
+                                                        ContiniousElementsBuilder::ImportType::HARMONIC_TAP,
+                                                        hasHarmonicTap, ContiniousElementsBuilder::HarmonicMarkSubType::TAP);
+
+    m_continiousElementsBuilder->buildContiniousElement(cr, ElementType::HARMONIC_MARK,
+                                                        ContiniousElementsBuilder::ImportType::HARMONIC_SEMI,
+                                                        hasHarmonicSemi, ContiniousElementsBuilder::HarmonicMarkSubType::SEMI);
 }
 
 //---------------------------------------------------------
@@ -524,7 +704,7 @@ void GuitarPro::addVibrato(Note* note, VibratoType type)
 
 void GuitarPro::addTap(Note* note)
 {
-    addTextArticulation(note, Articulation::TextType::TAP);
+    addTextArticulation(note, ArticulationTextType::TAP);
 }
 
 //---------------------------------------------------------
@@ -533,7 +713,7 @@ void GuitarPro::addTap(Note* note)
 
 void GuitarPro::addSlap(Note* note)
 {
-    addTextArticulation(note, Articulation::TextType::SLAP);
+    addTextArticulation(note, ArticulationTextType::SLAP);
 }
 
 //---------------------------------------------------------
@@ -542,12 +722,12 @@ void GuitarPro::addSlap(Note* note)
 
 void GuitarPro::addPop(Note* note)
 {
-    addTextArticulation(note, Articulation::TextType::POP);
+    addTextArticulation(note, ArticulationTextType::POP);
 }
 
-void GuitarPro::addTextArticulation(Note* note, Articulation::TextType type)
+void GuitarPro::addTextArticulation(Note* note, ArticulationTextType type)
 {
-    if (type == Articulation::TextType::NO_TEXT) {
+    if (type == ArticulationTextType::NO_TEXT) {
         return;
     }
 
@@ -739,6 +919,58 @@ void GuitarPro::readVolta(GPVolta* gpVolta, Measure* m)
     }
 }
 
+std::vector<PitchValue> GuitarPro::readBendDataFromFile()
+{
+    std::vector<PitchValue> bendData;
+
+    readUInt8();                          // icon
+    /*int amplitude =*/ readInt();        // shown amplitude
+    int numPoints = readInt();            // the number of points in the bend
+
+    for (int i = 0; i < numPoints; ++i) {
+        int bendTime  = readInt();
+        int bendPitch = readInt();
+        int bendVibrato = readUInt8();
+        bendData.emplace_back(bendTime, bendPitch, bendVibrato);
+    }
+
+    return bendData;
+}
+
+void GuitarPro::createBend(Note* note, std::vector<PitchValue>& bendData)
+{
+    if (bendData.size() < 2) {
+        return;
+    }
+
+    /// not adding "hold" on 0 pitch
+    int maxPitch = (std::max_element(bendData.begin(), bendData.end(), [](const PitchValue& l, const PitchValue& r) {
+        return l.pitch < r.pitch;
+    }))->pitch;
+
+    if (maxPitch == 0) {
+        return;
+    }
+
+    bool useStretchedBends = engravingConfiguration()->guitarProImportExperimental();
+
+    if (useStretchedBends) {
+        Chord* chord = toChord(note->parent());
+        StretchedBend* stretchedBend = Factory::createStretchedBend(chord);
+        stretchedBend->setPitchValues(bendData);
+        stretchedBend->setTrack(note->track());
+        stretchedBend->setNote(note);
+        note->setStretchedBend(stretchedBend);
+        chord->add(stretchedBend);
+        m_stretchedBends.push_back(stretchedBend);
+    } else {
+        Bend* bend = Factory::createBend(note);
+        bend->setPoints(bendData);
+        bend->setTrack(note->track());
+        note->add(bend);
+    }
+}
+
 //---------------------------------------------------------
 //   readBend
 //    bend graph
@@ -746,32 +978,8 @@ void GuitarPro::readVolta(GPVolta* gpVolta, Measure* m)
 
 void GuitarPro::readBend(Note* note)
 {
-    readUInt8();                          // icon
-    /*int amplitude =*/ readInt();                            // shown amplitude
-    int numPoints = readInt();            // the number of points in the bend
-
-    // there are no notes in the bend, exit the function
-    if (numPoints == 0) {
-        return;
-    }
-
-#ifdef ENGRAVING_USE_STRETCHED_BENDS
-    StretchedBend* bend = Factory::createStretchedBend(note);
-#else
-    Bend* bend = Factory::createBend(note);
-#endif
-
-    //TODO-ws      bend->setNote(note);
-    for (int i = 0; i < numPoints; ++i) {
-        int bendTime  = readInt();
-        int bendPitch = readInt();
-        int bendVibrato = readUInt8();
-        bend->points().push_back(PitchValue(bendTime, bendPitch, bendVibrato));
-    }
-    //TODO-ws      bend->setAmplitude(amplitude);
-    bend->setTrack(note->track());
-    note->add(bend);
-    m_bends.push_back(bend);
+    std::vector<PitchValue> bendData = readBendDataFromFile();
+    createBend(note, bendData);
 }
 
 //---------------------------------------------------------
@@ -780,8 +988,8 @@ void GuitarPro::readBend(Note* note)
 
 void GuitarPro::readLyrics()
 {
-    gpLyrics.lyricTrack = readInt();          // lyric track
-    gpLyrics.fromBeat = readInt();
+    gpLyrics.lyricTrack = static_cast<size_t>(readInt());          // lyric track
+    gpLyrics.fromBeat = static_cast<size_t>(readInt());
     gpLyrics.beatCounter = 0;
 
     String lyrics = readWordPascalString();
@@ -789,11 +997,6 @@ void GuitarPro::readLyrics()
     lyrics.replace(u'\r', u' ');
     auto sl = lyrics.split(u' ', KeepEmptyParts);
     for (auto& str : sl) {
-        /*while (str[0] == '-')
-    {
-       gpLyrics.lyrics.push_back("aa");
-       str = str.substr(1);
-    }*/
         gpLyrics.lyrics.push_back(str);
     }
 
@@ -812,7 +1015,7 @@ void GuitarPro::createSlide(int sl, ChordRest* cr, int staffIdx, Note* note)
     UNUSED(note);
     // shift / legato slide
     if (sl == SHIFT_SLIDE || sl == LEGATO_SLIDE) {
-        Glissando* s = new Glissando(cr);
+        Glissando* s = mu::engraving::Factory::createGlissando(cr);
         //s->setXmlText("");
         s->setGlissandoType(GlissandoType::STRAIGHT);
         cr->add(s);
@@ -832,6 +1035,8 @@ void GuitarPro::createSlide(int sl, ChordRest* cr, int staffIdx, Note* note)
                 s->setParent(prevChord->upNote());
                 s->setText(u"");
                 s->setGlissandoType(GlissandoType::STRAIGHT);
+                s->setGlissandoShift(sl == SHIFT_SLIDE);
+
                 if (sl == LEGATO_SLIDE) {
                     createSlur(true, staffIdx, prevChord);
                 }
@@ -1038,18 +1243,18 @@ void GuitarPro::createMeasures()
             }
         }
         readVolta(&bars[i].volta, m);
-        m->setRepeatEnd(bars[i].repeatFlags == Repeat::END);
-        m->setRepeatStart(bars[i].repeatFlags == Repeat::START);
-        m->setRepeatJump(bars[i].repeatFlags == Repeat::JUMP);
+        m->setRepeatEnd(bars[i].repeatFlags == mu::engraving::Repeat::END);
+        m->setRepeatStart(bars[i].repeatFlags == mu::engraving::Repeat::START);
+        m->setRepeatJump(bars[i].repeatFlags == mu::engraving::Repeat::JUMP);
         //            m->setRepeatFlags(bars[i].repeatFlags);
         m->setRepeatCount(bars[i].repeats);           // supported in gp5
 
         // reset the volta sequence if we have an opening repeat
-        if (bars[i].repeatFlags == Repeat::START) {
+        if (bars[i].repeatFlags == mu::engraving::Repeat::START) {
             voltaSequence = 1;
         }
         // otherwise, if we see an end repeat symbol, only reset if the bar after it does not contain a volta
-        else if (bars[i].repeatFlags == Repeat::END && i < bars.size() - 1) {
+        else if (bars[i].repeatFlags == mu::engraving::Repeat::END && i < bars.size() - 1) {
             if (bars[i + 1].volta.voltaInfo.size() == 0) {
                 voltaSequence = 1;              // reset  the volta count
             }
@@ -1065,7 +1270,7 @@ void GuitarPro::createMeasures()
 //   applyBeatEffects
 //---------------------------------------------------------
 
-void GuitarPro::applyBeatEffects(Chord* chord, int beatEffect)
+void GuitarPro::applyBeatEffects(Chord* chord, int beatEffect, bool& hasVibratoLeftHand, bool& hasVibratoWTremBar)
 {
     /* tap/slap/pop implemented as text until SMuFL has
      * specifications and we can add them to fonts. Note that
@@ -1079,7 +1284,7 @@ void GuitarPro::applyBeatEffects(Chord* chord, int beatEffect)
         if (version > 300) {
             addTap(chord->upNote());
         } else {
-            addVibrato(chord->upNote());
+            hasVibratoLeftHand = true;
         }
     } else if (beatEffect == 2) {
         addSlap(chord->upNote());
@@ -1089,7 +1294,7 @@ void GuitarPro::applyBeatEffects(Chord* chord, int beatEffect)
         if (version >= 400) {
             Articulation* a = Factory::createArticulation(chord);
             a->setSymId(SymId::guitarFadeIn);
-            a->setAnchor(ArticulationAnchor::TOP_STAFF);
+            a->setAnchor(ArticulationAnchor::TOP);
             a->setPropertyFlags(Pid::ARTICULATION_ANCHOR, PropertyFlags::UNSTYLED);
             chord->add(a);
         }
@@ -1104,7 +1309,7 @@ void GuitarPro::applyBeatEffects(Chord* chord, int beatEffect)
         art->setSymId(SymId::stringsDownBow);
         chord->add(art);
     } else if (beatEffect == 7) {
-        addVibrato(chord->upNote(), VibratoType::VIBRATO_SAWTOOTH);
+        hasVibratoWTremBar = true;
     }
 }
 
@@ -1118,6 +1323,7 @@ void GuitarPro::applyBeatEffects(Chord* chord, int beatEffect)
 
 bool GuitarPro1::read(IODevice* io)
 {
+    m_continiousElementsBuilder = std::make_unique<ContiniousElementsBuilder>(score);
     f      = io;
     curPos = 30;
 
@@ -1168,8 +1374,8 @@ bool GuitarPro1::read(IODevice* io)
         }
 
         int frets = 32;       // TODO
-        StringData stringData(frets, strings, &tuning2[0]);
-        createTuningString(strings, &tuning2[0]);
+        bool useFlats = createTuningString(strings, &tuning2[0]);
+        StringData stringData(frets, strings, &tuning2[0], useFlats);
         Part* part = score->staff(i)->part();
         Instrument* instr = part->instrument();
         instr->setStringData(stringData);
@@ -1310,20 +1516,28 @@ bool GuitarPro1::read(IODevice* io)
                 segment->add(cr);
                 Staff* staff = cr->staff();
                 int numStrings = static_cast<int>(staff->part()->instrument()->stringData()->strings());
+                ReadNoteResult readResult;
+                bool hasLetRing = false;
+                bool hasPalmMute = false;
                 for (int i = 6; i >= 0; --i) {
                     if (strings & (1 << i) && ((6 - i) < numStrings)) {
                         Note* note = Factory::createNote(static_cast<Chord*>(cr));
                         static_cast<Chord*>(cr)->add(note);
-                        readNote(6 - i, note);
+                        readResult = readNote(6 - i, note);
+                        hasLetRing = readResult.letRing || hasLetRing;
+                        hasPalmMute = readResult.palmMute || hasPalmMute;
                         note->setTpcFromPitch();
                     }
                 }
                 restsForEmptyBeats(segment, measure, cr, l, static_cast<int>(track), fraction);
                 fraction += cr->actualTicks();
                 measureLen += cr->actualTicks();
+                addLetRing(cr, hasLetRing);
+                addPalmMute(cr, hasPalmMute);
             }
             if (measureLen < measure->ticks()) {
                 score->setRest(fraction, track, measure->ticks() - measureLen, false, nullptr, false);
+                m_continiousElementsBuilder->notifyUncompletedMeasure();
             }
         }
         if (bar == 1 && !mixChange) {
@@ -1331,6 +1545,7 @@ bool GuitarPro1::read(IODevice* io)
         }
     }
 
+    m_continiousElementsBuilder->addElementsToScore();
     return true;
 }
 
@@ -1386,13 +1601,13 @@ void GuitarPro::setTempo(int newTempo, Measure* measure)
     if (last_tempo != newTempo) {
         Segment* segment = measure->getSegment(SegmentType::ChordRest, measure->tick());
         TempoText* tt = Factory::createTempoText(segment);
-        tt->setTempo(double(newTempo) / 60.0);
+        tt->setTempo(BeatsPerSecond::fromBPM(newTempo));
         tt->setXmlText(String(u"<sym>metNoteQuarterUp</sym> = %1").arg(newTempo));
         tt->setTrack(0);
         segment->add(tt);
         tempo = newTempo;
         last_tempo = newTempo;
-        score->setTempo(measure->tick(), newTempo);
+        score->setTempo(measure->tick(), BeatsPerSecond::fromBPM(newTempo));
     }
 }
 
@@ -1495,44 +1710,12 @@ void GuitarPro::createSlur(bool hasSlur, staff_idx_t staffIdx, ChordRest* cr)
 }
 
 //---------------------------------------------------------
-//   createOttava
-//---------------------------------------------------------
-
-void GuitarPro::createOttava(bool hasOttava, int track, ChordRest* cr, String value)
-{
-    if (hasOttava && (ottava.at(track) == 0)) {
-        Ottava* newOttava = new Ottava(score->dummy());
-        newOttava->setTrack(track);
-        if (value == u"8va") {
-            newOttava->setOttavaType(OttavaType::OTTAVA_8VA);
-        } else if (value == u"8vb") {
-            newOttava->setOttavaType(OttavaType::OTTAVA_8VB);
-        } else if (value == u"15ma") {
-            newOttava->setOttavaType(OttavaType::OTTAVA_15MA);
-        } else if (value == u"15mb") {
-            newOttava->setOttavaType(OttavaType::OTTAVA_15MB);
-        }
-        newOttava->setTick(cr->tick());
-        /* we set the second tick when we encounter the next note
-           without an ottava. We also allow the ottava to continue
-           over rests, as that's what Guitar Pro does. */
-        newOttava->setTick2(cr->tick());
-        ottava.at(track) = newOttava;
-        score->addElement(newOttava);
-    } else if (ottava.at(track) && !hasOttava) {
-        Ottava* currentOttava = ottava.at(track);
-        ottava.at(track) = 0;
-        currentOttava->setTick2(cr->tick());
-        //ottava.at(track)->staff()->updateOttava(ottava.at(track));
-    }
-}
-
-//---------------------------------------------------------
 //   read
 //---------------------------------------------------------
 
 bool GuitarPro2::read(IODevice* io)
 {
+    m_continiousElementsBuilder = std::make_unique<ContiniousElementsBuilder>(score);
     f      = io;
     curPos = 30;
 
@@ -1546,8 +1729,8 @@ bool GuitarPro2::read(IODevice* io)
         score->setMetaTag(u"copyright", copyright);
     }
 
-    transcriber  = readDelphiString();
-    instructions = readDelphiString();
+    readDelphiString(); // transcriber
+    readDelphiString(); // instructions
     int n = readInt();
     for (int i = 0; i < n; ++i) {
         comments.append(readDelphiString());
@@ -1573,6 +1756,7 @@ bool GuitarPro2::read(IODevice* io)
     }
     measures   = readInt();
     staves = readInt();
+    initDynamics(staves);
 
     int tnumerator   = 4;
     int tdenominator = 4;
@@ -1586,10 +1770,10 @@ bool GuitarPro2::read(IODevice* io)
             tdenominator = readUInt8();
         }
         if (barBits & SCORE_REPEAT_START) {
-            bar.repeatFlags = bar.repeatFlags | Repeat::START;
+            bar.repeatFlags = bar.repeatFlags | mu::engraving::Repeat::START;
         }
         if (barBits & SCORE_REPEAT_END) {
-            bar.repeatFlags = bar.repeatFlags | Repeat::END;
+            bar.repeatFlags = bar.repeatFlags | mu::engraving::Repeat::END;
             bar.repeats = readUInt8() + 1;
         }
         if (barBits & SCORE_VOLTA) {
@@ -1682,14 +1866,14 @@ bool GuitarPro2::read(IODevice* io)
         for (int k = 0; k < strings; ++k) {
             tuning2[strings - k - 1] = tuning[k];
         }
-        StringData stringData(frets, strings, &tuning2[0]);
+        bool useFlats = createTuningString(strings, &tuning2[0]);
+        StringData stringData(frets, strings, &tuning2[0], useFlats);
         Part* part = score->staff(i)->part();
         Instrument* instr = part->instrument();
         instr->setStringData(stringData);
         instr->setSingleNoteDynamics(false);
         part->setPartName(name);
         part->setPlainLongName(name);
-        createTuningString(strings, &tuning2[0]);
 
         //
         // determine clef
@@ -1699,9 +1883,30 @@ bool GuitarPro2::read(IODevice* io)
         ClefType clefId = ClefType::G;
         if (midiChannel == GP_DEFAULT_PERCUSSION_CHANNEL) {
             clefId = ClefType::PERC;
-            // instr->setUseDrumset(DrumsetKind::GUITAR_PRO);
-            instr->setDrumset(gpDrumset);
-            staff->setStaffType(Fraction(0, 1), *StaffType::preset(StaffTypes::PERC_DEFAULT));
+            StaffTypes type = StaffTypes::PERC_DEFAULT;
+            if (auto it = PERC_STAFF_LINES_FROM_INSTRUMENT.find(name.toStdString());
+                it != PERC_STAFF_LINES_FROM_INSTRUMENT.end()) {
+                initGuitarProPercussionSet(it->second);
+                setInstrumentDrumset(instr, it->second);
+                switch (it->second.numLines) {
+                case 1:
+                    type = StaffTypes::PERC_1LINE;
+                    break;
+                case 2:
+                    type = StaffTypes::PERC_2LINE;
+                    break;
+                case 3:
+                    type = StaffTypes::PERC_3LINE;
+                    break;
+                default:
+                    type = StaffTypes::PERC_DEFAULT;
+                    break;
+                }
+            } else {
+                GuitarPro::initGuitarProDrumset();
+                instr->setDrumset(gpDrumset);
+            }
+            staff->setStaffType(Fraction(0, 1), *StaffType::preset(type));
         } else {
             clefId = defaultClef(patch);
         }
@@ -1847,20 +2052,28 @@ bool GuitarPro2::read(IODevice* io)
                 segment->add(cr);
                 Staff* staff = cr->staff();
                 int numStrings = static_cast<int>(staff->part()->instrument()->stringData()->strings());
+                ReadNoteResult readResult;
+                bool hasLetRing = false;
+                bool hasPalmMute = false;
                 for (int i = 6; i >= 0; --i) {
                     if (strings & (1 << i) && ((6 - i) < numStrings)) {
                         Note* note = Factory::createNote(static_cast<Chord*>(cr));
                         static_cast<Chord*>(cr)->add(note);
-                        readNote(6 - i, note);
+                        readResult = readNote(6 - i, note);
+                        hasLetRing = readResult.letRing || hasLetRing;
+                        hasPalmMute = readResult.palmMute || hasPalmMute;
                         note->setTpcFromPitch();
                     }
                 }
                 restsForEmptyBeats(segment, measure, cr, l, static_cast<int>(track), fraction);
                 fraction += cr->actualTicks();
                 measureLen += cr->actualTicks();
+                addLetRing(cr, hasLetRing);
+                addPalmMute(cr, hasPalmMute);
             }
             if (measureLen < measure->ticks()) {
                 score->setRest(fraction, track, measure->ticks() - measureLen, false, nullptr, false);
+                m_continiousElementsBuilder->notifyUncompletedMeasure();
             }
         }
         if (bar == 1 && !mixChange) {
@@ -1868,6 +2081,7 @@ bool GuitarPro2::read(IODevice* io)
         }
     }
 
+    m_continiousElementsBuilder->addElementsToScore();
     return true;
 }
 
@@ -1875,9 +2089,9 @@ bool GuitarPro2::read(IODevice* io)
 //   readNote
 //---------------------------------------------------------
 
-bool GuitarPro1::readNote(int string, Note* note)
+GuitarPro::ReadNoteResult GuitarPro1::readNote(int string, Note* note)
 {
-    bool slur = false;
+    ReadNoteResult readResult;
     uint8_t noteBits = readUInt8();
     if (noteBits & NOTE_GHOST) {
         if (version == 300) {
@@ -1923,6 +2137,8 @@ bool GuitarPro1::readNote(int string, Note* note)
         //readUInt8();
     }
 
+    int& previousDynamic = previousDynamicByTrack[note->track()];
+
     // set dynamic information on note if different from previous note
     if (noteBits & NOTE_DYNAMIC) {
         int d = readChar();
@@ -1930,6 +2146,9 @@ bool GuitarPro1::readNote(int string, Note* note)
             previousDynamic = d;
             addDynamic(note, d);
         }
+    } else if (previousDynamic != DEFAULT_DYNAMIC) {
+        previousDynamic = DEFAULT_DYNAMIC;
+        addDynamic(note, previousDynamic);
     }
 
     int fretNumber = -1;
@@ -1958,13 +2177,13 @@ bool GuitarPro1::readNote(int string, Note* note)
             int transition = readUInt8();                  // grace transition
             int duration = readUInt8();                  // grace duration
 
-            int grace_len = Constants::division / 8;
+            int grace_len = Constants::DIVISION / 8;
             if (duration == 1) {
-                grace_len = Constants::division / 8;       //32nd
+                grace_len = Constants::DIVISION / 8;       //32nd
             } else if (duration == 2) {
-                grace_len = Constants::division / 6;       //24th
+                grace_len = Constants::DIVISION / 6;       //24th
             } else if (duration == 3) {
-                grace_len = Constants::division / 4;       //16th
+                grace_len = Constants::DIVISION / 4;       //16th
             }
             Note* gn = Factory::createNote(score->dummy()->chord());
 
@@ -1989,13 +2208,13 @@ bool GuitarPro1::readNote(int string, Note* note)
                 gc = Factory::createChord(score->dummy()->segment());
                 TDuration d;
                 d.setVal(grace_len);
-                if (grace_len == Constants::division / 6) {
+                if (grace_len == Constants::DIVISION / 6) {
                     d.setDots(1);
                 }
                 gc->setDurationType(d);
                 gc->setTicks(d.fraction());
                 gc->setNoteType(NoteType::ACCIACCATURA);
-                gc->setMag(note->chord()->staff()->staffMag(Fraction(0, 1)) * score->styleD(Sid::graceNoteMag));
+                gc->mutldata()->setMag(note->chord()->staff()->staffMag(Fraction(0, 1)) * score->style().styleD(Sid::graceNoteMag));
                 note->chord()->add(gc);         // sets parent + track
                 addDynamic(gn, dynamic);
             }
@@ -2058,10 +2277,10 @@ bool GuitarPro1::readNote(int string, Note* note)
             }
         }
         if (modMask1 & EFFECT_HAMMER) {         // hammer on / pull off
-            slur = true;
+            readResult.slur = true;
         }
         if (modMask1 & EFFECT_LET_RING) {       // let ring
-            addLetRing(note);
+            readResult.letRing = true;
         }
         if (modMask1 & EFFECT_SLIDE_OLD) {
             slideList.push_back(note);
@@ -2071,8 +2290,7 @@ bool GuitarPro1::readNote(int string, Note* note)
             if (modMask2 & EFFECT_STACCATO) {
             }
             if (modMask2 & EFFECT_PALM_MUTE) {
-                //note->setPalmMute(true);
-                addPalmMute(note);
+                readResult.palmMute = true;
             }
             if (modMask2 & EFFECT_TREMOLO) {
                 readUInt8();
@@ -2174,7 +2392,8 @@ bool GuitarPro1::readNote(int string, Note* note)
             true_note->add(tie);
         }
     }
-    return slur;
+
+    return readResult;
 }
 
 //---------------------------------------------------------
@@ -2208,6 +2427,7 @@ int GuitarPro1::readBeatEffects(int, Segment*)
 
 bool GuitarPro3::read(IODevice* io)
 {
+    m_continiousElementsBuilder = std::make_unique<ContiniousElementsBuilder>(score);
     f      = io;
     curPos = 30;
 
@@ -2217,12 +2437,13 @@ bool GuitarPro3::read(IODevice* io)
     album        = readDelphiString();
     composer     = readDelphiString();
     String copyright = readDelphiString();
+
     if (!copyright.isEmpty()) {
         score->setMetaTag(u"copyright", copyright);
     }
 
-    transcriber  = readDelphiString();
-    instructions = readDelphiString();
+    readDelphiString(); // transcriber
+    readDelphiString(); // instructions
     for (int i = 0, n = readInt(); i < n; ++i) {
         comments.append(readDelphiString());
     }
@@ -2247,17 +2468,12 @@ bool GuitarPro3::read(IODevice* io)
     }
     measures   = readInt();
     staves = readInt();
+    initDynamics(staves);
 
     slurs = new Slur*[staves];
     for (size_t i = 0; i < staves; ++i) {
         slurs[i] = nullptr;
     }
-
-    //previousDynamic = new int [staves * VOICES];
-    // initialise the dynamics to 0
-    //for (int i = 0; i < staves * VOICES; i++)
-    //      previousDynamic[i] = 0;
-    previousDynamic = -1;
 
     int tnumerator   = 4;
     int tdenominator = 4;
@@ -2271,10 +2487,10 @@ bool GuitarPro3::read(IODevice* io)
             tdenominator = readUInt8();
         }
         if (barBits & SCORE_REPEAT_START) {
-            bar.repeatFlags = bar.repeatFlags | Repeat::START;
+            bar.repeatFlags = bar.repeatFlags | mu::engraving::Repeat::START;
         }
         if (barBits & SCORE_REPEAT_END) {                    // number of repeats
-            bar.repeatFlags = bar.repeatFlags | Repeat::END;
+            bar.repeatFlags = bar.repeatFlags | mu::engraving::Repeat::END;
             bar.repeats = readUInt8() + 1;
         }
         if (barBits & SCORE_VOLTA) {                          // a volta
@@ -2346,18 +2562,18 @@ bool GuitarPro3::read(IODevice* io)
         }
 
         readVolta(&bars[i].volta, m);
-        m->setRepeatEnd(bars[i].repeatFlags == Repeat::END);
-        m->setRepeatStart(bars[i].repeatFlags == Repeat::START);
-        m->setRepeatJump(bars[i].repeatFlags == Repeat::JUMP);
+        m->setRepeatEnd(bars[i].repeatFlags == mu::engraving::Repeat::END);
+        m->setRepeatStart(bars[i].repeatFlags == mu::engraving::Repeat::START);
+        m->setRepeatJump(bars[i].repeatFlags == mu::engraving::Repeat::JUMP);
         //            m->setRepeatFlags(bars[i].repeatFlags);
         m->setRepeatCount(bars[i].repeats);
 
         // reset the volta sequence if we have an opening repeat
-        if (bars[i].repeatFlags == Repeat::START) {
+        if (bars[i].repeatFlags == mu::engraving::Repeat::START) {
             voltaSequence = 1;
         }
         // otherwise, if we see an end repeat symbol, only reset if the bar after it does not contain a volta
-        else if (bars[i].repeatFlags == Repeat::END && i < bars.size() - 1) {
+        else if (bars[i].repeatFlags == mu::engraving::Repeat::END && i < bars.size() - 1) {
             if (bars[i + 1].volta.voltaInfo.size() == 0) {
                 voltaSequence = 1;
             }
@@ -2399,14 +2615,14 @@ bool GuitarPro3::read(IODevice* io)
         for (int k = 0; k < strings; ++k) {
             tuning2[strings - k - 1] = tuning[k];
         }
-        StringData stringData(frets, strings, &tuning2[0]);
+        bool useFlats = createTuningString(strings, &tuning2[0]);
+        StringData stringData(frets, strings, &tuning2[0], useFlats);
         Part* part = score->staff(i)->part();
         Instrument* instr = part->instrument();
         instr->setStringData(stringData);
         instr->setSingleNoteDynamics(false);
         part->setPartName(name);
         part->setPlainLongName(name);
-        createTuningString(strings, &tuning2[0]);
         //
         // determine clef
         //
@@ -2415,9 +2631,30 @@ bool GuitarPro3::read(IODevice* io)
         ClefType clefId = ClefType::G;
         if (midiChannel == GP_DEFAULT_PERCUSSION_CHANNEL) {
             clefId = ClefType::PERC;
-            // instr->setUseDrumset(DrumsetKind::GUITAR_PRO);
-            instr->setDrumset(gpDrumset);
-            staff->setStaffType(Fraction(0, 1), *StaffType::preset(StaffTypes::PERC_DEFAULT));
+            StaffTypes type = StaffTypes::PERC_DEFAULT;
+            if (auto it = PERC_STAFF_LINES_FROM_INSTRUMENT.find(name.toStdString());
+                it != PERC_STAFF_LINES_FROM_INSTRUMENT.end()) {
+                initGuitarProPercussionSet(it->second);
+                setInstrumentDrumset(instr, it->second);
+                switch (it->second.numLines) {
+                case 1:
+                    type = StaffTypes::PERC_1LINE;
+                    break;
+                case 2:
+                    type = StaffTypes::PERC_2LINE;
+                    break;
+                case 3:
+                    type = StaffTypes::PERC_3LINE;
+                    break;
+                default:
+                    type = StaffTypes::PERC_DEFAULT;
+                    break;
+                }
+            } else {
+                GuitarPro::initGuitarProDrumset();
+                instr->setDrumset(gpDrumset);
+            }
+            staff->setStaffType(Fraction(0, 1), *StaffType::preset(type));
         } else {
             clefId = defaultClef(patch);
         }
@@ -2468,7 +2705,6 @@ bool GuitarPro3::read(IODevice* io)
         }
 
         std::vector<Tuplet*> tuplets(staves);
-        //Tuplet* tuplets[staves];
         for (size_t staffIdx = 0; staffIdx < staves; ++staffIdx) {
             tuplets[staffIdx] = 0;
         }
@@ -2482,6 +2718,12 @@ bool GuitarPro3::read(IODevice* io)
                 return false;
             }
             for (int beat = 0; beat < beats; ++beat) {
+                bool hasSlur = false;
+                bool hasLetRing = false;
+                bool hasPalmMute = false;
+                bool hasVibratoLeftHand = false;
+                bool hasVibratoWTremBar = false;
+
                 //                        int pause = 0;
                 uint8_t beatBits = readUInt8();
                 bool dotted = beatBits & BEAT_DOTTED;
@@ -2492,7 +2734,7 @@ bool GuitarPro3::read(IODevice* io)
 
                 slide = -1;
                 if (mu::contains(slides, static_cast<int>(track))) {
-                    slide = mu::take(slides, track);
+                    slide = mu::take(slides, static_cast<int>(track));
                 }
 
                 int len = readChar();
@@ -2519,8 +2761,8 @@ bool GuitarPro3::read(IODevice* io)
                 Lyrics* lyrics = 0;
                 if (beatBits & BEAT_LYRICS) {
                     String txt = readDelphiString();
-                    Lyrics* lyrics = Factory::createLyrics(score->dummy()->chord());
-                    lyrics->setPlainText(txt);
+                    Lyrics* lyrics2 = Factory::createLyrics(score->dummy()->chord());
+                    lyrics2->setPlainText(txt);
                 }
                 int beatEffects = 0;
 
@@ -2598,13 +2840,12 @@ bool GuitarPro3::read(IODevice* io)
 
                 Staff* staff = cr->staff();
                 int numStrings = static_cast<int>(staff->part()->instrument()->stringData()->strings());
-                bool hasSlur = false;
                 for (int i = 6; i >= 0; --i) {
                     if (strings & (1 << i) && ((6 - i) < numStrings)) {
                         Note* note = Factory::createNote(toChord(cr));
                         toChord(cr)->add(note);
                         if (vibrato) {
-                            addVibrato(note);
+                            hasVibratoLeftHand = true;
                         }
                         if (dotted) {
                             NoteDot* dot = Factory::createNoteDot(note);
@@ -2614,7 +2855,11 @@ bool GuitarPro3::read(IODevice* io)
                             dot->setVisible(true);
                             note->add(dot);
                         }
-                        hasSlur = (readNote(6 - i, note) || hasSlur);
+                        ReadNoteResult readResult = readNote(6 - i, note);
+                        hasSlur = readResult.slur || hasSlur;
+                        hasLetRing = readResult.letRing || hasLetRing;
+                        hasPalmMute = readResult.palmMute || hasPalmMute;
+                        hasVibratoLeftHand = readResult.vibrato || hasVibratoLeftHand;
                         note->setTpcFromPitch();
                     }
                 }
@@ -2630,22 +2875,34 @@ bool GuitarPro3::read(IODevice* io)
                     segment->add(cr);
                 }
                 createSlur(hasSlur, staffIdx, cr);
+
                 if (cr && (cr->isChord())) {
                     if (beatEffects >= 200) {
                         beatEffects -= 200;
                         Articulation* art = Factory::createArticulation(cr);
                         art->setSymId(SymId::guitarFadeOut);
-                        art->setAnchor(ArticulationAnchor::TOP_STAFF);
+                        art->setAnchor(ArticulationAnchor::TOP);
                         art->setPropertyFlags(Pid::ARTICULATION_ANCHOR, PropertyFlags::UNSTYLED);
                         if (!score->toggleArticulation(cr, art)) {
                             delete art;
                         }
                     }
 
-                    applyBeatEffects(static_cast<Chord*>(cr), beatEffects);
+                    bool hasVibratoLeftHandOnBeat = false;
+                    bool hasVibratoWTremBarOnBeat = false;
+                    applyBeatEffects(static_cast<Chord*>(cr), beatEffects, hasVibratoLeftHandOnBeat, hasVibratoWTremBarOnBeat);
+                    hasVibratoLeftHand = hasVibratoLeftHand || hasVibratoLeftHandOnBeat;
+                    hasVibratoWTremBar = hasVibratoWTremBar || hasVibratoWTremBarOnBeat;
                     if (slide > 0) {
                         createSlide(slide, cr, static_cast<int>(staffIdx));
                     }
+                }
+
+                if (cr) {
+                    addLetRing(cr, hasLetRing);
+                    addPalmMute(cr, hasPalmMute);
+                    addVibratoLeftHand(cr, hasVibratoLeftHand);
+                    addVibratoWTremBar(cr, hasVibratoWTremBar);
                 }
 
                 restsForEmptyBeats(segment, measure, cr, l, static_cast<int>(track), fraction);
@@ -2654,6 +2911,7 @@ bool GuitarPro3::read(IODevice* io)
             }
             if (measureLen < measure->ticks()) {
                 score->setRest(fraction, track, measure->ticks() - measureLen, false, nullptr, false);
+                m_continiousElementsBuilder->notifyUncompletedMeasure();
             }
             bool removeRests = true;
             int counter = 0;
@@ -2744,9 +3002,8 @@ bool GuitarPro3::read(IODevice* io)
         }
     }
 
-#ifdef ENGRAVING_USE_STRETCHED_BENDS
-    StretchedBend::prepareBends(m_bends);
-#endif
+    m_continiousElementsBuilder->addElementsToScore();
+    StretchedBend::prepareBends(m_stretchedBends);
 
     return true;
 }
@@ -2821,25 +3078,6 @@ void GuitarPro::readTremoloBar(int /*track*/, Segment* /*segment*/)
         int vibrato = readUInt8();
         points.push_back(PitchValue(time, pitch, vibrato));
     }
-}
-
-//---------------------------------------------------------
-//   createCrecDim
-//---------------------------------------------------------
-
-void GuitarPro::createCrecDim(int staffIdx, int track, const Fraction& tick, bool crec)
-{
-    hairpins[staffIdx] = new Hairpin(score->dummy()->segment());
-    if (crec) {
-        hairpins[staffIdx]->setHairpinType(HairpinType::CRESC_HAIRPIN);
-    } else {
-        hairpins[staffIdx]->setHairpinType(HairpinType::DECRESC_HAIRPIN);
-    }
-    hairpins[staffIdx]->setTick(tick);
-    hairpins[staffIdx]->setTick2(tick);
-    hairpins[staffIdx]->setTrack(track);
-    hairpins[staffIdx]->setTrack(track);
-    score->undoAddElement(hairpins[staffIdx]);
 }
 
 //---------------------------------------------------------
@@ -2932,7 +3170,7 @@ static void createLinkedTabs(MasterScore* score)
         size_t stavesNum = part->nstaves();
 
         if (stavesNum != 1) {
-            for (int i = 0; i < stavesNum; i++) {
+            for (size_t i = 0; i < stavesNum; i++) {
                 indexMapping[curStaffIdx] = stavesOperated + i;
                 curStaffIdx++;
             }
@@ -2941,32 +3179,37 @@ static void createLinkedTabs(MasterScore* score)
             continue;
         }
 
-        part->setStaves(static_cast<int>(stavesInPart));
+        bool needsTabStaff = !part->staff(0)->isDrumStaff(fr);
 
-        Staff* srcStaff = part->staff(0);
-        Staff* dstStaff = part->staff(1);
-        Excerpt::cloneStaff(srcStaff, dstStaff, false);
+        if (needsTabStaff) {
+            part->setStaves(static_cast<int>(stavesInPart));
 
-        static const std::vector<StaffTypes> types {
-            StaffTypes::TAB_4SIMPLE,
-            StaffTypes::TAB_5SIMPLE,
-            StaffTypes::TAB_6SIMPLE,
-            StaffTypes::TAB_7SIMPLE,
-            StaffTypes::TAB_8SIMPLE
-        };
+            Staff* srcStaff = part->staff(0);
+            Staff* dstStaff = part->staff(1);
+            Excerpt::cloneStaff(srcStaff, dstStaff, false);
 
-        int index = (lines >= 4 && lines <= 8) ? lines - 4 : 2;
+            static const std::vector<StaffTypes> types {
+                StaffTypes::TAB_4SIMPLE,
+                StaffTypes::TAB_5SIMPLE,
+                StaffTypes::TAB_6SIMPLE,
+                StaffTypes::TAB_7SIMPLE,
+                StaffTypes::TAB_8SIMPLE
+            };
 
-        dstStaff->setStaffType(fr, *StaffType::preset(types.at(index)));
-        dstStaff->setLines(fr, static_cast<int>(lines));
+            size_t index = (lines >= 4 && lines <= 8) ? lines - 4 : 2;
+
+            dstStaff->setStaffType(fr, *StaffType::preset(types.at(index)));
+            dstStaff->setLines(fr, static_cast<int>(lines));
+
+            staffIndexesToCopy.insert(curStaffIdx);
+        }
 
         // each spanner moves down to the staff with index,
         // equal to number of spanners operated before it
         indexMapping[curStaffIdx] = stavesOperated;
-        staffIndexesToCopy.insert(curStaffIdx);
         curStaffIdx++;
 
-        stavesOperated += stavesInPart;
+        stavesOperated += needsTabStaff ? stavesInPart : 1;
     }
 
     // moving and copying spanner segments
@@ -3001,14 +3244,18 @@ static void createLinkedTabs(MasterScore* score)
 //   importScore
 //---------------------------------------------------------
 
-static Err importScore(MasterScore* score, mu::io::IODevice* io)
+static Err importScore(MasterScore* score, mu::io::IODevice* io, bool experimental = false)
 {
     if (!io->open(IODevice::ReadOnly)) {
         return Err::FileOpenError;
     }
 
     score->loadStyle(u"/engraving/styles/gp-style.mss");
+    if (experimental) {
+        score->loadStyle(u"/engraving/styles/gp-style-experimental.mss");
+    }
 
+    score->checkChordList();
     io->seek(0);
     char header[5];
     io->read((uint8_t*)(header), 4);
@@ -3024,7 +3271,6 @@ static Err importScore(MasterScore* score, mu::io::IODevice* io)
     // check to see if we are dealing with a GP file via the extension
     if (strcmp(header, "PK\x3\x4") == 0) {
         gp = new GuitarPro7(score);
-        gp->initGuitarProDrumset();
         readResult = gp->read(io);
         gp->setTempo(0, 0);
     }
@@ -3068,7 +3314,6 @@ static Err importScore(MasterScore* score, mu::io::IODevice* io)
             LOGD("unknown gtp format %d", version);
             return Err::FileBadFormat;
         }
-        gp->initGuitarProDrumset();
         readResult = gp->read(io);
         gp->setTempo(0, 0);
     } else {
@@ -3098,11 +3343,26 @@ static Err importScore(MasterScore* score, mu::io::IODevice* io)
         score->lastMeasure()->setEndBarLineType(BarLineType::END, false);
     }
 
-    for (const Part* part : score->parts()) {
+    for (Part* part : score->parts()) {
         for (const auto& pair : part->instruments()) {
             pair.second->updateInstrumentId();
         }
+
+        std::vector<MidiArticulation> articulations =
+        {
+            MidiArticulation(u"staccatissimo", u"", 100, 30),
+            MidiArticulation(u"staccato", u"", 100, 50),
+            MidiArticulation(u"portato", u"", 100, 67),
+            MidiArticulation(u"tenuto", u"", 100, 100),
+            MidiArticulation(u"accent", u"", 120, 100),
+            MidiArticulation(u"marcato", u"", 144, 100),
+            MidiArticulation(u"sforzato", u"", 169, 100),
+        };
+
+        part->instrument()->setArticulation(articulations);
     }
+
+    score->setUpTempoMap();
 
     delete gp;
 
@@ -3113,9 +3373,9 @@ static Err importScore(MasterScore* score, mu::io::IODevice* io)
 //   importGTP
 //---------------------------------------------------------
 
-Err importGTP(MasterScore* score, mu::io::IODevice* io, bool createLinkedTabForce)
+Err importGTP(MasterScore* score, mu::io::IODevice* io, bool createLinkedTabForce, bool experimental)
 {
-    Err error = importScore(score, io);
+    Err error = importScore(score, io, experimental);
 
     if (error != Err::NoError) {
         return error;
@@ -3127,4 +3387,4 @@ Err importGTP(MasterScore* score, mu::io::IODevice* io, bool createLinkedTabForc
 
     return Err::NoError;
 }
-}
+} // namespace mu::iex::guitarpro

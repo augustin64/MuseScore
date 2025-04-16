@@ -21,11 +21,12 @@
  */
 #include "qfontprovider.h"
 
+#include <QFont>
 #include <QPaintDevice>
 #include <QFontDatabase>
 #include <QFontMetricsF>
 
-#include "engraving/libmscore/mscore.h"
+#include "engraving/dom/mscore.h"
 #include "fontengineft.h"
 
 using namespace mu;

@@ -25,22 +25,21 @@
 
 #include "log.h"
 
-#include "libmscore/rendermidi.h"
-#include "libmscore/masterscore.h"
-#include "libmscore/tempo.h"
-#include "libmscore/part.h"
-#include "libmscore/instrument.h"
-#include "libmscore/repeatlist.h"
-#include "libmscore/measure.h"
-#include "libmscore/segment.h"
-#include "libmscore/system.h"
-#include "libmscore/page.h"
-#include "libmscore/staff.h"
-#include "libmscore/chordrest.h"
-#include "libmscore/chord.h"
-#include "libmscore/harmony.h"
-#include "libmscore/tempotext.h"
-#include "libmscore/tempo.h"
+#include "engraving/dom/chordrest.h"
+#include "engraving/dom/instrument.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/measure.h"
+#include "engraving/dom/page.h"
+#include "engraving/dom/part.h"
+#include "engraving/dom/repeatlist.h"
+#include "engraving/dom/segment.h"
+#include "engraving/dom/staff.h"
+#include "engraving/dom/system.h"
+#include "engraving/dom/tempo.h"
+#include "engraving/dom/tempotext.h"
+#include "engraving/dom/stafftext.h"
+#include "engraving/dom/soundflag.h"
+#include "engraving/dom/utils.h"
 
 #include "../notationerrors.h"
 
@@ -54,9 +53,9 @@ static constexpr int PLAYBACK_TAIL_SECS = 3;
 
 NotationPlayback::NotationPlayback(IGetScore* getScore,
                                    async::Notification notationChanged)
-    : m_getScore(getScore)
+    : m_getScore(getScore), m_notationChanged(notationChanged)
 {
-    notationChanged.onNotify(this, [this]() {
+    m_notationChanged.onNotify(this, [this]() {
         updateLoopBoundaries();
     });
 }
@@ -66,9 +65,8 @@ mu::engraving::Score* NotationPlayback::score() const
     return m_getScore->score();
 }
 
-void NotationPlayback::init(INotationUndoStackPtr undoStack)
+void NotationPlayback::init()
 {
-    // IF_ASSERT_FAILED(score() && undoStack) {
     IF_ASSERT_FAILED(score()) {
         return;
     }
@@ -173,7 +171,7 @@ void NotationPlayback::updateTotalPlayTime()
         return;
     }
 
-    int lastTick = score->repeatList().ticks();
+    int lastTick = score->repeatList(m_playbackModel.isPlayRepeatsEnabled()).ticks();
     qreal secs = score->utick2utime(lastTick);
     secs += PLAYBACK_TAIL_SECS;
 
@@ -219,7 +217,7 @@ tick_t NotationPlayback::secToTick(float sec) const
 
     tick_t utick = secToPlayedTick(sec);
 
-    return score()->repeatList().utick2tick(utick);
+    return score()->repeatList(m_playbackModel.isPlayRepeatsEnabled()).utick2tick(utick);
 }
 
 RetVal<midi::tick_t> NotationPlayback::playPositionTickByRawTick(midi::tick_t tick) const
@@ -228,7 +226,7 @@ RetVal<midi::tick_t> NotationPlayback::playPositionTickByRawTick(midi::tick_t ti
         return make_ret(Err::Undefined);
     }
 
-    midi::tick_t playbackTick = score()->repeatList().tick2utick(tick);
+    midi::tick_t playbackTick = score()->repeatList(m_playbackModel.isPlayRepeatsEnabled()).tick2utick(tick);
 
     return RetVal<midi::tick_t>::make_ok(std::move(playbackTick));
 }
@@ -376,7 +374,167 @@ double NotationPlayback::tempoMultiplier() const
 
 void NotationPlayback::setTempoMultiplier(double multiplier)
 {
-    if (score()) {
-        score()->tempomap()->setTempoMultiplier(multiplier);
+    Score* score = this->score();
+    if (!score) {
+        return;
     }
+
+    if (!score->tempomap()->setTempoMultiplier(multiplier)) {
+        return;
+    }
+
+    score->masterScore()->updateRepeatListTempo();
+
+    m_playbackModel.reload();
+}
+
+void NotationPlayback::addSoundFlags(const std::vector<StaffText*>& staffTextList)
+{
+    TRACEFUNC;
+
+    if (staffTextList.empty()) {
+        return;
+    }
+
+    bool added = false;
+
+    for (StaffText* staffText : staffTextList) {
+        added |= doAddSoundFlag(staffText);
+    }
+
+    if (added) {
+        score()->update();
+        m_notationChanged.notify();
+    }
+}
+
+bool NotationPlayback::doAddSoundFlag(StaffText* staffText)
+{
+    IF_ASSERT_FAILED(staffText) {
+        return false;
+    }
+
+    if (staffText->hasSoundFlag()) {
+        return false;
+    }
+
+    SoundFlag* soundFlag = Factory::createSoundFlag(staffText);
+    staffText->add(soundFlag);
+
+    const LinkedObjects* links = staffText->links();
+    if (!links) {
+        return true;
+    }
+
+    for (EngravingObject* obj : *links) {
+        if (obj && obj->isStaffText() && obj != staffText) {
+            toStaffText(obj)->add(soundFlag->linkedClone());
+        }
+    }
+
+    return true;
+}
+
+void NotationPlayback::removeSoundFlags(const InstrumentTrackIdSet& trackIdSet)
+{
+    TRACEFUNC;
+
+    std::vector<StaffText*> staffTextList = collectStaffText(trackIdSet, true /*withSoundFlags*/);
+    if (staffTextList.empty()) {
+        return;
+    }
+
+    for (StaffText* staffText : staffTextList) {
+        if (!staffText->hasSoundFlag()) {
+            continue;
+        }
+
+        staffText->remove(staffText->soundFlag());
+
+        const LinkedObjects* links = staffText->links();
+        if (!links) {
+            continue;
+        }
+
+        for (EngravingObject* obj : *links) {
+            if (obj && obj->isStaffText() && obj != staffText) {
+                StaffText* linkedStaffText = toStaffText(obj);
+                if (!linkedStaffText->hasSoundFlag()) {
+                    continue;
+                }
+
+                linkedStaffText->remove(linkedStaffText->soundFlag());
+            }
+        }
+    }
+
+    score()->update();
+
+    m_playbackModel.reload();
+    m_notationChanged.notify();
+}
+
+bool NotationPlayback::hasSoundFlags()
+{
+    return m_playbackModel.hasSoundFlags();
+}
+
+bool NotationPlayback::hasSoundFlags(const engraving::InstrumentTrackIdSet& trackIdSet)
+{
+    TRACEFUNC;
+
+    for (const InstrumentTrackId& trackId : trackIdSet) {
+        if (m_playbackModel.hasSoundFlags(trackId)) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+std::vector<StaffText*> NotationPlayback::collectStaffText(const InstrumentTrackIdSet& trackIdSet, bool withSoundFlags) const
+{
+    TRACEFUNC;
+
+    std::vector<StaffText*> result;
+
+    if (trackIdSet.empty()) {
+        return result;
+    }
+
+    const Score* score = this->score();
+    IF_ASSERT_FAILED(score) {
+        return result;
+    }
+
+    const Measure* fm = score->firstMeasure();
+    if (!fm) {
+        return result;
+    }
+
+    for (const Segment* seg = fm->first(SegmentType::ChordRest); seg; seg = seg->next1(SegmentType::ChordRest)) {
+        for (EngravingItem* annotation : seg->annotations()) {
+            if (!annotation || !annotation->isStaffText()) {
+                continue;
+            }
+
+            StaffText* staffText = toStaffText(annotation);
+            bool hasSoundFlag = staffText->hasSoundFlag();
+
+            if (withSoundFlags && !hasSoundFlag) {
+                continue;
+            }
+
+            if (!withSoundFlags && hasSoundFlag) {
+                continue;
+            }
+
+            InstrumentTrackId trackId = mu::engraving::makeInstrumentTrackId(annotation);
+            if (mu::contains(trackIdSet, trackId)) {
+                result.push_back(staffText);
+            }
+        }
+    }
+
+    return result;
 }

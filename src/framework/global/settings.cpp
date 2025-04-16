@@ -21,7 +21,6 @@
  */
 
 #include "settings.h"
-#include "config.h"
 #include "log.h"
 
 #include <QDateTime>
@@ -45,7 +44,7 @@ Settings* Settings::instance()
 
 Settings::Settings()
 {
-#if defined(WIN_PORTABLE)
+#ifdef WIN_PORTABLE
     QSettings::setPath(QSettings::IniFormat, QSettings::UserScope, dataPath());
     QSettings::setPath(QSettings::IniFormat, QSettings::SystemScope, dataPath());
 #endif
@@ -164,6 +163,11 @@ Val Settings::defaultValue(const Key& key) const
     return findItem(key).defaultValue;
 }
 
+std::string Settings::description(const Key& key) const
+{
+    return findItem(key).description;
+}
+
 void Settings::setSharedValue(const Key& key, const Val& value)
 {
     setLocalValue(key, value);
@@ -208,7 +212,7 @@ void Settings::writeValue(const Key& key, const Val& value)
 
 QString Settings::dataPath() const
 {
-#if defined(WIN_PORTABLE)
+#ifdef WIN_PORTABLE
     return QDir::cleanPath(QString("%1/../../../Data/settings").arg(QCoreApplication::applicationDirPath()));
 #else
     return QStandardPaths::writableLocation(QStandardPaths::DataLocation);
@@ -220,27 +224,39 @@ void Settings::setDefaultValue(const Key& key, const Val& value)
     Item& item = findItem(key);
 
     if (item.isNull()) {
-        m_items[key] = Item{ key, value, value };
+        m_items[key] = Item{ key, value, value, "", false, Val(), Val() };
     } else {
         item.defaultValue = value;
         item.value.setType(value.type());
     }
 }
 
-void Settings::setCanBeManuallyEdited(const Settings::Key& key, bool canBeManuallyEdited)
+void Settings::setDescription(const Key& key, const std::string& value)
+{
+    Item& item = findItem(key);
+    if (item.isNull()) {
+        return;
+    }
+
+    item.description = value;
+}
+
+void Settings::setCanBeManuallyEdited(const Settings::Key& key, bool canBeManuallyEdited, const Val& minValue, const Val& maxValue)
 {
     Item& item = findItem(key);
 
     if (item.isNull()) {
-        m_items[key] = Item{ key, Val(), Val(), canBeManuallyEdited };
+        m_items[key] = Item{ key, Val(), Val(), "", canBeManuallyEdited, minValue, maxValue };
     } else {
         item.canBeManuallyEdited = canBeManuallyEdited;
+        item.minValue = minValue;
+        item.maxValue = maxValue;
     }
 }
 
 void Settings::insertNewItem(const Settings::Key& key, const Val& value)
 {
-    Item item = Item{ key, value, value };
+    Item item = Item{ key, value, value, "", false, Val(), Val() };
     if (m_isTransactionStarted) {
         m_localSettings[key] = item;
     } else {

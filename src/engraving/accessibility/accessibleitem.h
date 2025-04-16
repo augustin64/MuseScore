@@ -28,8 +28,8 @@
 #include "modularity/ioc.h"
 #include "accessibility/iaccessibilitycontroller.h"
 
-#include "libmscore/engravingitem.h"
-#include "libmscore/textbase.h"
+#include "dom/engravingitem.h"
+#include "dom/textbase.h"
 
 //! NOTE At the moment this is just a concept, not a production-ready system, a lot of work yet.
 
@@ -39,7 +39,7 @@ class AccessibleItem : public accessibility::IAccessible, public std::enable_sha
 {
     OBJECT_ALLOCATOR(engraving, AccessibleItem)
 
-    INJECT_STATIC(engraving, accessibility::IAccessibilityController, accessibilityController)
+    INJECT_STATIC(accessibility::IAccessibilityController, accessibilityController)
 
 public:
     AccessibleItem(EngravingItem* e, Role role = Role::ElementOnScore);
@@ -84,6 +84,9 @@ public:
     QString accessibleTextAfterOffset(int offset, TextBoundaryType boundaryType, int* startOffset, int* endOffset) const override;
     QString accessibleTextAtOffset(int offset, TextBoundaryType boundaryType, int* startOffset, int* endOffset) const override;
     int accessibleCharacterCount() const override;
+
+    // ListView item Interface
+    int accessibleRowIndex() const override;
 
     async::Channel<Property, Val> accessiblePropertyChanged() const override;
     async::Channel<State, bool> accessibleStateChanged() const override;

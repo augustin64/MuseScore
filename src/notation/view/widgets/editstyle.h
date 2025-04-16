@@ -29,6 +29,7 @@
 #include "inotationconfiguration.h"
 #include "iinteractive.h"
 #include "ui/iuiengine.h"
+#include "engraving/iengravingfontsprovider.h"
 
 #include "engraving/style/textstyle.h"
 
@@ -37,10 +38,12 @@ class EditStyle : public QDialog, private Ui::EditStyleBase
 {
     Q_OBJECT
 
-    INJECT(notation, mu::context::IGlobalContext, globalContext)
-    INJECT(notation, mu::notation::INotationConfiguration, configuration)
-    INJECT(notation, mu::framework::IInteractive, interactive)
-    INJECT(notation, mu::ui::IUiEngine, uiEngine)
+    INJECT(mu::context::IGlobalContext, globalContext)
+    INJECT(mu::notation::INotationConfiguration, configuration)
+    INJECT(mu::framework::IInteractive, interactive)
+    INJECT(mu::ui::IUiEngine, uiEngine)
+    INJECT(mu::engraving::IEngravingFontsProvider, engravingFonts)
+    INJECT(mu::accessibility::IAccessibilityController, accessibilityController)
 
     Q_PROPERTY(QString currentPageCode READ currentPageCode WRITE setCurrentPageCode NOTIFY currentPageChanged)
     Q_PROPERTY(QString currentSubPageCode READ currentSubPageCode WRITE setCurrentSubPageCode NOTIFY currentSubPageChanged)
@@ -51,6 +54,9 @@ public:
 
     QString currentPageCode() const;
     QString currentSubPageCode() const;
+
+    static QString pageCodeForElement(const EngravingItem*);
+    static QString subPageCodeForElement(const EngravingItem*);
 
 public slots:
     void accept();
@@ -67,6 +73,7 @@ private:
     void showEvent(QShowEvent*);
     void hideEvent(QHideEvent*);
     void changeEvent(QEvent*);
+    void keyPressEvent(QKeyEvent* event);
 
     void retranslate();
     void setHeaderFooterToolTip();
@@ -76,7 +83,6 @@ private:
     /// This is a type for a pointer to any QWidget that is a member of EditStyle.
     /// It's used to create static references to the pointers to pages.
     typedef QWidget* EditStyle::* EditStylePage;
-    static EditStylePage pageForElement(EngravingItem*);
 
     struct StyleWidget {
         StyleId idx = StyleId::NOSTYLE;
@@ -130,13 +136,19 @@ private slots:
     void on_buttonTogglePagelist_clicked();
     void on_resetStylesButton_clicked();
     void on_resetTabStylesButton_clicked();
+    void on_pageRowSelectionChanged();
     void editUserStyleName();
     void endEditUserStyleName();
     void resetUserStyleName();
+    void updateParenthesisIndicatingTiesGroupState();
+    void clefVisibilityChanged(bool);
 
 private:
     QString m_currentPageCode;
     QString m_currentSubPageCode;
+
+    static int s_lastPageRow;
+    static int s_lastSubPageRow;
 };
 }
 

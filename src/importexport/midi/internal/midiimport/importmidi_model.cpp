@@ -25,7 +25,7 @@
 
 #include "importmidi_inner.h"
 #include "importmidi_clef.h"
-#include "libmscore/instrtemplate.h"
+#include "engraving/dom/instrtemplate.h"
 
 namespace mu::iex::midi {
 class TracksModel::Column
@@ -203,7 +203,7 @@ void TracksModel::reset(const MidiOperations::Opers& opers,
             int width() const override { return 220; }
             QString headerName() const override
             {
-                return qtrc("iex_midi", "MuseScore instrument");
+                return qtrc("iex_midi", "MuseScore Studio instrument");
             }
 
             bool isEditable(int trackIndex) const override
