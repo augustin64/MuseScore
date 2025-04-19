@@ -156,7 +156,7 @@ private:
 
     std::vector<const EngravingItem*> filterPlayableItems(const std::vector<const EngravingItem*>& items) const;
 
-    muse::mpe::ArticulationsProfilePtr defaultActiculationProfile(const InstrumentTrackId& trackId) const;
+    // muse::mpe::ArticulationsProfilePtr defaultActiculationProfile(const InstrumentTrackId& trackId) const;
 
     PlaybackContextPtr playbackCtx(const InstrumentTrackId& trackId);
 

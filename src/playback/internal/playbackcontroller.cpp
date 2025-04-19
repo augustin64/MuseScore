@@ -1065,10 +1065,10 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
     }
 
     mpe::PlaybackData playbackData = notationPlayback()->trackPlaybackData(instrumentTrackId);
-    LOGI() << String("instrument id: %1 <%2>").arg(String::fromStdString(instrumentTrackId.instrumentId)).arg(playbackData.setupData.toString());
     if (!playbackData.isValid()) {
         return;
     }
+    LOGI() << String("instrument id: %1 <%2>").arg(instrumentTrackId.instrumentId).arg(playbackData.setupData.toString());
 
     AudioInputParams inParams = audioSettings()->trackInputParams(instrumentTrackId);
     AudioOutputParams outParams = trackOutputParams(instrumentTrackId);
@@ -1086,6 +1086,8 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
         }
     }
 
+    // HACK: Comment out these codes as MuseSampler and VSTi are not supported in emscripten
+#ifndef __EMSCRIPTEN__
     if (!isMetronome && outParams.auxSends.empty()) {
         const muse::String& instrumentSoundId = inParams.resourceMeta.attributeVal(PLAYBACK_SETUP_DATA_ATTRIBUTE);
         AudioSourceType sourceType = inParams.isValid() ? inParams.type() : AudioSourceType::Fluid;
@@ -1095,6 +1097,7 @@ void PlaybackController::doAddTrack(const InstrumentTrackId& instrumentTrackId, 
             outParams.auxSends.emplace_back(AuxSendParams { signalAmount, true });
         }
     }
+#endif
 
     uint64_t playbackKey = notationPlaybackKey();
 
@@ -1520,7 +1523,7 @@ void PlaybackController::updateSoloMuteStates()
         }
 
         // if (isRangePlaybackMode && !shouldForceMute) {
-        //     shouldForceMute = !muse::contains(allowedInstrumentTrackIdSet, instrumentTrackId);
+        //     shouldForceMute = !mu::contains(allowedInstrumentTrackIdSet, instrumentTrackId);
         // }
 
         // 3. Update params for playback / mixer

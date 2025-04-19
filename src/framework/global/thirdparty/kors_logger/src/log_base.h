@@ -53,12 +53,37 @@ SOFTWARE.
 #define LOGDA LOGDA_T(LOG_TAG)      // active debug
 #define LOGN if constexpr (0)LOGD_T(LOG_TAG)  // compiling, but no output
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#define PrintStackTrace \
+    EM_ASM({ console.error("Call stack:\n", new Error().stack); });
+#elif defined(__unix__)
+#include <execinfo.h>
+#define PrintStackTrace \
+    do { \
+        const int maxStackFrames = 128; \
+        void* stackFrames[maxStackFrames]; \
+        int numFrames = backtrace(stackFrames, maxStackFrames); \
+        char** symbols = backtrace_symbols(stackFrames, numFrames); \
+        if (symbols) { \
+            LOGE() << "Call stack:" << std::endl; \
+            for (int i = 0; i < numFrames; ++i) { \
+                LOGE() << symbols[i] << std::endl; \
+            } \
+            free(symbols); \
+        } \
+    } while (0)
+#else
+#define PrintStackTrace (void)0
+#endif
+
 //! Useful macros
 #define DO_ASSERT_X_IMPL(cond, msg, var_name) \
     { \
         const bool var_name = static_cast<bool>(cond); \
         if (!(var_name)) { \
             LOGE() << "ASSERT FAILED:    " << msg << "    " << __FILE__ << ":" << __LINE__; \
+            PrintStackTrace; \
             assert(var_name && #cond); \
         } \
     }

@@ -18,12 +18,12 @@ void initModule() {
     modularity::ioc()->registerExport<playback::IPlaybackController>("", playbackController);
     modularity::ioc()->registerExport<playback::ISoundProfilesRepository>("", new playback::SoundProfilesRepository());
     playbackController->init();
-    aeM->onInit(framework::IApplication::RunMode::Converter);
+    aeM->onInit(framework::IApplication::RunMode::ConsoleApp);
 
     auto audioM = new iex::audioexport::AudioExportModule();
     audioM->registerExports();
     audioM->resolveImports();
-    audioM->onInit(framework::IApplication::RunMode::Converter);
+    audioM->onInit(framework::IApplication::RunMode::ConsoleApp);
 }
 
 } // namespace MainAudio

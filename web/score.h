@@ -2,8 +2,8 @@
 #ifndef MAIN_SCORE_H
 #define MAIN_SCORE_H
 
-#include "engraving/libmscore/masterscore.h"
-#include "engraving/libmscore/excerpt.h"
+#include "engraving/dom/masterscore.h"
+#include "engraving/dom/excerpt.h"
 using namespace mu;
 
 struct MainScore {

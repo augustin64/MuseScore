@@ -213,7 +213,8 @@ void Notation::setIsOpen(bool open)
     }
 
     Score* s = score();
-    IF_ASSERT_FAILED(s) {
+    // IF_ASSERT_FAILED(s) {
+    if (!s) {  // Without asserting WASM also works so we don't need to print the error message
         return;
     }
 

@@ -18,6 +18,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+if (NOT FREETYPE_INCLUDED)
 declare_thirdparty_module(freetype)
 
 set(FREETYPE_DIR ${CMAKE_CURRENT_LIST_DIR}/freetype-2.13.1)
@@ -62,6 +63,25 @@ endif()
 if(NOT(ORIGINAL_FTCONFIG_H STREQUAL FTCONFIG_H))
     file(WRITE "${FTCONFIG_H_NAME}" "${FTCONFIG_H}")
 endif()
+
+include_directories(${MU_ROOT}/thirdparty/brotli)
+# Create the options file
+file(READ "${FREETYPE_DIR}/include/freetype/config/ftoption.h"
+  FTOPTION_H)
+
+string(REGEX REPLACE
+"/\\* +(#define +FT_CONFIG_OPTION_USE_BROTLI) +\\*/" "\\1"
+FTOPTION_H "${FTOPTION_H}")
+
+set(FTOPTION_H_NAME "${FREETYPE_BINARY_DIR}/include/freetype/config/ftoption.h")
+if (EXISTS "${FTOPTION_H_NAME}")
+  file(READ "${FTOPTION_H_NAME}" ORIGINAL_FTOPTION_H)
+else ()
+  set(ORIGINAL_FTOPTION_H "")
+endif ()
+if (NOT (ORIGINAL_FTOPTION_H STREQUAL FTOPTION_H))
+  file(WRITE "${FTOPTION_H_NAME}" "${FTOPTION_H}")
+endif ()
 
 # Collect header files
 file(GLOB FREETYPE_PUBLIC_HEADERS "${FREETYPE_DIR}/include/ft2build.h" "${FREETYPE_DIR}/include/freetype/*.h")
@@ -154,6 +174,8 @@ set(MODULE_INCLUDE
 
     # Make <ftconfig.h> available for builds/unix/ftsystem.c.
     ${FREETYPE_BINARY_DIR}/include/freetype/config
+
+    ${MU_ROOT}/thirdparty/brotli/c/include
 )
 
 set(MODULE_DEF
@@ -173,3 +195,8 @@ target_no_warning(${MODULE} -WMSVC-no-signed-unsigned-mismatch)
 target_no_warning(${MODULE} -Wno-float-conversion)
 target_no_warning(${MODULE} -Wno-conversion)
 target_no_warning(${MODULE} -WMSVC-no-assignment-within-conditional-expression)
+
+set(FREETYPE_INCLUDED TRUE CACHE INTERNAL "FreeType has been built")
+else()
+message(STATUS "FreeType has already been built, skipping.")
+endif()

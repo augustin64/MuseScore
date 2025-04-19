@@ -42,7 +42,7 @@ class NotationPainting : public INotationPainting
     INJECT(INotationConfiguration, configuration)
     INJECT(engraving::IEngravingConfiguration, engravingConfiguration)
     INJECT(engraving::rendering::IScoreRenderer, scoreRenderer)
-    // INJECT(muse::ui::IUiConfiguration, uiConfiguration)
+    // INJECT(ui::IUiConfiguration, uiConfiguration)
 
 public:
     NotationPainting(Notation* notation);

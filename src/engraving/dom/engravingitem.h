@@ -156,6 +156,8 @@ public:
 
 class EngravingItem : public EngravingObject
 {
+    mutable mu::RectF m_bbox;  ///< Bounding box relative to _pos + _offset
+
     M_PROPERTY2(bool, isPositionLinkedToMaster, setPositionLinkedToMaster, true)
     M_PROPERTY2(bool, isAppearanceLinkedToMaster, setAppearanceLinkedToMaster, true)
     M_PROPERTY2(bool, excludeFromOtherParts, setExcludeFromOtherParts, false)
@@ -261,6 +263,9 @@ public:
     Fraction beat() const;
 
     bool isNudged() const { return !m_offset.isNull(); }
+
+    virtual const mu::RectF& bbox() const { return m_bbox; }
+    virtual mu::RectF& bbox() { return m_bbox; }
 
     bool contains(const PointF& p) const;
     bool intersects(const RectF& r) const;

@@ -1,7 +1,7 @@
 
 set(MODULE MainAudio)
 
-set(ENABLE_AUDIO_EXPORT ON)
+set(MUE_ENABLE_AUDIO_EXPORT ON)
 
 set(MODULE_SRC
     audio.cpp
@@ -13,6 +13,8 @@ set(MODULE_SRC
     ${MU_ROOT}/src/playback/internal/playbackcontroller.h
     ${MU_ROOT}/src/playback/internal/soundprofilesrepository.cpp
     ${MU_ROOT}/src/playback/internal/soundprofilesrepository.h
+    ${MU_ROOT}/src/playback/internal/drumsetloader.cpp
+    ${MU_ROOT}/src/playback/internal/drumsetloader.h
 )
 
 set(MODULE_INCLUDE

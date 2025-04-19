@@ -92,7 +92,8 @@ void AudioDriverController::init()
 #endif
 
 #ifdef Q_OS_WASM
-    m_audioDriver = std::shared_ptr<IAudioDriver>(new WebAudioDriver());
+    // m_audioDriver = std::shared_ptr<IAudioDriver>(new WebAudioDriver());
+    m_audioDriver = std::shared_ptr<IAudioDriver>(nullptr);
 #endif
 
 #endif // MUSE_MODULE_AUDIO_JACK

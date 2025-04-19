@@ -327,6 +327,10 @@ void Mixer::processTrackChannels(size_t outBufferSize, size_t samplesPerChannel,
 
 bool Mixer::useMultithreading() const
 {
+    // When using emscripten, do not use multithreading
+#ifdef __EMSCRIPTEN__
+    return false;
+#endif
     if (m_nonMutedTrackCount < m_minTrackCountForMultithreading) {
         return false;
     }

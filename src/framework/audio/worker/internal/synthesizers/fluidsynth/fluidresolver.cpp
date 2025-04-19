@@ -47,15 +47,19 @@ ISynthesizerPtr FluidResolver::resolveSynth(const TrackId /*trackId*/, const Aud
 {
     ONLY_AUDIO_WORKER_THREAD;
 
+#if 0
     auto search = m_resourcesCache.find(params.resourceMeta.id);
     if (search == m_resourcesCache.end()) {
         LOGE() << "Not found: " << params.resourceMeta.id;
         return nullptr;
     }
+#endif
 
     FluidSynthPtr synth = std::make_shared<FluidSynth>(params, iocContext());
+#if 0
     synth->addSoundFonts({ search->second.path });
     synth->setPreset(search->second.preset);
+#endif
 
     return synth;
 }

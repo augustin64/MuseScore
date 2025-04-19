@@ -8,7 +8,7 @@
         "webmscore": "../web-public"
     },
     "scripts": {
-        "start": "node --experimental-modules example.js",
+        "start": "node --experimental-modules --unhandled-rejections=strict example.js",
         "start:browser": "npx http-server . -o -c-1",
         "benchmark": "node --experimental-modules benchmark.js"
     }

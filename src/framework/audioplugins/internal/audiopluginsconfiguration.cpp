@@ -26,5 +26,7 @@ using namespace muse::audioplugins;
 
 io::path_t AudioPluginsConfiguration::knownAudioPluginsFilePath() const
 {
-    return globalConfiguration()->userAppDataPath() + "/known_audio_plugins.json";
+    NOT_IMPLEMENTED;
+    return {}; // HACK: return empty path for now
+    // return globalConfiguration()->userAppDataPath() + "/known_audio_plugins.json";
 }

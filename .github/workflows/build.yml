@@ -103,16 +103,28 @@ jobs:
           name: npm-pack
           path: web-example
       - name: Test
+        id: run-test
         run: |
           cd web-example
           npm i
           npm i ./webmscore-*.tgz
-          npm start
+          npm start || echo "failed=1" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
         with:
           name: example-exports
           path: web-example/exported*
+      
+      - uses: actions/upload-artifact@v4
+        if: steps.run-test.outputs.failed == '1'
+        with:
+          name: test-log
+          path: .npm/_logs
+
+      - name: Make faile
+        if: steps.run-test.outputs.failed == '1'
+        run: |
+          exit 1
 
   publish:
     if: github.ref_name == 'webmscore' && startsWith(github.event.head_commit.message, 'release v')

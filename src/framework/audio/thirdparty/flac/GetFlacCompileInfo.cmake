@@ -2,9 +2,29 @@ include(CheckCCompilerFlag)
 include(CheckFunctionExists)
 include(CheckIncludeFile)
 include(CheckCSourceCompiles)
-include(TestBigEndian)
 
 include(${FLAC_DIR}/cmake/UseSystemExtensions.cmake)
+
+if(${CMAKE_VERSION} VERSION_GREATER_EQUAL "3.20.0")
+    if(CMAKE_C_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+        set(CPU_IS_BIG_ENDIAN_C TRUE)
+    else()
+        set(CPU_IS_BIG_ENDIAN_C FALSE)
+    endif()
+
+    if(CMAKE_CXX_BYTE_ORDER STREQUAL "BIG_ENDIAN")
+        set(CPU_IS_BIG_ENDIAN_CXX TRUE)
+    else()
+        set(CPU_IS_BIG_ENDIAN_CXX FALSE)
+    endif()
+
+    if(NOT CPU_IS_BIG_ENDIAN_C STREQUAL CPU_IS_BIG_ENDIAN_CXX)
+        message(FATAL_ERROR "C and C++ have different byte orders!")
+    endif()
+else()
+    include(TestBigEndian)
+    test_big_endian(CPU_IS_BIG_ENDIAN)
+endif()
 
 check_include_file("byteswap.h" HAVE_BYTESWAP_H)
 check_include_file("inttypes.h" HAVE_INTTYPES_H)
@@ -34,7 +54,5 @@ check_c_source_compiles("
         return !cs;
     }"
     HAVE_LANGINFO_CODESET)
-
-test_big_endian(CPU_IS_BIG_ENDIAN)
 
 check_c_compiler_flag(-mstackrealign HAVE_STACKREALIGN_FLAG)

@@ -17,6 +17,10 @@ set(CMAKE_MODULE_PATH
     ${CMAKE_MODULE_PATH}
     )
 
+# Load MuseScore version
+set(MUSESCORE_BUILD_MODE "release")
+include(${MU_ROOT}/SetupConfigure.cmake)
+
 set(QT_SUPPORT ON)
 
 # include(SetupBuildEnvironment)
@@ -35,7 +39,7 @@ add_definitions(
     -DENGRAVING_NO_QTEXTDOCUMENT
     -DENGRAVING_NO_INTERACTIVE
     -DDRAW_NO_QSVGRENDER           # QSvgRenderer (QtSvg) depends on QWidget in Qt5, this changes in Qt6
-    -DENABLE_AUDIO_EXPORT
+    -DMUE_ENABLE_AUDIO_EXPORT
     # -DHAW_LOGGER_QT_SUPPORT
     -DQT_SUPPORT
     # -DHAW_PROFILER_ENABLED
@@ -83,7 +87,7 @@ set(CMAKE_C_FLAGS           "${CMAKE_C_FLAGS}         ${CMAKE_CXX_FLAGS}")
 set(CMAKE_C_FLAGS_DEBUG     "${CMAKE_C_FLAGS_DEBUG}   ${CMAKE_CXX_FLAGS_DEBUG}")
 set(CMAKE_C_FLAGS_RELEASE   "${CMAKE_C_FLAGS_RELEASE} ${CMAKE_CXX_FLAGS_RELEASE}")
 
-set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=gnu++11")       # `-std=gnu++11` is not allowed in CMAKE_C_FLAGS 
+set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -std=gnu++11")       # `-std=gnu++11` is not allowed in CMAKE_C_FLAGS
 
 include(EmbedFiles)
 
@@ -152,4 +156,5 @@ target_link_libraries(webmscore
     importexport
     MainAudio
     freetype # important for supporting woff2 files
+    brotlidec-static
 )

@@ -29,7 +29,7 @@
 #include "async/asyncable.h"
 #include "modularity/ioc.h"
 
-#include "isoundprofilesrepository.h"
+#include "../isoundprofilesrepository.h"
 #include "../iplaybackconfiguration.h"
 
 namespace mu::playback {
