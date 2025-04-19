@@ -24,7 +24,7 @@
 #include "settings.h"
 #include "types/string.h"
 
-#include "playbacktypes.h"
+#include "../playbacktypes.h"
 
 #include "log.h"
 

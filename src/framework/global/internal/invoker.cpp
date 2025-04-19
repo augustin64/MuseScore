@@ -22,7 +22,7 @@
 #include "invoker.h"
 
 #include <QMetaObject>
-#include <QApplication>
+#include <QGuiApplication>
 
 #include "log.h"
 

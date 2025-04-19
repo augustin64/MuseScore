@@ -3,6 +3,8 @@ import WebMscore from 'webmscore'
 import fs from 'fs'
 import * as FRONTS from '@librescore/fonts'
 
+Error.stackTraceLimit = 100;
+
 // https://musescore.com/openscore/scores/4074271
 // public domain
 const name = 'Aequale_No_1.mscz'

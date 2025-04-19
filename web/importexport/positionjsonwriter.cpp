@@ -3,9 +3,9 @@
 
 #include <cmath>
 
-#include "libmscore/masterscore.h"
-#include "libmscore/repeatlist.h"
-#include "libmscore/system.h"
+#include "dom/masterscore.h"
+#include "dom/repeatlist.h"
+#include "dom/system.h"
 
 #include "engraving/types/types.h"
 
@@ -160,7 +160,7 @@ void PositionJsonWriter::writeSegmentsPositions(QJsonObject& json, const mu::eng
         size_t tracks = score->nstaves() * mu::engraving::VOICES;
         for (size_t track = 0; track < tracks; track++) {
             EngravingItem* e = segment->element(static_cast<int>(track));
-            if (e && e->_bbox.isValid()) { // HACK: `e` may be an instance of `EngravingObject` ???, thus no `bbox()` method
+            if (e && e->m_bbox.isValid()) { // HACK: `e` may be an instance of `EngravingObject` ???, thus no `bbox()` method
                 sx = qMax(sx, e->width());
             }
         }

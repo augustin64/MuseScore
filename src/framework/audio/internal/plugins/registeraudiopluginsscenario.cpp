@@ -22,7 +22,7 @@
 
 #include "registeraudiopluginsscenario.h"
 
-#include <QApplication>
+#include <QGuiApplication>
 
 #include "audioutils.h"
 #include "audioerrors.h"

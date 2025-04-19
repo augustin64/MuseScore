@@ -51,8 +51,10 @@ ISynthesizerPtr FluidResolver::resolveSynth(const TrackId /*trackId*/, const Aud
         LOGE() << "Not found: " << params.resourceMeta.id;
         return nullptr;
     }
+#endif
 
     FluidSynthPtr synth = std::make_shared<FluidSynth>(params);
+#if 0
     synth->addSoundFonts({ search->second.path });
     synth->setPreset(search->second.preset);
 #endif

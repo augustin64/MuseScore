@@ -210,7 +210,7 @@ Color EngravingConfiguration::noteBackgroundColor() const
 
 Color EngravingConfiguration::fontPrimaryColor() const
 {
-    return Color(uiConfiguration()->currentTheme().values[ui::ThemeStyleKey::FONT_PRIMARY_COLOR].toString());
+    // return Color(uiConfiguration()->currentTheme().values[ui::ThemeStyleKey::FONT_PRIMARY_COLOR].toString());
 }
 
 double EngravingConfiguration::guiScaling() const

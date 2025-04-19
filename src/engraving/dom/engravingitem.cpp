@@ -94,6 +94,7 @@ EngravingItem::EngravingItem(const ElementType& type, EngravingObject* parent, E
 EngravingItem::EngravingItem(const EngravingItem& e)
     : EngravingObject(e)
 {
+    m_bbox       = e.m_bbox;
     m_offset     = e.m_offset;
     m_track      = e.m_track;
     m_flags      = e.m_flags;

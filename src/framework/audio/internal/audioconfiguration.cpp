@@ -219,5 +219,7 @@ async::Channel<io::paths_t> AudioConfiguration::soundFontDirectoriesChanged() co
 
 io::path_t AudioConfiguration::knownAudioPluginsFilePath() const
 {
-    return globalConfiguration()->userAppDataPath() + "/known_audio_plugins.json";
+    NOT_IMPLEMENTED;
+    return {}; // HACK: return empty path for now
+    // return globalConfiguration()->userAppDataPath() + "/known_audio_plugins.json";
 }

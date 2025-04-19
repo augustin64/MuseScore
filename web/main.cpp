@@ -21,14 +21,15 @@
 #include "importexport/imagesexport/imagesexportmodule.h"
 
 #include "draw/ifontprovider.h"
-#include "engraving/libmscore/score.h"
+#include "engraving/dom/score.h"
 #include "project/internal/notationproject.h"
 #include "engraving/engravingproject.h"
 #include "engraving/compat/mscxcompat.h"
 #include "project/internal/notationreadersregister.h"
 #include "project/internal/notationwritersregister.h"
-#include "engraving/libmscore/excerpt.h"
-#include "engraving/libmscore/undo.h"
+#include "engraving/dom/excerpt.h"
+#include "engraving/dom/undo.h"
+#include "engraving/engravingerrors.h"
 #include "converter/internal/compat/notationmeta.h"
 #include "notation/internal/notation.h"
 #include "notation/internal/mscnotationwriter.h"
@@ -49,7 +50,7 @@ static auto s_globalContext = std::make_shared<context::GlobalContext>();
  * MSCZ/MSCX file format version
  */
 int _version() {
-    return engraving::MSCVERSION;
+    return engraving::Constants::MSC_VERSION;
 }
 
 /**
@@ -73,7 +74,7 @@ void _init(int argc, char** argv) {
 
     auto engM = new engraving::EngravingModule();
     engM->registerExports();
-    engM->onInit(framework::IApplication::RunMode::Converter);
+    engM->onInit(framework::IApplication::RunMode::ConsoleApp);
     auto mpeM = new mpe::MpeModule();
     mpeM->registerExports();
 
@@ -93,11 +94,11 @@ void _init(int argc, char** argv) {
     auto midiM = new iex::midi::MidiModule();
     midiM->registerExports();
     midiM->resolveImports();
-    midiM->onInit(framework::IApplication::RunMode::Converter);
+    midiM->onInit(framework::IApplication::RunMode::ConsoleApp);
     auto imgM = new iex::imagesexport::ImagesExportModule();
     imgM->registerExports();
     imgM->resolveImports();
-    imgM->onInit(framework::IApplication::RunMode::Converter);
+    imgM->onInit(framework::IApplication::RunMode::ConsoleApp);
 
     auto writers = modularity::ioc()->resolve<project::INotationWritersRegister>("");
     writers->reg({ engraving::MSCZ }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Zip));
@@ -128,7 +129,7 @@ bool _addFont(const char* fontPath) {
  */
 Ret _doLoad(engraving::EngravingProjectPtr proj, QString filePath, bool doLayout) {
     // read score using the `compat` method
-    engraving::Err err = engraving::compat::loadMsczOrMscx(proj->masterScore(), filePath, true);
+    engraving::Err err = static_cast<engraving::Err>(engraving::compat::loadMsczOrMscx(proj->masterScore(), filePath, true).code());
     if (err != engraving::Err::NoError) {
         return make_ret(err);
     }
@@ -146,7 +147,7 @@ Ret _doLoad(engraving::EngravingProjectPtr proj, QString filePath, bool doLayout
     };
 
     // Setup master score
-    err = proj->setupMasterScore(true);
+    err = static_cast<engraving::Err>(proj->setupMasterScore(true).code());
     if (err != engraving::Err::NoError) {
         return make_ret(err);
     }
@@ -199,7 +200,7 @@ Ret _doImport(engraving::EngravingProjectPtr proj, QString filePath, bool doLayo
     }
 
     // Setup master score
-    engraving::Err err = proj->setupMasterScore(true);
+    engraving::Err err = static_cast<engraving::Err>(proj->setupMasterScore(true).code());
     if (err != engraving::Err::NoError) {
         return make_ret(err);
     }
@@ -269,7 +270,7 @@ void _generateExcerpts(uintptr_t score_ptr) {
     }
 
     auto parts = score->parts();
-    auto excerpts = engraving::Excerpt::createExcerptsFromParts(parts);
+    auto excerpts = engraving::Excerpt::createExcerptsFromParts(parts, score->masterScore());
 
     // TODO: testing
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/engraving/libmscore/unrollrepeats.cpp#L99-L117
@@ -528,7 +529,7 @@ WasmRes _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
     Ret ret = processWriter(_format, score, tempfile);
     int size = tempfile.size();
     QByteArray data = tempfile.readAll();
-    
+
     LOGI() << String(u"excerpt %1, size %2").arg(excerptId).arg(size);
     if (!ret.success()) {
         return WasmRes::fromRet(ret);
@@ -576,8 +577,8 @@ extern "C" {
     };
 
     EMSCRIPTEN_KEEPALIVE
-    void setLogLevel(const haw::logger::Level level) {
-        haw::logger::Logger::instance()->setLevel(level);
+    void setLogLevel(const mu::logger::Level level) {
+        mu::logger::Logger::instance()->setLevel(level);
     };
 
     EMSCRIPTEN_KEEPALIVE

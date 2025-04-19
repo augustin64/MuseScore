@@ -72,7 +72,7 @@ public:
 
 private:
 
-    friend class NotationCreator;
+    friend class project::NotationProject;
     explicit MasterNotation();
 
     void initAfterSettingScore(const engraving::MasterScore* score);

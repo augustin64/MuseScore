@@ -19,39 +19,7 @@
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
-<<<<<<<< HEAD:src/project/qml/MuseScore/Project/UploadProgressDialog.qml
-import QtQuick 2.15
-import QtQuick.Layouts 1.15
 
-import MuseScore.UiComponents 1.0
-import MuseScore.Project 1.0
-
-StyledDialogView {
-    id: root
-
-    contentWidth: 314
-    contentHeight: 52
-    margins: 12
-
-    modal: true
-    frameless: true
-    closeOnEscape: false
-
-    ColumnLayout {
-        anchors.fill: parent
-
-        spacing: 8
-
-        StyledTextLabel {
-            Layout.fillWidth: true
-            Layout.alignment: Qt.AlignHCenter
-
-            text: qsTrc("project", "Saving online…")
-            font: ui.theme.largeBodyBoldFont
-        }
-    }
-}
-========
 #ifndef MU_AUDIO_IAUDIOPLUGINSSCANNER_H
 #define MU_AUDIO_IAUDIOPLUGINSSCANNER_H
 
@@ -72,4 +40,3 @@ using IAudioPluginsScannerPtr = std::shared_ptr<IAudioPluginsScanner>;
 }
 
 #endif // MU_AUDIO_IAUDIOPLUGINSSCANNER_H
->>>>>>>> v4.3.2:src/framework/audio/iaudiopluginsscanner.h

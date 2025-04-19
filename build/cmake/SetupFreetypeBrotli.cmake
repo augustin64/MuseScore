@@ -1,7 +1,7 @@
 ##
 ## FreeType v2.10.2
 ##
-set(USE_SYSTEM_FREETYPE ON)
+set(USE_SYSTEM_FREETYPE OFF)
 
 set(BROTLIDEC_FOUND TRUE)
 set(BROTLIDEC_LIBRARIES brotlidec-static brotlicommon-static)
@@ -10,9 +10,9 @@ set(SKIP_INSTALL_ALL TRUE)
 
 add_compile_definitions(FT_CONFIG_OPTION_USE_BROTLI)
 
-include_directories(${MU_ROOT}/thirdparty/freetype-2-10/include)
+include_directories(${MU_ROOT}/src/framework/draw/thirdparty/freetype)
 
 subdirs(
     ${MU_ROOT}/thirdparty/brotli
-    ${MU_ROOT}/thirdparty/freetype-2-10
+    ${MU_ROOT}/src/framework/draw/thirdparty/freetype
 )

@@ -133,7 +133,8 @@ void AudioModule::registerExports()
 #endif
 
 #ifdef Q_OS_WASM
-    m_audioDriver = std::shared_ptr<IAudioDriver>(new WebAudioDriver());
+    // m_audioDriver = std::shared_ptr<IAudioDriver>(new WebAudioDriver());
+    m_audioDriver = std::shared_ptr<IAudioDriver>(nullptr);
 #endif
 
 #endif // JACK_AUDIO
@@ -230,7 +231,7 @@ void AudioModule::onInit(const framework::IApplication::RunMode& mode)
         for (const io::path_t& p : paths) {
             pr->reg("soundfonts", p);
         }
-        pr->reg("known_audio_plugins", m_configuration->knownAudioPluginsFilePath());
+        // pr->reg("known_audio_plugins", m_configuration->knownAudioPluginsFilePath());
     }
 }
 

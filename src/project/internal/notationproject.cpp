@@ -43,7 +43,8 @@
 #include "notation/notationerrors.h"
 #include "projectaudiosettings.h"
 #include "projectfileinfoprovider.h"
-#include "projecterrors.h"
+#include "../projecterrors.h"
+#include "notation/internal/masternotation.h"
 
 #include "defer.h"
 #include "log.h"
@@ -94,7 +95,8 @@ void NotationProject::setupProject()
 
     m_engravingProject = EngravingProject::create();
     m_engravingProject->setFileInfoProvider(std::make_shared<ProjectFileInfoProvider>(this));
-    m_masterNotation = notationCreator()->newMasterNotationPtr();
+    // m_masterNotation = notationCreator()->newMasterNotationPtr();
+    m_masterNotation = std::shared_ptr<IMasterNotation>(new MasterNotation());
     m_projectAudioSettings = std::shared_ptr<ProjectAudioSettings>(new ProjectAudioSettings());
 }
 
@@ -738,7 +740,7 @@ mu::Ret NotationProject::saveSelectionOnScore(const mu::io::path_t& path)
     }
     // Check writable
     if (fileSystem()->exists(path) && !fileSystem()->isWritable(path)) {
-        LOGE() << "failed save, not writable path: " << String(path);
+        LOGE() << "failed save, not writable path: " << path.toString();
         return make_ret(notation::Err::UnknownError);
     }
 
@@ -758,7 +760,7 @@ mu::Ret NotationProject::saveSelectionOnScore(const mu::io::path_t& path)
         QFile::setPermissions(path.toQString(),
                               QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::ReadGroup | QFile::ReadOther);
     }
-    LOGI() << "success save file: " << String(path);
+    LOGI() << "success save file: " << path.toString();
     return ret;
 }
 

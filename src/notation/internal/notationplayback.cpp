@@ -410,6 +410,8 @@ void NotationPlayback::addSoundFlags(const std::vector<StaffText*>& staffTextLis
 
 bool NotationPlayback::doAddSoundFlag(StaffText* staffText)
 {
+    NOT_IMPLEMENTED;
+#if 0
     IF_ASSERT_FAILED(staffText) {
         return false;
     }
@@ -433,10 +435,13 @@ bool NotationPlayback::doAddSoundFlag(StaffText* staffText)
     }
 
     return true;
+#endif
 }
 
 void NotationPlayback::removeSoundFlags(const InstrumentTrackIdSet& trackIdSet)
 {
+    NOT_IMPLEMENTED;
+#if 0
     TRACEFUNC;
 
     std::vector<StaffText*> staffTextList = collectStaffText(trackIdSet, true /*withSoundFlags*/);
@@ -472,6 +477,7 @@ void NotationPlayback::removeSoundFlags(const InstrumentTrackIdSet& trackIdSet)
 
     m_playbackModel.reload();
     m_notationChanged.notify();
+#endif
 }
 
 bool NotationPlayback::hasSoundFlags()
