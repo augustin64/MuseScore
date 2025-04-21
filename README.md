@@ -51,6 +51,8 @@ Minimum version: v8.9.0 with ES Modules support
 The `--experimental-modules` flag is required for Node.js versions under 14,  
 Also require `"type": "module"` in `package.json`
 
+Node.js greater or equal to v18 is not supported. Node.js v16 is recommended.
+
 ```js
 import WebMscore from 'webmscore'
 WebMscore.ready.then(async () => {
