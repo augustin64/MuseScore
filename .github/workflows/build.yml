@@ -54,7 +54,6 @@ jobs:
           dir: ${{ github.workspace }}/build.qt5
           setup-python: true
           cache: true
-          extra: "--base=https://mirrors.tuna.tsinghua.edu.cn/qt"
       - name: Install emscripten
         uses: Xmader/setup-emsdk@master
         with:
