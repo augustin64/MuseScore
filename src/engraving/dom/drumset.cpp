@@ -303,5 +303,49 @@ void initDrumset()
     smDrumset->drum(56) = DrumInstrument(TConv::userName(DrumNum(56)), NoteHeadGroup::HEAD_TRIANGLE_DOWN, 1, DirectionV::UP);
     smDrumset->drum(57) = DrumInstrument(TConv::userName(DrumNum(57)), NoteHeadGroup::HEAD_CROSS,   -3, DirectionV::UP);
     smDrumset->drum(59) = DrumInstrument(TConv::userName(DrumNum(59)), NoteHeadGroup::HEAD_CROSS,    2, DirectionV::UP);
+
+    // We add unsupported notes so they can be loaded and exported
+    smDrumset->drum(27) = DrumInstrument(TConv::userName(DrumNum(27)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(28) = DrumInstrument(TConv::userName(DrumNum(28)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(29) = DrumInstrument(TConv::userName(DrumNum(29)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(30) = DrumInstrument(TConv::userName(DrumNum(30)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(31) = DrumInstrument(TConv::userName(DrumNum(31)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(32) = DrumInstrument(TConv::userName(DrumNum(32)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(33) = DrumInstrument(TConv::userName(DrumNum(33)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(34) = DrumInstrument(TConv::userName(DrumNum(34)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(39) = DrumInstrument(TConv::userName(DrumNum(39)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(58) = DrumInstrument(TConv::userName(DrumNum(58)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(60) = DrumInstrument(TConv::userName(DrumNum(60)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(61) = DrumInstrument(TConv::userName(DrumNum(61)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(62) = DrumInstrument(TConv::userName(DrumNum(62)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(63) = DrumInstrument(TConv::userName(DrumNum(63)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(64) = DrumInstrument(TConv::userName(DrumNum(64)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(65) = DrumInstrument(TConv::userName(DrumNum(65)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(66) = DrumInstrument(TConv::userName(DrumNum(66)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(67) = DrumInstrument(TConv::userName(DrumNum(67)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(68) = DrumInstrument(TConv::userName(DrumNum(68)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(69) = DrumInstrument(TConv::userName(DrumNum(69)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(70) = DrumInstrument(TConv::userName(DrumNum(70)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(71) = DrumInstrument(TConv::userName(DrumNum(71)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(72) = DrumInstrument(TConv::userName(DrumNum(72)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(73) = DrumInstrument(TConv::userName(DrumNum(73)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(74) = DrumInstrument(TConv::userName(DrumNum(74)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(75) = DrumInstrument(TConv::userName(DrumNum(75)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(76) = DrumInstrument(TConv::userName(DrumNum(76)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(77) = DrumInstrument(TConv::userName(DrumNum(77)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(78) = DrumInstrument(TConv::userName(DrumNum(78)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(79) = DrumInstrument(TConv::userName(DrumNum(79)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(80) = DrumInstrument(TConv::userName(DrumNum(80)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(81) = DrumInstrument(TConv::userName(DrumNum(81)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(82) = DrumInstrument(TConv::userName(DrumNum(82)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(83) = DrumInstrument(TConv::userName(DrumNum(83)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(84) = DrumInstrument(TConv::userName(DrumNum(84)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(85) = DrumInstrument(TConv::userName(DrumNum(85)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(86) = DrumInstrument(TConv::userName(DrumNum(86)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(87) = DrumInstrument(TConv::userName(DrumNum(87)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(91) = DrumInstrument(TConv::userName(DrumNum(91)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(93) = DrumInstrument(TConv::userName(DrumNum(93)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(99) = DrumInstrument(TConv::userName(DrumNum(99)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
+    smDrumset->drum(102) = DrumInstrument(TConv::userName(DrumNum(102)), NoteHeadGroup::HEAD_INVALID,   0, DirectionV::UP);
 }
 }
