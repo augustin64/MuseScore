@@ -658,6 +658,12 @@ extern "C" {
     };
 
     EMSCRIPTEN_KEEPALIVE
+    void setInstrumentVolume(uintptr_t score_ptr, int instrumentId, float audioVolume) {
+        (void)score_ptr;
+        printf("Setting volume to %f for instrument %d\n", audioVolume, instrumentId);
+    }
+
+    EMSCRIPTEN_KEEPALIVE
     const char* processSynth(uintptr_t fn_ptr, bool cancel = false) {
         return MainAudio::Synth(fn_ptr).process(cancel);
     }

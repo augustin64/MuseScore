@@ -379,6 +379,21 @@ class WebMscore {
     }
 
     /**
+     * Change the audio level of an instrument for synthAudio
+     * 
+     * @param {number} instrumentId the id of the instrument, corresponding to score parts
+     * @param {number} audioVolume
+     * @returns {Promise<void>}
+     */
+    async setInstrumentVolume(instrumentId, audioVolume) {
+        return Module.ccall('setInstrumentVolume',
+            null,
+            ['number', 'number', 'number'],
+            [this.scoreptr, instrumentId, audioVolume]
+        )
+    }
+
+    /**
      * Synthesize audio frames
      * 
      * `synthAudio` is single instance, i.e. you can't have multiple iterators. If you call `synthAudio` multiple times, it will reset the time offset of all iterators the function returned.
