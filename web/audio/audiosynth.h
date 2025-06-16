@@ -51,6 +51,8 @@ private:
     static std::vector<std::function<SynthRes*(bool)>> synthIterators;
 };
 
+void setInstrumentVolume(int instrumentId, float audioVolume);
+
 } // namespace MainAudio
 
 #endif // MAINAUDIO_SYNTH_H

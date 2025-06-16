@@ -4,6 +4,7 @@
 
 #include "audio/internal/worker/playback.h"
 #include "audio/internal/worker/audioengine.h"
+#include "audio/internal/worker/audiooutputhandler.h"
 
 #include "./audiosynth.h"
 
@@ -101,6 +102,16 @@ Synth Synth::start(MainScore score, float starttime) {
     synthIterators.push_back(synthIterator);
 
     return Synth(&synthIterators.back());
+}
+
+void setInstrumentVolume(int instrumentId, float audioVolume) {
+    auto playback = modularity::ioc()->resolve<audio::Playback>("");
+
+    audio::AudioOutputParams params;
+    params.volume = audioVolume;
+
+    LOGI() << "Setting volume to "<< audioVolume <<" for instrument"<< instrumentId;
+    return playback->audioOutput()->setOutputParams(0, instrumentId, params);
 }
 
 } // namespace MainAudio

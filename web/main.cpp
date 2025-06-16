@@ -660,7 +660,7 @@ extern "C" {
     EMSCRIPTEN_KEEPALIVE
     void setInstrumentVolume(uintptr_t score_ptr, int instrumentId, float audioVolume) {
         (void)score_ptr;
-        printf("Setting volume to %f for instrument %d\n", audioVolume, instrumentId);
+        return MainAudio::setInstrumentVolume(instrumentId, audioVolume);
     }
 
     EMSCRIPTEN_KEEPALIVE
