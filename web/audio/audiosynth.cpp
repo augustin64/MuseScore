@@ -129,7 +129,7 @@ template<typename T> T depromisify(deto::async::Promise<T> promise) {
     });
 
     while (!completed) {
-        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
     }
     if (completed != 1) { throw std::runtime_error(err_msg); }
     return result;
