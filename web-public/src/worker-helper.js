@@ -313,6 +313,16 @@ class WebMscoreW {
     }
 
     /**
+     * Change the audio level of an instrument for synthAudio
+     * 
+     * @param {number} instrumentId the id of the instrument, corresponding to score parts
+     * @returns {Promise<import('../schemas').AudioOutputParams>}
+     */
+    getAudioOutputParams(instrumentId) {
+        return this.rpc('getAudioOutputParams', [instrumentId])
+    }
+
+    /**
      * Synthesize audio frames
      * @param {number} starttime The start time offset in seconds
      * @returns {Promise<(cancel?: boolean) => Promise<import('../schemas').SynthRes>>} The iterator function

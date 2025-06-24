@@ -674,6 +674,11 @@ extern "C" {
     }
 
     EMSCRIPTEN_KEEPALIVE
+    const char* getAudioOutputParams(int instrumentId) {
+        return (const char*)MainAudio::getAudioOutputParams(instrumentId);
+    }
+
+    EMSCRIPTEN_KEEPALIVE
     WasmResBytes savePositions(uintptr_t score_ptr, bool ofSegments, int excerptId = -1) {
         return _savePositions(score_ptr, ofSegments, excerptId);
     };
