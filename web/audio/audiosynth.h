@@ -51,7 +51,14 @@ private:
     static std::vector<std::function<SynthRes*(bool)>> synthIterators;
 };
 
+struct AudioOutputParams {
+    float volume_db;
+    float balance;
+    bool muted;
+};
+
 void setInstrumentVolume(int instrumentId, float audioVolume);
+MainAudio::AudioOutputParams* getAudioOutputParams(int instrumentId);
 
 } // namespace MainAudio
 

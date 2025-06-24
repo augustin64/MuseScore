@@ -114,4 +114,38 @@ void setInstrumentVolume(int instrumentId, float audioVolume) {
     return playback->audioOutput()->setOutputParams(0, instrumentId, params);
 }
 
+template<typename T> T depromisify(deto::async::Promise<T> promise) {
+    bool completed = 0; // 1: done, -1: error
+    std::string err_msg;
+    T result = {};
+
+    promise.onResolve(NULL, [&result, &completed](T res) {
+        result = res;
+        completed = 1;
+    }).onReject(NULL, [&err_msg, &completed](int code, const std::string& msg) {
+        (void) code;
+        err_msg = msg;
+        completed = -1;
+    });
+
+    while (!completed) {
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+    if (completed == 1) { throw std::runtime_error(err_msg); }
+    return result;
+}
+
+MainAudio::AudioOutputParams* getAudioOutputParams(int instrumentId) {
+    auto playback = modularity::ioc()->resolve<audio::Playback>("");
+
+    audio::AudioOutputParams output_params = depromisify(playback->audioOutput()->outputParams(0, instrumentId));
+    MainAudio::AudioOutputParams* params = (MainAudio::AudioOutputParams*)malloc(sizeof(MainAudio::AudioOutputParams));
+
+    params->balance = output_params.balance;
+    params->muted = output_params.muted;
+    params->volume_db = output_params.volume;
+
+    return params;
+}
+
 } // namespace MainAudio

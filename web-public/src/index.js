@@ -394,6 +394,41 @@ class WebMscore {
     }
 
     /**
+     * Parse struct AudioOutputParams, then free its memory
+     * @private
+     * @param {number} resptr - pointer to the AudioOutputParams data
+     * @returns {import('../schemas').AudioOutputParams}
+     */
+    _parseAudioOutputParams(resptr) {
+        // struct AudioOutputParams in audiosynth.h
+
+        const volume_db = +Module.getValue(resptr + 0, 'float')
+        const balance = +Module.getValue(resptr + 4, 'float')
+        const muted = +Module.getValue(resptr + 8, 'i8')
+        freePtr(resptr)
+
+        return {
+            volume_db,
+            balance,
+            muted: !!muted,
+        }
+    }
+
+    /**
+     * 
+     * @param {number} instrumentId 
+     * @returns {Promise<import('../schemas').AudioOutputParams>}
+     */
+    async getAudioOutputParams(instrumentId) {
+        const resptr = Module.ccall('getAudioOutputParams',
+            null,
+            ['number'],
+            [instrumentId]
+        )
+        return this._parseAudioOutputParams(resptr);
+    }
+
+    /**
      * Synthesize audio frames
      * 
      * `synthAudio` is single instance, i.e. you can't have multiple iterators. If you call `synthAudio` multiple times, it will reset the time offset of all iterators the function returned.

@@ -246,6 +246,19 @@ export interface SynthRes {
     chunk: Uint8Array;
 }
 
+export interface AudioOutputParams {
+    /**
+     * Volume in decibels
+     */
+    volume_db: number;
+
+    /**
+     * How to center the sound
+     */
+    balance: number;
+    muted: boolean;
+}
+
 export type InputFileFormat =
     | 'mscz'             // compressed MuseScore native format
     | 'mscx'             // uncompressed MuseScore native format
