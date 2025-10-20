@@ -1,5 +1,5 @@
 
-import WebMscore from 'webmscore'
+import WebMscore from 'webmscore4'
 import fs from 'fs'
 import * as FRONTS from '@librescore/fonts'
 

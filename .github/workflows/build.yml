@@ -81,7 +81,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: npm-pack
-          path: web-public/webmscore-*.tgz
+          path: web-public/webmscore4-*.tgz
 
   test:
     needs: build
@@ -106,7 +106,7 @@ jobs:
         run: |
           cd web-example
           npm i
-          npm i ./webmscore-*.tgz
+          npm i ./webmscore4-*.tgz
           npm start || echo "failed=1" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v4
