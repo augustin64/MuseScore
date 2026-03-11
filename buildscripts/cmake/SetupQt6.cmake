@@ -18,6 +18,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
+#! debug
+set(QT_DEBUG_FIND_PACKAGE ON)
+
 if (OS_IS_WASM)
     set(QT_IS_STATIC ON)
 endif()
