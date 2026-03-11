@@ -84,6 +84,11 @@ jobs:
           sudo apt install -y ccache
           ccache --version
 
+      - name: Install GLESv2
+        # No longer shipped by Qt>6
+        run: |
+          sudo apt install -y libgles2
+
       - name: Build
         run: |
           cd web-public
