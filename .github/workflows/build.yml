@@ -47,7 +47,7 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           # aqtversion: '==2.1.*'
-          version: '6.8.3'
+          version: '6.4.3'
           host: 'linux'
           target: 'desktop'
           arch: 'wasm_32'
