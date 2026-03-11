@@ -87,7 +87,7 @@ jobs:
       - name: Install GLESv2
         # No longer shipped by Qt>6
         run: |
-          sudo apt install -y libgles2
+          sudo apt install -y libgles2 libgles2-mesa-dev
 
       - name: Build
         run: |
