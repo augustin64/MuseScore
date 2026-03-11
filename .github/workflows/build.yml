@@ -16,6 +16,7 @@ concurrency:
 env:
   EM_VERSION: 2.0.6
   EM_CACHE_FOLDER: 'emsdk-cache'
+  QT_VERSION: '6.4.3'
   COMMIT_MSG: ${{ github.event.head_commit.message }}
 
 jobs:
@@ -47,10 +48,22 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           # aqtversion: '==2.1.*'
-          version: '6.4.3'
+          version: ${{env.QT_VERSION}}
           host: 'linux'
           target: 'desktop'
           arch: 'wasm_32'
+          archives: 'qtbase'
+          dir: ${{ github.workspace }}/build.qt6
+          setup-python: true
+          cache: true
+      - name: Install Host Qt
+        uses: jurplel/install-qt-action@v3
+        with:
+          # aqtversion: '==2.1.*'
+          version: ${{env.QT_VERSION}}
+          host: 'linux'
+          target: 'desktop'
+          arch: 'gcc_64'
           archives: 'qtbase'
           dir: ${{ github.workspace }}/build.qt6
           setup-python: true

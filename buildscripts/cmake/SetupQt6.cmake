@@ -111,3 +111,7 @@ if (QT_IS_STATIC)
     qt_import_qml_plugins(all_qml_plugins)
     list(APPEND QT_LIBRARIES all_qml_plugins)
 endif()
+
+set(QT_PLATFORM_PLUGINS
+    Qt6::QOffscreenIntegrationPlugin
+    )
