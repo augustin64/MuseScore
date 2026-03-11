@@ -47,12 +47,12 @@ jobs:
         uses: jurplel/install-qt-action@v3
         with:
           # aqtversion: '==2.1.*'
-          version: '5.15.2'
+          version: '6.8.3'
           host: 'linux'
           target: 'desktop'
           arch: 'wasm_32'
           archives: 'qtbase'
-          dir: ${{ github.workspace }}/build.qt5
+          dir: ${{ github.workspace }}/build.qt6
           setup-python: true
           cache: true
       - name: Install emscripten
@@ -62,8 +62,8 @@ jobs:
           actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
       - name: Apply patches for Qt and emscripten
         run: |
-          echo $Qt5_DIR
-          cp --verbose -r build/qt/* ${Qt5_DIR}
+          echo $Qt6_DIR
+          cp --verbose -r build/qt/* ${Qt6_DIR}
           echo $(which emcc).py
           sed -i -r "s/(shared.Settings.MEM_INIT_IN_WASM = )True/\1False/" "$(which emcc).py"
       - name: Install ccache

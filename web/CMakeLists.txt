@@ -12,8 +12,8 @@ set(MU_ROOT ${CMAKE_CURRENT_LIST_DIR}/..)
 set(PROJECT_ROOT_DIR ${MU_ROOT})
 
 set(CMAKE_MODULE_PATH
-    ${MU_ROOT}/build
-    ${MU_ROOT}/build/cmake
+    ${MU_ROOT}/buildscripts
+    ${MU_ROOT}/buildscripts/cmake
     ${CMAKE_MODULE_PATH}
     )
 
@@ -95,8 +95,8 @@ include(EmbedFiles)
 # Setup external dependencies
 ###########################################
 
-set(QT_MIN_VERSION    "5.15.0")
-include(FindQt5)
+set(QT_MIN_VERSION    "6.8.3")
+include(SetupQt6)
 
 include(SetupFreetypeBrotli)
 
