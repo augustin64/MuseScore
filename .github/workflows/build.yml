@@ -57,14 +57,12 @@ jobs:
           dir: ${{ github.workspace }}/build.qt6
           setup-python: true
           cache: true
-      - name: Rename libICU for Qt
+      - name: Symlink libICU for Qt
         # This is an *awful* fix, but qmake seems to accept that
         run: |
-          echo $(whereis libicui18n.so) $(whereis libicui18n.so).56
-          ls /usr/lib/x86_64-linux-gnu/
-          sudo cp $(whereis libicui18n.so) $(whereis libicui18n.so).56
-          sudo cp $(whereis libicuuc.so) $(whereis libicuuc.so).56
-          sudo cp $(whereis libicudata.so) $(whereis libicudata.so).56
+          sudo ln -s $(whereis libicui18n.so | awk '{print $NF}') $(whereis libicui18n.so | awk '{print $NF}').56
+          sudo ln -s $(whereis libicuuc.so | awk '{print $NF}') $(whereis libicuuc.so | awk '{print $NF}').56
+          sudo ln -s $(whereis libicudata.so | awk '{print $NF}') $(whereis libicudata.so | awk '{print $NF}').56
         
       - name: Install emscripten
         uses: Xmader/setup-emsdk@master
