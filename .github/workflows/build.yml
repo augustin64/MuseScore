@@ -70,6 +70,10 @@ jobs:
           dir: ${{ github.workspace }}/build.qt6
           setup-python: true
           cache: true
+      - name: Install ICU compatibility libs for Qt
+        run: |
+          sudo apt install -y libicu-dev
+        
       - name: Install emscripten
         uses: Xmader/setup-emsdk@master
         with:
