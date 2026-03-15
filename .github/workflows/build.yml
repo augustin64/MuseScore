@@ -52,7 +52,7 @@ jobs:
           host: 'linux'
           target: 'desktop'
           arch: 'wasm_32'
-          archives: 'qtbase'
+          archives: 'qtbase qtdeclarative qtsvg'
           modules: 'qt5compat'
           dir: ${{ github.workspace }}/build.qt6
           setup-python: true
@@ -60,9 +60,9 @@ jobs:
       - name: Symlink libICU for Qt
         # This is an *awful* fix, but qmake seems to accept that
         run: |
-          sudo ln -s $(whereis libicui18n.so | awk '{print $NF}') $(whereis libicui18n.so | awk '{print $NF}').56
-          sudo ln -s $(whereis libicuuc.so | awk '{print $NF}') $(whereis libicuuc.so | awk '{print $NF}').56
-          sudo ln -s $(whereis libicudata.so | awk '{print $NF}') $(whereis libicudata.so | awk '{print $NF}').56
+          LIB=$(whereis libicui18n.so | awk '{print $NF}') sudo ln -s $LIB $LIB.56
+          LIB=$(whereis libicudata.so | awk '{print $NF}') sudo ln -s $LIB $LIB.56
+          LIB=$(whereis libicuuc.so | awk '{print $NF}') sudo ln -s $LIB $LIB.56
         
       - name: Install emscripten
         uses: Xmader/setup-emsdk@master
