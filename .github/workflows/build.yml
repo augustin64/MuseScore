@@ -57,9 +57,12 @@ jobs:
           dir: ${{ github.workspace }}/build.qt6
           setup-python: true
           cache: true
-      - name: Install ICU compatibility libs for Qt
+      - name: Symlink libICU for Qt
+        # This is an *awful* fix, but qmake seems to accept that
         run: |
-          sudo apt install -y libicu-dev
+          sudo ln -s $(whereis libicui18n.so) $(whereis libicui18n.so).56
+          sudo ln -s $(whereis libicuuc.so) $(whereis libicuuc.so).56
+          sudo ln -s $(whereis libicudata.so) $(whereis libicudata.so).56
         
       - name: Install emscripten
         uses: Xmader/setup-emsdk@master
