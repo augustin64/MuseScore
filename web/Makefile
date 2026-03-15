@@ -7,6 +7,7 @@ MU_ROOT	  := $(dir ${CURDIR})
 
 # change path to include your Qt6 installation
 export CMAKE_PREFIX_PATH	=	../../build.qt6/Qt/${Qt6_VER}/wasm_32
+export CMAKE_TOOLCHAIN_FILE = $(CMAKE_PREFIX_PATH)/lib/cmake/Qt6/qt.toolchain.cmake
 
 # setup ccache
 export CCACHE_CPP2          =   true
