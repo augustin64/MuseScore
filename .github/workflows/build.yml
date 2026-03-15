@@ -60,6 +60,8 @@ jobs:
       - name: Rename libICU for Qt
         # This is an *awful* fix, but qmake seems to accept that
         run: |
+          echo $(whereis libicui18n.so) $(whereis libicui18n.so).56
+          ls /usr/lib/x86_64-linux-gnu/
           sudo cp $(whereis libicui18n.so) $(whereis libicui18n.so).56
           sudo cp $(whereis libicuuc.so) $(whereis libicuuc.so).56
           sudo cp $(whereis libicudata.so) $(whereis libicudata.so).56
