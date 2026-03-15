@@ -52,7 +52,7 @@ jobs:
           host: 'linux'
           target: 'desktop'
           arch: 'wasm_32'
-          archives: 'qtbase'
+          archives: 'qtbase qt5compat'
           dir: ${{ github.workspace }}/build.qt6
           setup-python: true
           cache: true
@@ -64,7 +64,7 @@ jobs:
           host: 'linux'
           target: 'desktop'
           arch: 'gcc_64'
-          archives: 'qtbase'
+          archives: 'qtbase qt5compat'
           dir: ${{ github.workspace }}/build.qt6
           setup-python: true
           cache: true
