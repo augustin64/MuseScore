@@ -6,7 +6,7 @@ MU_ROOT	  := $(dir ${CURDIR})
 # BUILD_NUMBER   = $(shell git rev-parse --short=7 HEAD)
 
 # change path to include your Qt6 installation
-export CMAKE_PREFIX_PATH	=	../../build.qt6/6.8.3/wasm_32
+export CMAKE_PREFIX_PATH	=	../../build.qt6/${Qt6_VER}/wasm_32
 
 # setup ccache
 export CCACHE_CPP2          =   true
