@@ -66,10 +66,8 @@ jobs:
         with:
           version: ${{env.EM_VERSION}}
           actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
-      - name: Apply patches for Qt and emscripten
+      - name: Apply patches for emscripten
         run: |
-          echo $Qt6_DIR
-          cp --verbose -r build/qt/* ${Qt6_DIR}
           echo $(which emcc).py
           sed -i -r "s/(shared.Settings.MEM_INIT_IN_WASM = )True/\1False/" "$(which emcc).py"
       - name: Install ccache
