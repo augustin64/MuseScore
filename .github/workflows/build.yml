@@ -25,17 +25,17 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: true
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v6
         with:
           node-version: 16
-      - uses: actions/cache@v3
+      - uses: actions/cache@v5
         with:
           path: ${{env.EM_CACHE_FOLDER}}
           key: emsdk-${{env.EM_VERSION}}-${{ runner.os }}
-      - uses: actions/cache@v3
+      - uses: actions/cache@v5
         with:
           # Allows updating the cache
           # https://github.com/actions/cache/blob/main/tips-and-workarounds.md#update-a-cache
@@ -45,26 +45,13 @@ jobs:
           path: ${{ github.workspace }}/.ccache
 
       - name: Install Qt
-        uses: jurplel/install-qt-action@v3
+        uses: jurplel/install-qt-action@v4
         with:
           # aqtversion: '==2.1.*'
           version: ${{env.Qt6_VER}}
           host: 'linux'
           target: 'desktop'
           arch: 'wasm_32'
-          archives: 'qtbase'
-          modules: 'qt5compat'
-          dir: ${{ github.workspace }}/build.qt6
-          setup-python: true
-          cache: true
-      - name: Install Host Qt
-        uses: jurplel/install-qt-action@v3
-        with:
-          # aqtversion: '==2.1.*'
-          version: ${{env.Qt6_VER}}
-          host: 'linux'
-          target: 'desktop'
-          arch: 'gcc_64'
           archives: 'qtbase'
           modules: 'qt5compat'
           dir: ${{ github.workspace }}/build.qt6
@@ -98,7 +85,7 @@ jobs:
           npm pack
 
       - name: Save build artifacts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: npm-pack
           path: web-public/webmscore4-*.tgz
@@ -109,15 +96,15 @@ jobs:
     steps:
 
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: false
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v6
         with:
           node-version: 12
 
       - name: Download webmscore package tarball
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v8
         with:
           name: npm-pack
           path: web-example
@@ -129,12 +116,12 @@ jobs:
           npm i ./webmscore4-*.tgz
           npm start || echo "failed=1" >> "$GITHUB_OUTPUT"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: example-exports
           path: web-example/exported*
       
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: steps.run-test.outputs.failed == '1'
         with:
           name: test-log
@@ -153,16 +140,16 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v3
+        uses: actions/checkout@v6
         with:
           submodules: false
-      - uses: actions/setup-node@v1
+      - uses: actions/setup-node@v6
         with:
           node-version: 12
           # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
           registry-url: https://registry.npmjs.org/
       - name: Download webmscore package tarball
-        uses: actions/download-artifact@v3
+        uses: actions/download-artifact@v8
         with:
           name: npm-pack
       - run: |

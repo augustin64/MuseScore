@@ -96,7 +96,6 @@ include(EmbedFiles)
 ###########################################
 
 set(QT_MIN_VERSION    "6.0.0")
-set(QT_HOST_PATH      "${MU_ROOT}/build.qt6/Qt/6.4.3/gcc_64")
 include(SetupQt6)
 
 include(SetupFreetypeBrotli)
