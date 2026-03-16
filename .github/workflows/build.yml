@@ -28,6 +28,15 @@ jobs:
         uses: actions/checkout@v6
         with:
           submodules: true
+      - name: Compatibility step for act
+        if: ${{ env.ACT }}
+        run: |
+          git submodule init
+          git submodule update
+          sudo apt update
+          sudo apt install -y cmake
+          cmake --version
+    
       - uses: actions/setup-node@v6
         with:
           node-version: 16
