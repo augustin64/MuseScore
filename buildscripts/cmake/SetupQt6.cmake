@@ -18,21 +18,21 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-if (OS_IS_WASM)
-    set(QT_IS_STATIC ON)
-endif()
+# if (OS_IS_WASM)
+#     set(QT_IS_STATIC ON)
+# endif()
 
 set(qt_components
     Core
     Gui
-    # Widgets
+    Widgets
     # Network
-    # Qml
-    # Quick
+    Qml
+    Quick
     # QuickControls2
     # QuickWidgets
-    # Xml
-    # Svg
+    Xml
+    Svg
     # ShaderTools
 
     Core5Compat
@@ -40,15 +40,15 @@ set(qt_components
 
 set(QT_LIBRARIES
     Qt::Core
-    Qt::Gui
+    # Qt::Gui
     # Qt::Widgets
     # Qt::Network
-    # Qt::Qml
-    # Qt::Quick
+    Qt::Qml
+    Qt::Quick
     # Qt::QuickControls2
     # Qt::QuickWidgets
     Qt::Xml
-    # Qt::Svg
+    Qt::Svg
 
     Qt::Core5Compat
 )
