@@ -45,11 +45,11 @@ add_subdirectory(${MU_ROOT}/src/importexport/guitarpro guitarpro)
 set(MODULE_LINK ${MODULE_LINK} iex_guitarpro)
 
 add_subdirectory(${MU_ROOT}/src/importexport/midi midi)
-add_subdirectory(${MU_ROOT}/thirdparty/beatroot beatroot)
+# add_subdirectory(${MU_ROOT}/thirdparty/beatroot beatroot)
 set(MODULE_LINK ${MODULE_LINK} iex_midi)
 set(MODULE_LINK ${MODULE_LINK} beatroot)
 
 add_subdirectory(${MU_ROOT}/src/importexport/imagesexport imagesexport)
 set(MODULE_LINK ${MODULE_LINK} iex_imagesexport)
 
-include(SetupModule)
+setup_module()

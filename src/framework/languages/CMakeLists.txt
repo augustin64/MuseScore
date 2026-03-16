@@ -35,7 +35,7 @@ set(MODULE_SRC
     )
 
 if (QT_SUPPORT)
-    list(APPEND MODULE_LINK Qt::Concurrent Qt::Gui Qt::Network Qt::Qml)
+    list(APPEND MODULE_LINK Qt::Concurrent Qt::Network Qt::Qml)
 endif()
 
 setup_module()

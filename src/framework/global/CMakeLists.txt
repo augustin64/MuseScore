@@ -271,7 +271,7 @@ set(MODULE_DEF ${TINYXML_MODULE_DEF})
 if (QT_SUPPORT)
     # These are needed by so many modules, that we make them public here,
     # so that other modules get them transitively.
-    list(APPEND MODULE_LINK_PUBLIC Qt::Core Qt::Gui)
+    list(APPEND MODULE_LINK_PUBLIC Qt::Core Qt::Qml)
 
     # These are needed by the PCH; if we don't make them public, modules
     # that don't use them won't be able to use the PCH with some compilers.

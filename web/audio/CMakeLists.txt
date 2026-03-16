@@ -29,4 +29,4 @@ set(MODULE_LINK
     iex_audioexport
 )
 
-include(SetupModule)
+setup_module()

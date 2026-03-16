@@ -22,8 +22,8 @@ include(GetPlatformInfo)
 include(DeclareModuleSetup)
 
 # Qt
-set(qt_components Core Gui Quick Qml Widgets)
-set(qt_libs Qt6::Core Qt6::Gui Qt6::Quick Qt6::Qml Qt6::Widgets)
+set(qt_components Core Qml Widgets)
+set(qt_libs Qt6::Core Qt6::Qml Qt6::Widgets)
 set(qt_includes )
 if (OS_IS_LIN)
     list(APPEND qt_components DBus)

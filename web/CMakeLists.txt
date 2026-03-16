@@ -11,8 +11,9 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(MU_ROOT ${CMAKE_CURRENT_LIST_DIR}/..)
 set(PROJECT_ROOT_DIR ${MU_ROOT})
 
-set(MUSE_FRAMEWORK_PATH ${CMAKE_CURRENT_LIST_DIR}/..)
-set(MUSE_FRAMEWORK_SRC_PATH ${CMAKE_CURRENT_LIST_DIR}/../src/framework)
+set(THIRDPARTY_DIR ${MU_ROOT}/thirdparty)
+set(MUSE_FRAMEWORK_PATH ${MU_ROOT})
+set(MUSE_FRAMEWORK_SRC_PATH ${MU_ROOT}/src/framework)
 
 set(CMAKE_MODULE_PATH
     ${MU_ROOT}/buildscripts
@@ -120,7 +121,7 @@ add_subdirectory(${MU_ROOT}/src/engraving engraving)
 add_subdirectory(${MU_ROOT}/src/framework/mpe mpe)
 
 add_subdirectory(importexport)
-add_subdirectory(audio)
+# add_subdirectory(audio)
 
 add_executable(webmscore
     main.cpp
