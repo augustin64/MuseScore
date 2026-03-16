@@ -31,10 +31,13 @@ std::shared_ptr<Pixmap> QImageProvider::createPixmap(int w, int h, int dpm, cons
 
 Pixmap QImageProvider::scaled(const Pixmap& origin, const Size& s) const
 {
+#if 0
     QPixmap qtPixmap = Pixmap::toQPixmap(origin);
     qtPixmap = qtPixmap.scaled(s.width(), s.height());
 
     return Pixmap::fromQPixmap(qtPixmap);
+#endif
+    NOT_IMPLEMENTED;
 }
 
 std::shared_ptr<IPaintProvider> QImageProvider::painterForImage(std::shared_ptr<Pixmap> pixmap)
@@ -44,8 +47,11 @@ std::shared_ptr<IPaintProvider> QImageProvider::painterForImage(std::shared_ptr<
 
 void QImageProvider::saveAsPng(std::shared_ptr<Pixmap> px, io::IODevice* device)
 {
+#if 0
     QBuffer buf;
     buf.open(QIODevice::WriteOnly);
     Pixmap::toQPixmap(*px).save(&buf, FILE_FORMAT);
     device->write(buf.data());
+#endif
+    NOT_IMPLEMENTED;
 }

@@ -59,6 +59,7 @@ bool QMimeDataAdapter::hasImage() const
     return m_data->hasImage();
 }
 
+#if 0
 static std::shared_ptr<Pixmap> pixmapFromQVariant(const QVariant& val)
 {
     using namespace muse::draw;
@@ -77,3 +78,4 @@ std::shared_ptr<Pixmap> QMimeDataAdapter::imageData() const
 {
     return pixmapFromQVariant(m_data->imageData());
 }
+#endif
