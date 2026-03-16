@@ -27,7 +27,7 @@
 #include "geometry.h"
 
 #ifndef NO_QT_SUPPORT
-#include <QPixmap>
+// #include <QPixmap>
 #include <QImage>
 #include <QBuffer>
 #endif

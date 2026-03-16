@@ -23,7 +23,7 @@
 #define MU_PROJECT_PROJECTMETA_H
 
 #include <QDate>
-#include <QPixmap>
+// #include <QPixmap>
 #include <QSet>
 #include <QString>
 
