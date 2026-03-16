@@ -121,7 +121,7 @@ add_subdirectory(${MU_ROOT}/src/engraving engraving)
 add_subdirectory(${MU_ROOT}/src/framework/mpe mpe)
 
 add_subdirectory(importexport)
-# add_subdirectory(audio)
+add_subdirectory(audio)
 
 add_executable(webmscore
     main.cpp
