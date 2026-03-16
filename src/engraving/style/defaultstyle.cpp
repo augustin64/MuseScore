@@ -39,6 +39,7 @@ static const String LEGACY_MSS_V1_PATH(u"/engraving/styles/legacy-style-defaults
 static const String LEGACY_MSS_V2_PATH(u"/engraving/styles/legacy-style-defaults-v2.mss");
 static const String LEGACY_MSS_V3_PATH(u"/engraving/styles/legacy-style-defaults-v3.mss");
 static const String LEGACY_MSS_V302_PATH(u"/engraving/styles/legacy-style-defaults-v302.mss");
+static const String LEGACY_MSS_V450_PATH(u"/engraving/styles/legacy-style-defaults-v450.mss");
 
 DefaultStyle* DefaultStyle::instance()
 {
