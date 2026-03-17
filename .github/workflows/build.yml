@@ -14,7 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  EM_VERSION: 2.0.6
+  EM_VERSION: 3.1.74
   EM_CACHE_FOLDER: 'emsdk-cache'
   Qt6_VER: '6.4.3'
   COMMIT_MSG: ${{ github.event.head_commit.message }}
