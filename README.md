@@ -116,6 +116,9 @@ WebAssembly vs native C++ program!
 
 ## Compiling
 
+> [!TIP]
+> You can use [act](https://github.com/nektos/act) to download these dependencies and handle the build process for you, in a container.
+
 1. Install essential tools like `make`, `cmake`, `llvm`, etc.
 
 2. Install `emscripten` v2.0.6 using `emsdk`
