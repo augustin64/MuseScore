@@ -83,6 +83,7 @@ public:
 
     static Pixmap fromQPixmap(const QPixmap& qpx)
     {
+        (void)qpx;
 #if 0
         QByteArray bytes;
         QBuffer buffer(&bytes);
@@ -94,7 +95,6 @@ public:
 
         return px;
 #endif
-        NOT_IMPLEMENTED;
     }
 
 #if 0

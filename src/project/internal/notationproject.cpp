@@ -98,7 +98,7 @@ void NotationProject::setupProject()
     m_engravingProject = EngravingProject::create(iocContext());
     m_engravingProject->setFileInfoProvider(std::make_shared<ProjectFileInfoProvider>(this));
     // m_masterNotation = notationCreator()->newMasterNotationPtr(iocContext());
-    m_masterNotation = std::shared_ptr<IMasterNotation>(new MasterNotation());
+    m_masterNotation = std::shared_ptr<IMasterNotation>(new MasterNotation(iocContext()));
     m_projectAudioSettings = std::shared_ptr<ProjectAudioSettings>(new ProjectAudioSettings());
 }
 
@@ -628,14 +628,14 @@ Ret NotationProject::doSave(const muse::io::path_t& path, engraving::MscIoMode i
     {
         if ((fileSystem()->exists(savePath) && !fileSystem()->isWritable(savePath))
             || (fileSystem()->exists(targetContainerPath) && !fileSystem()->isWritable(targetContainerPath))) {
-            LOGE() << "failed save, not writable path: " << targetContainerPath.toString();
+            LOGE() << "failed save, not writable path: " << targetContainerPath;
             return make_ret(io::Err::FSWriteError);
         }
 
         if (ioMode == engraving::MscIoMode::Dir) {
             // Dir needs to be created, otherwise we can't move to it
             if (!QDir(targetContainerPath).mkpath(".")) {
-                LOGE() << "Couldn't create container directory: " << targetContainerPath.toString();
+                LOGE() << "Couldn't create container directory: " << targetContainerPath;
                 return make_ret(io::Err::FSMakingError);
             }
         }
@@ -742,7 +742,7 @@ Ret NotationProject::doSave(const muse::io::path_t& path, engraving::MscIoMode i
                               QFile::ReadOwner | QFile::WriteOwner | QFile::ReadUser | QFile::ReadGroup | QFile::ReadOther);
     }
 
-    LOGI() << "success save file: " << targetContainerPath.toString();
+    LOGI() << "success save file: " << targetContainerPath;
     return make_ret(Ret::Code::Ok);
 }
 

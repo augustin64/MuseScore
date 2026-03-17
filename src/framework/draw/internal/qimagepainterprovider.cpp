@@ -30,8 +30,8 @@ namespace muse::draw {
 QImagePainterProvider::QImagePainterProvider(std::shared_ptr<Pixmap> px)
     : QPainterProvider(new QPainter()), m_px(px)
 {
-    m_image = Pixmap::toQPixmap(*px.get()).toImage();
-    m_painter->begin(&m_image);
+    // m_image = Pixmap::toQPixmap(*px.get()).toImage();
+    // m_painter->begin(&m_image);
 }
 
 QImagePainterProvider::~QImagePainterProvider()

@@ -31,6 +31,7 @@ jobs:
       - name: Compatibility step for act
         if: ${{ env.ACT }}
         run: |
+          # If checkout is a `docker cp`, submodules are missing
           git submodule init
           git submodule update
           sudo apt update
@@ -40,7 +41,7 @@ jobs:
       - uses: actions/setup-node@v6
         with:
           node-version: 16
-      - uses: actions/cache@v5
+      - uses: actions/cache/restore@v5
         with:
           path: ${{env.EM_CACHE_FOLDER}}
           key: emsdk-${{env.EM_VERSION}}-${{ runner.os }}
@@ -69,15 +70,21 @@ jobs:
       - name: Symlink libICU for Qt
         # This is an *awful* fix, but qmake seems to accept that
         run: |
-          sudo ln -s $(whereis libicui18n.so | awk '{print $NF}') $(whereis libicui18n.so | awk '{print $NF}').56
-          sudo ln -s $(whereis libicudata.so | awk '{print $NF}') $(whereis libicudata.so | awk '{print $NF}').56
-          sudo ln -s $(whereis libicuuc.so | awk '{print $NF}') $(whereis libicuuc.so | awk '{print $NF}').56
+          sudo ln -sf $(whereis libicui18n.so | awk '{print $NF}') $(whereis libicui18n.so | awk '{print $NF}').56
+          sudo ln -sf $(whereis libicudata.so | awk '{print $NF}') $(whereis libicudata.so | awk '{print $NF}').56
+          sudo ln -sf $(whereis libicuuc.so | awk '{print $NF}') $(whereis libicuuc.so | awk '{print $NF}').56
         
       - name: Install emscripten
         uses: Xmader/setup-emsdk@master
         with:
           version: ${{env.EM_VERSION}}
           actions-cache-folder: ${{env.EM_CACHE_FOLDER}}
+
+      - name: Save Emscripten
+        uses: actions/cache/save@v5
+        with:
+          path: ${{env.EM_CACHE_FOLDER}}
+          key: emsdk-${{env.EM_VERSION}}-${{ runner.os }}
       - name: Apply patches for emscripten
         run: |
           echo $(which emcc).py
