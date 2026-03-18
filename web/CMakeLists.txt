@@ -63,11 +63,13 @@ set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} --no-entry")
 set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} --emit-symbol-map")
 # set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s WASM=0 -s SINGLE_FILE=1")
 set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s WASM=1")
-set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=0 -s MODULARIZE=1")
+set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s EXPORT_ES6=1 -s USE_ES6_IMPORT_META=1 -s MODULARIZE=1")
 set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s NODEJS_CATCH_EXIT=0 -s NODEJS_CATCH_REJECTION=0")
 set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s ALLOW_TABLE_GROWTH=1")
 set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s ALLOW_MEMORY_GROWTH=1")
+set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s INITIAL_MEMORY=33MB")
 # set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s ASSERTIONS=1")
+set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s ASYNCIFY_IMPORTS")
 set(WASM_LINK_FLAGS         "${WASM_LINK_FLAGS} -s EXTRA_EXPORTED_RUNTIME_METHODS='[\"_malloc\", \"_free\", \"ccall\", \"cwrap\", \"stringToUTF8\", \"UTF8ToString\", \"getValue\", \"setValue\"]'")
 
 set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -fsigned-char")
@@ -80,7 +82,6 @@ set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -s USE_ZLIB=1")      # 1 = use z
 # set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -s USE_FREETYPE=1")  # 1 = use freetype from emscripten-ports
 set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -s USE_VORBIS=1")    # 1 = use vorbis from emscripten-ports
 set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -s USE_OGG=1")       # 1 = use ogg from emscripten-ports
-set(CMAKE_CXX_FLAGS         "${CMAKE_CXX_FLAGS} -s DEMANGLE_SUPPORT=1")
 
 set(CMAKE_CXX_FLAGS_DEBUG   "-g4 -s ASSERTIONS=2 -s STACK_OVERFLOW_CHECK=2 -s SAFE_HEAP=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-Oz -DNDEBUG -DQT_NO_DEBUG")
@@ -135,6 +136,8 @@ add_executable(webmscore
 
     ${MU_ROOT}/src/context/internal/globalcontext.cpp
     ${MU_ROOT}/src/context/internal/globalcontext.h
+    ${MU_ROOT}/src/context/internal/playbackstate.cpp
+    ${MU_ROOT}/src/context/internal/playbackstate.h
     ${MU_ROOT}/src/project/internal/notationproject.cpp
     ${MU_ROOT}/src/project/internal/notationproject.h
     ${MU_ROOT}/src/notation/internal/notationconfiguration.cpp
@@ -148,15 +151,18 @@ add_executable(webmscore
 set_target_properties (webmscore PROPERTIES LINK_FLAGS ${WASM_LINK_FLAGS})
 
 target_include_directories(webmscore PUBLIC
+    ${MU_ROOT} # for thirdparty/
     ${MU_ROOT}/src/framework/global
     ${MU_ROOT}/src/engraving
+    ${MU_ROOT}/src/framework # for global/
+    ${MU_ROOT}/src
 )
 
 target_link_libraries(webmscore
     ${QT_LIBRARIES}
-    global
+    muse_global
     engraving
-    mpe
+    muse_mpe
     importexport
     MainAudio
     freetype # important for supporting woff2 files

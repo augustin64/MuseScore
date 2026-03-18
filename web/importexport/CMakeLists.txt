@@ -1,5 +1,11 @@
 
-set(MODULE importexport)
+declare_module(importexport)
+
+set(MODULE_INCLUDE
+    ${MU_ROOT}/src/notation
+    ${MU_ROOT}/src/project
+    ${MU_ROOT}/src/engraving
+)
 
 set(MODULE_SRC
     ${MU_ROOT}/src/project/internal/notationreadersregister.cpp
@@ -15,6 +21,8 @@ set(MODULE_SRC
     ${MU_ROOT}/src/notation/internal/notationpainting.h
     ${MU_ROOT}/src/notation/internal/notationviewstate.cpp
     ${MU_ROOT}/src/notation/internal/notationviewstate.h
+    ${MU_ROOT}/src/notation/internal/notationsolomutestate.cpp
+    ${MU_ROOT}/src/notation/internal/notationsolomutestate.h
     ${MU_ROOT}/src/notation/internal/notationundostack.cpp
     ${MU_ROOT}/src/notation/internal/notationundostack.h
     ${MU_ROOT}/src/notation/internal/searchcommandsparser.cpp
@@ -29,10 +37,14 @@ set(MODULE_SRC
     ${MU_ROOT}/src/notation/internal/excerptnotation.h
     ${MU_ROOT}/src/notation/internal/notationplayback.cpp
     ${MU_ROOT}/src/notation/internal/notationplayback.h
+    ${MU_ROOT}/src/notation/internal/notationplaybackstub.cpp
+    ${MU_ROOT}/src/notation/internal/notationplaybackstub.h
     ${MU_ROOT}/src/notation/internal/masternotationparts.cpp
     ${MU_ROOT}/src/notation/internal/masternotationparts.h
     ${MU_ROOT}/src/notation/internal/notationparts.cpp
     ${MU_ROOT}/src/notation/internal/notationparts.h
+    ${MU_ROOT}/src/notation/utilities/percussionutilities.cpp
+    ${MU_ROOT}/src/notation/utilities/percussionutilities.h
     
     positionjsonwriter.cpp
     positionjsonwriter.h

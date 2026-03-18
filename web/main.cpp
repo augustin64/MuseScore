@@ -75,7 +75,7 @@ void _init(int argc, char** argv) {
 
     auto engM = new engraving::EngravingModule();
     engM->registerExports();
-    engM->onInit(muse::IApplication::RunMode::ConsoleApp);
+    engM->onInit(IApplication::RunMode::ConsoleApp);
     auto mpeM = new mpe::MpeModule();
     mpeM->registerExports();
 
@@ -95,11 +95,11 @@ void _init(int argc, char** argv) {
     auto midiM = new iex::midi::MidiModule();
     midiM->registerExports();
     midiM->resolveImports();
-    midiM->onInit(muse::IApplication::RunMode::ConsoleApp);
+    midiM->onInit(IApplication::RunMode::ConsoleApp);
     auto imgM = new iex::imagesexport::ImagesExportModule();
     imgM->registerExports();
     imgM->resolveImports();
-    imgM->onInit(muse::IApplication::RunMode::ConsoleApp);
+    imgM->onInit(IApplication::RunMode::ConsoleApp);
 
     auto writers = modularity::globalIoc()->resolve<project::INotationWritersRegister>("");
     writers->reg({ engraving::MSCZ }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Zip));
@@ -571,8 +571,8 @@ extern "C" {
     };
 
     EMSCRIPTEN_KEEPALIVE
-    void setLogLevel(const muse::logger::Level level) {
-        muse::logger::Logger::instance()->setLevel(level);
+    void setLogLevel(const logger::Level level) {
+        logger::Logger::instance()->setLevel(level);
     };
 
     EMSCRIPTEN_KEEPALIVE

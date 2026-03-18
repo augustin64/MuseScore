@@ -56,7 +56,7 @@ static bool setThreadPriority(std::thread& thread, ThreadPriority priority)
     if (!SetThreadPriority(thread.native_handle(), winPriority)) {
         return false;
     }
-#else
+#elif 0
     pthread_t pthread = thread.native_handle();
     struct sched_param param;
     int policy = 0;
@@ -83,6 +83,10 @@ static bool setThreadPriority(std::thread& thread, ThreadPriority priority)
     if (error != 0) {
         return false;
     }
+#else
+    (void)thread;
+    (void)priority;
+    return false;
 #endif
 
     return true;

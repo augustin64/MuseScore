@@ -137,10 +137,13 @@ bool WebAudioDriver::selectOutputDevice(const std::string& name)
     return false;
 }
 
-std::vector<std::string> WebAudioDriver::availableOutputDevices() const
+AudioDeviceList WebAudioDriver::availableOutputDevices() const
 {
     NOT_SUPPORTED;
-    return { "default" };
+    AudioDeviceList devices;
+    devices.push_back({ DEFAULT_DEVICE_ID, muse::trc("audio", "System default") });
+
+    return devices;
 }
 
 async::Notification WebAudioDriver::availableOutputDevicesChanged() const

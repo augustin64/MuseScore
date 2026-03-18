@@ -548,7 +548,7 @@ void PlaybackController::onNotationChanged()
 {
     if (globalContext()->currentMasterNotation() != m_masterNotation) {
         m_masterNotation = globalContext()->currentMasterNotation();
-        notifyActionCheckedChanged(LOOP_CODE);
+        // notifyActionCheckedChanged(LOOP_CODE);
     }
 
     setNotation(globalContext()->currentNotation());

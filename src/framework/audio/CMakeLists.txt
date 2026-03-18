@@ -52,9 +52,6 @@ set(MODULE_SRC
     ${CMAKE_CURRENT_LIST_DIR}/internal/audioconfiguration.h
     )
 
-# fluidsynth dependency
-include(SetupSndFile)
-
 add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/thirdparty/fluidsynth fluidsynth)
 
 set(MODULE_LINK

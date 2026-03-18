@@ -132,7 +132,7 @@ Ret AbstractAudioWriter::doWriteAndWait(INotationPtr notation,
 
     while (!m_isCompleted) {
         // process async events
-        mu::async::processEvents(); // XXX: !important, otherwise promises won't run
+        async::processEvents(); // XXX: !important, otherwise promises won't run
 
         // qApp->processEvents();
         // QThread::yieldCurrentThread();

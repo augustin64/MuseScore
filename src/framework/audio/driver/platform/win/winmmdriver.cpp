@@ -229,10 +229,13 @@ bool WinmmDriver::selectOutputDevice(const std::string& /*name*/)
     return false;
 }
 
-std::vector<std::string> WinmmDriver::availableOutputDevices() const
+AudioDeviceList WinmmDriver::availableOutputDevices() const
 {
     NOT_IMPLEMENTED;
-    return { "default" };
+    AudioDeviceList devices;
+    devices.push_back({ DEFAULT_DEVICE_ID, muse::trc("audio", "System default") });
+
+    return devices;
 }
 
 async::Notification WinmmDriver::availableOutputDevicesChanged() const

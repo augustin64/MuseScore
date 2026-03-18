@@ -95,6 +95,7 @@ public:
 
         return px;
 #endif
+        return Pixmap();
     }
 
 #if 0

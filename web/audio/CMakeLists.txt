@@ -1,5 +1,5 @@
 
-set(MODULE MainAudio)
+declare_module(MainAudio)
 
 set(MUE_BUILD_IMPEXP_BB_MODULE ON)
 set(MUE_BUILD_IMPEXP_BWW_MODULE ON)
@@ -23,6 +23,8 @@ set(MODULE_SRC
 
     ${MU_ROOT}/src/playback/internal/playbackcontroller.cpp
     ${MU_ROOT}/src/playback/internal/playbackcontroller.h
+    ${MU_ROOT}/src/playback/internal/onlinesoundscontroller.cpp
+    ${MU_ROOT}/src/playback/internal/onlinesoundscontroller.h
     ${MU_ROOT}/src/playback/internal/soundprofilesrepository.cpp
     ${MU_ROOT}/src/playback/internal/soundprofilesrepository.h
     ${MU_ROOT}/src/playback/internal/drumsetloader.cpp
@@ -37,7 +39,7 @@ add_subdirectory(${MU_ROOT}/src/framework/audio          audio)
 add_subdirectory(${MU_ROOT}/src/importexport/audioexport audioexport)
 
 set(MODULE_LINK
-    audio
+    muse_audio
     iex_audioexport
 )
 

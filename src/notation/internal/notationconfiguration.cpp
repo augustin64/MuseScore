@@ -34,7 +34,6 @@ using namespace mu::notation;
 using namespace muse;
 using namespace muse::async;
 using namespace muse::draw;
-using namespace muse::ui;
 
 static const std::string module_name("notation");
 

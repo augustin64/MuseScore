@@ -1,6 +1,7 @@
 declare_thirdparty_module(fluidsynth)
 
 include(${CMAKE_CURRENT_LIST_DIR}/fluidsynth.cmake)
+include(${CMAKE_CURRENT_LIST_DIR}/sndfile.cmake)
 
 set(MODULE_SRC
     ${FLUIDSYNTH_SRC}

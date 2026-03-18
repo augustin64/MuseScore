@@ -50,7 +50,7 @@
         "build:js-only": "npm run clean:d-ts && npm run bundle && npm run d-ts",
         "version": "npm run build:js-only",
         "bundle": "npm i rollup --no-save && rollup -c",
-        "compile": "cd ../web/ && make release && cd - && mv webmscore.lib.js.mem webmscore.lib.mem.wasm && mv webmscore.lib.js.symbols webmscore.lib.symbols",
+        "compile": "cd ../web/ && make release && cd - && if [ -f webmscore.lib.js.mem ]; then mv webmscore.lib.js.mem webmscore.lib.mem.wasm; fi && if [ -f webmscore.lib.js.symbols ]; then mv webmscore.lib.js.symbols webmscore.lib.symbols; fi",
         "postcompile": "perl -pi -e 's/\\\\([0-9a-f]{2})/chr(hex($1))/eg' webmscore.lib.symbols",
         "clean": "npm run clean:d-ts && npm run clean:md && cd ../web/ && make clean",
         "clean:d-ts": "rm -f src/*.d.ts *.d.ts",

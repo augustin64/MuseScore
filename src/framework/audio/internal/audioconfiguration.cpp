@@ -99,7 +99,6 @@ void AudioConfiguration::init()
     for (const auto& path : userSoundFontDirectories()) {
         fileSystem()->makePath(path);
     }
-#endif
 
     settings()->setDefaultValue(AUDIO_MEASURE_INPUT_LAG, Val(false));
 
@@ -109,6 +108,7 @@ void AudioConfiguration::init()
     settings()->valueChanged(ONLINE_SOUNDS_PROCESS_IN_BACKGROUND).onReceive(nullptr, [this](const Val& val) {
         m_autoProcessOnlineSoundsInBackgroundChanged.send(val.toBool());
     });
+#endif
 
     updateSamplesToPreallocate();
 }
@@ -221,7 +221,9 @@ async::Notification AudioConfiguration::sampleRateChanged() const
 
 size_t AudioConfiguration::desiredAudioThreadNumber() const
 {
-    return settings()->value(AUDIO_DESIRED_THREAD_NUMBER_KEY).toInt();
+    // return settings()->value(AUDIO_DESIRED_THREAD_NUMBER_KEY).toInt();
+    NOT_IMPLEMENTED;
+    return 0;
 }
 
 size_t AudioConfiguration::minTrackCountForMultithreading() const
@@ -267,12 +269,15 @@ async::Channel<io::paths_t> AudioConfiguration::soundFontDirectoriesChanged() co
 
 bool AudioConfiguration::autoProcessOnlineSoundsInBackground() const
 {
-    return settings()->value(ONLINE_SOUNDS_PROCESS_IN_BACKGROUND).toBool();
+    // return settings()->value(ONLINE_SOUNDS_PROCESS_IN_BACKGROUND).toBool();
+    NOT_IMPLEMENTED;
+    return false;
 }
 
 void AudioConfiguration::setAutoProcessOnlineSoundsInBackground(bool value)
 {
-    settings()->setSharedValue(ONLINE_SOUNDS_PROCESS_IN_BACKGROUND, Val(value));
+    // settings()->setSharedValue(ONLINE_SOUNDS_PROCESS_IN_BACKGROUND, Val(value));
+    NOT_IMPLEMENTED;
 }
 
 async::Channel<bool> AudioConfiguration::autoProcessOnlineSoundsInBackgroundChanged() const
@@ -282,7 +287,9 @@ async::Channel<bool> AudioConfiguration::autoProcessOnlineSoundsInBackgroundChan
 
 bool AudioConfiguration::shouldMeasureInputLag() const
 {
-    return settings()->value(AUDIO_MEASURE_INPUT_LAG).toBool();
+    // return settings()->value(AUDIO_MEASURE_INPUT_LAG).toBool();
+    NOT_IMPLEMENTED;
+    return false;
 }
 
 void AudioConfiguration::updateSamplesToPreallocate()
