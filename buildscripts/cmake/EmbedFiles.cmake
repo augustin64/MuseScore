@@ -34,7 +34,7 @@ set(_preload_files
     fonts/bravura/Bravura.woff2
     fonts/bravura/metadata.json
     
-    fonts/mscore/mscore.woff2
+    fonts/mscore/MScore.woff2
     fonts/mscore/metadata.json
 
     fonts/gootville/Gootville.woff2
