@@ -86,8 +86,10 @@ jobs:
         with:
           path: ${{env.EM_CACHE_FOLDER}}
           key: emsdk-${{env.EM_VERSION}}-${{ runner.os }}
-      - name: Apply patches for emscripten
+      - name: Apply patches for Qt and emscripten
         run: |
+          cp --verbose -r buildscripts/qt/* build.qt6/Qt/${Qt6_VER}/wasm_32/
+          find build.qt6/Qt/${Qt6_VER}/wasm_32/lib/cmake/Qt6Gui/ -name 'Qt6QWasmIntegration*' -delete
           echo $(which emcc).py
           sed -i -r "s/(shared.Settings.MEM_INIT_IN_WASM = )True/\1False/" "$(which emcc).py"
       - name: Install ccache
