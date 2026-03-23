@@ -23,8 +23,6 @@ set(MODULE_SRC
 
     ${MU_ROOT}/src/playback/internal/playbackcontroller.cpp
     ${MU_ROOT}/src/playback/internal/playbackcontroller.h
-    ${MU_ROOT}/src/playback/internal/onlinesoundscontroller.cpp
-    ${MU_ROOT}/src/playback/internal/onlinesoundscontroller.h
     ${MU_ROOT}/src/playback/internal/soundprofilesrepository.cpp
     ${MU_ROOT}/src/playback/internal/soundprofilesrepository.h
     ${MU_ROOT}/src/playback/internal/drumsetloader.cpp
