@@ -106,7 +106,7 @@ void _init(int argc, char** argv) {
     // writers->reg({ engraving::MSCX }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Dir));
     writers->reg({ engraving::MSCS }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::XmlFile));
 
-    MainAudio::initModule();
+    // MainAudio::initModule();
 }
 
 /**
