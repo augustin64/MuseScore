@@ -21,6 +21,8 @@
  */
 #include "notationconfiguration.h"
 
+#include <QFontDatabase>
+
 #include "engraving/dom/mscore.h"
 
 #include "log.h"
@@ -738,14 +740,13 @@ Notification NotationConfiguration::mouseZoomPrecisionChanged() const
 
 std::string NotationConfiguration::fontFamily() const
 {
-    return "ScoreText";
-    // return uiConfiguration()->fontFamily();
+    return QFontDatabase::systemFont(QFontDatabase::GeneralFont).family().toStdString();
 }
 
 int NotationConfiguration::fontSize() const
 {
-    NOT_IMPLEMENTED;
-    // return uiConfiguration()->fontSize(FontSizeType::BODY);
+    const int size = QFontDatabase::systemFont(QFontDatabase::GeneralFont).pointSize();
+    return size > 0 ? size : 12;
 }
 
 muse::io::path_t NotationConfiguration::userStylesPath() const

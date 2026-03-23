@@ -47,6 +47,8 @@ using project::INotationWriter;
 std::set<engraving::EngravingProjectPtr> instances;
 static auto s_globalContext = std::make_shared<context::GlobalContext>();
 
+static void loadFonts();
+
 /**
  * MSCZ/MSCX file format version
  */
@@ -61,6 +63,7 @@ void _init(int argc, char** argv) {
     setenv("QT_QPA_PLATFORM", "offscreen", 1); // https://stackoverflow.com/a/70978934
     setenv("QT_QPA_FONTDIR", "/fonts", 1);
     new QGuiApplication(argc, argv);
+    loadFonts();
 
     modularity::globalIoc()->registerExport<context::IGlobalContext>("", s_globalContext);
     modularity::globalIoc()->registerExport<notation::INotationConfiguration>("", new notation::NotationConfiguration());
@@ -120,6 +123,39 @@ bool _addFont(const char* fontPath) {
     } else {
         return true;
     }
+}
+
+/**
+ * Loads the embedded fonts explicitely
+ * (setting QT_QPA_FONTDIR to /fonts doesn't seem to be enough)
+ */
+static void loadFonts() {
+    const char* embeddedFonts[] = {
+        "/fonts/FreeSerif.woff2",
+        "/fonts/FreeSerifBold.woff2",
+        "/fonts/FreeSerifItalic.woff2",
+        "/fonts/FreeSerifBoldItalic.woff2",
+        "/fonts/FreeSans.woff2",
+        "/fonts/edwin/Edwin-Roman.woff2",
+        "/fonts/edwin/Edwin-Bold.woff2",
+        "/fonts/edwin/Edwin-Italic.woff2",
+        "/fonts/edwin/Edwin-BdIta.woff2",
+        "/fonts/leland/LelandText.woff2",
+        "/fonts/musejazz/MuseJazzText.woff2",
+        "/fonts/mscore/MScoreText.woff2",
+        "/fonts/gootville/GootvilleText.woff2",
+        "/fonts/bravura/BravuraText.woff2",
+        "/fonts/petaluma/PetalumaText.woff2",
+    };
+
+    int missedCount = 0;
+    int totalCount = (sizeof(embeddedFonts) / sizeof(embeddedFonts[0]));
+    for (const char* fontPath : embeddedFonts) {
+        if (!_addFont(fontPath))
+            missedCount++;
+    }
+
+    LOGI() << "Fonts loaded: " << totalCount - missedCount << "/" << totalCount;
 }
 
 /**
