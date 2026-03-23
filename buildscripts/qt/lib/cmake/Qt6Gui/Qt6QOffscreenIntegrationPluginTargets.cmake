@@ -86,7 +86,6 @@ set_target_properties(Qt6::QOffscreenIntegrationPlugin_init PROPERTIES
   IMPORTED_OBJECTS_RELEASE "${_IMPORT_PREFIX}/./plugins/platforms/objects-Release/QOffscreenIntegrationPlugin_init/QOffscreenIntegrationPlugin_init.cpp.o"
   )
 
-message(WARNING "IMPORT PREFIX: ${_IMPORT_PREFIX}")
 list(APPEND _cmake_import_check_files_for_Qt6::QOffscreenIntegrationPlugin_init "${_IMPORT_PREFIX}/./plugins/platforms/objects-Release/QOffscreenIntegrationPlugin_init/QOffscreenIntegrationPlugin_init.cpp.o" )
 
 # Make sure the targets which have been exported in some other
