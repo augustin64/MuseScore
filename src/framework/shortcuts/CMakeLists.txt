@@ -79,7 +79,7 @@ if (OS_IS_MAC)
     )
 endif(OS_IS_MAC)
 
-list(APPEND MODULE_LINK Qt::Qml)
+list(APPEND MODULE_LINK Qt::Gui Qt::Qml)
 
 setup_module()
 

@@ -21,7 +21,7 @@
  */
 #pragma once
 
-// #include <QPixmap>
+#include <QPixmap>
 #include <QDate>
 #include <unordered_set>
 

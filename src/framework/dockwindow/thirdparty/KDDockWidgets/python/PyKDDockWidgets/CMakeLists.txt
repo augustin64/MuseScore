@@ -49,6 +49,7 @@ set(PyKDDockWidgets_target_include_directories
 set(PyKDDockWidgets_target_link_libraries
     KDAB::kddockwidgets
     Qt${Qt_VERSION_MAJOR}::Core
+    Qt${Qt_VERSION_MAJOR}::Gui
     Qt${Qt_VERSION_MAJOR}::Widgets
     ${Python3_LIBRARIES}
 )

@@ -120,7 +120,7 @@ if (MUSE_MODULE_DRAW_TRACE)
 endif()
 
 if (QT_SUPPORT)
-    list(APPEND MODULE_LINK Qt::Svg)
+    list(APPEND MODULE_LINK Qt::Gui Qt::Svg)
 endif()
 
 setup_module()

@@ -27,7 +27,7 @@
 #include "geometry.h"
 
 #ifndef NO_QT_SUPPORT
-// #include <QPixmap>
+#include <QPixmap>
 #include <QImage>
 #include <QBuffer>
 #endif
@@ -83,8 +83,6 @@ public:
 
     static Pixmap fromQPixmap(const QPixmap& qpx)
     {
-        (void)qpx;
-#if 0
         QByteArray bytes;
         QBuffer buffer(&bytes);
         buffer.open(QIODevice::WriteOnly);
@@ -94,11 +92,8 @@ public:
         px.setData(ByteArray::fromQByteArray(bytes));
 
         return px;
-#endif
-        return Pixmap();
     }
 
-#if 0
     static QPixmap toQPixmap(const Pixmap& px)
     {
         QPixmap qpx(px.width(), px.height());
@@ -108,7 +103,7 @@ public:
         }
         return qpx;
     }
-#endif
+
 #endif
 
 private:

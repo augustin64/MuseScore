@@ -423,7 +423,7 @@ QColor NotationConfiguration::notationColor() const
 
 QColor NotationConfiguration::backgroundColor() const
 {
-    NOT_IMPLEMENTED;
+    return Color::WHITE.toQColor();
 #if 0
     if (uiConfiguration()->currentTheme().codeKey == LIGHT_THEME_CODE) {
         return settings()->value(LIGHT_SCORE_BACKGROUND_COLOR).toQColor();
@@ -738,7 +738,7 @@ Notification NotationConfiguration::mouseZoomPrecisionChanged() const
 
 std::string NotationConfiguration::fontFamily() const
 {
-    NOT_IMPLEMENTED;
+    return "ScoreText";
     // return uiConfiguration()->fontFamily();
 }
 

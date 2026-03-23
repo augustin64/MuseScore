@@ -241,7 +241,7 @@ SizeF EngravingConfiguration::defaultPageSize() const
 
 muse::String EngravingConfiguration::iconsFontFamily() const
 {
-    NOT_IMPLEMENTED;
+    return String::fromStdString("");
     // return String::fromStdString(uiConfiguration()->iconsFontFamily());
 }
 

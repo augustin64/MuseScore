@@ -21,7 +21,7 @@
 #include "widgets/TabWidgetWidget_p.h"
 #endif
 
-// #include <QPixmap>
+#include <QPixmap>
 #include <QPainter>
 
 using namespace KDDockWidgets;

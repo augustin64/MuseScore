@@ -36,7 +36,7 @@ public:
 
     std::string outputDevice() const override;
     bool selectOutputDevice(const std::string& name) override;
-    AudioDeviceList availableOutputDevices() const override;
+    std::vector<std::string> availableOutputDevices() const override;
     async::Notification availableOutputDevicesChanged() const override;
     void resume() override;
     void suspend() override;
