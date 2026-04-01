@@ -4,7 +4,7 @@
 #include "context/iglobalcontext.h"
 #include "modularity/ioc.h"
 
-#include "audio/main/internal/playback.h"
+#include "audio/common/rpc/irpcchannel.h"
 #include "audio/worker/internal/audioengine.h"
 #include "audio/worker/internal/workerplayback.h"
 
@@ -48,20 +48,27 @@ Synth Synth::start(MainScore score, float starttime) {
     static const size_t channels = 2;
     static const size_t sampleRate = 44100;
 
+    auto rpcChannel = modularity::globalIoc()->resolve<audio::rpc::IRpcChannel>("");
+
     // Wait async ticks, otherwise `sequenceIdList` is empty
     //  previous `Playback::addSequence()` is a `Promise`
-    async::processEvents();
+    for (int i=0; i < 3; i++) {
+        async::processEvents();
+        rpcChannel->process();
+    }
     //  resolve `totalDuration`
     async::processEvents();
 
-    auto playback = modularity::globalIoc()->resolve<audio::Playback>("");
+    auto playbackController = modularity::globalIoc()->resolve<playback::IPlaybackController>("");
     auto worker_playback = modularity::globalIoc()->resolve<audio::worker::WorkerPlayback>("");
     auto audio_engine = modularity::globalIoc()->resolve<audio::worker::IAudioEngine>("");
-    IF_ASSERT_FAILED (worker_playback->getSequences().size() > 0) {
+
+    const auto sequenceId = playbackController->currentTrackSequenceId();
+    IF_ASSERT_FAILED(sequenceId != -1) {
         LOGE() << "no playback sequence found!";
         return nullptr;
     }
-    auto sequence = worker_playback->getSequences().at(0); // use only the first `sequence`
+    auto sequence = worker_playback->sequence(sequenceId);
 
     // Seek
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/worker/audiooutputhandler.cpp#L200-L201

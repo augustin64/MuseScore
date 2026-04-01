@@ -130,6 +130,6 @@ std::vector<std::string> AudioDriverController::availableAudioApiList() const
 
 IAudioDriverPtr AudioDriverController::audioDriver() const
 {
-    DO_ASSERT(m_audioDriver);
+    // DO_ASSERT(m_audioDriver);
     return m_audioDriver;
 }

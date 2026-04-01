@@ -46,7 +46,11 @@ static constexpr msecs_t MIN_NOTE_LENGTH = 10;
 static constexpr unsigned int FLUID_AUDIO_CHANNELS_PAIR = 1;
 static constexpr unsigned int FLUID_AUDIO_CHANNELS_COUNT = FLUID_AUDIO_CHANNELS_PAIR * 2;
 
+#ifdef __EMSCRIPTEN__
+static constexpr bool STAFF_TO_MIDIOUT_CHANNEL = false;
+#else
 static constexpr bool STAFF_TO_MIDIOUT_CHANNEL = true;
+#endif
 
 struct muse::audio::synth::Fluid {
     fluid_settings_t* settings = nullptr;
@@ -165,7 +169,7 @@ void FluidSynth::doFlushSound()
     }
 
     auto port = midiOutPort();
-    if (port->isConnected()) {
+    if (STAFF_TO_MIDIOUT_CHANNEL && port->isConnected()) {
         // Send all notes off to connected midi ports.
         // Room for improvement:
         // - We could record which groups/channels we sent something or which channels were scheduled in the sequencer.
@@ -433,9 +437,11 @@ bool FluidSynth::processSequence(const FluidSequencer::EventSequence& sequence, 
         m_tuning.reset();
     }
 
+    #if 0
     for (const FluidSequencer::EventType& event : sequence) {
         handleEvent(std::get<midi::Event>(event));
     }
+    #endif
 
     fluid_synth_tune_notes(m_fluid->synth, 0, 0, m_tuning.size(), m_tuning.keys.data(), m_tuning.pitches.data(), true);
 

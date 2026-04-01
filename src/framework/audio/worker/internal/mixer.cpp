@@ -50,6 +50,12 @@ void Mixer::init(size_t desiredAudioThreadNumber, size_t minTrackCountForMultith
 {
     ONLY_AUDIO_WORKER_THREAD;
 
+#ifdef __EMSCRIPTEN__
+    m_minTrackCountForMultithreading = 0;
+    AudioSanitizer::setMixerThreads({});
+    return;
+#endif
+
     m_taskScheduler = std::make_unique<TaskScheduler>(static_cast<thread_pool_size_t>(desiredAudioThreadNumber));
 
     if (!m_taskScheduler->setThreadsPriority(ThreadPriority::High)) {

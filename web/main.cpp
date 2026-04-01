@@ -109,7 +109,7 @@ void _init(int argc, char** argv) {
     // writers->reg({ engraving::MSCX }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::Dir));
     writers->reg({ engraving::MSCS }, std::make_shared<notation::MscNotationWriter>(engraving::MscIoMode::XmlFile));
 
-    // MainAudio::initModule();
+    MainAudio::initModule();
 }
 
 /**
@@ -267,7 +267,6 @@ WasmRes _load(const char* format, const char* data, const uint32_t size, bool do
     auto notationProj = std::make_shared<project::NotationProject>(modularity::globalCtx());
     notationProj->setupProject();
     notationProj->setPath(filePath);
-    s_globalContext->setCurrentProject(notationProj);
 
     // save smart pointer to keep the object alive
     auto proj = notationProj->m_engravingProject;
@@ -287,6 +286,9 @@ WasmRes _load(const char* format, const char* data, const uint32_t size, bool do
 
     engraving::MasterScore* score = proj->masterScore();
     notationProj->m_masterNotation->setMasterScore(score);
+
+    // Set project only after master score is attached
+    s_globalContext->setCurrentProject(notationProj);
 
     auto score_ptr = reinterpret_cast<uintptr_t>(score);
     return WasmRes(score_ptr);

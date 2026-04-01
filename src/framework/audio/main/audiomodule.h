@@ -79,6 +79,7 @@ private:
     std::shared_ptr<IAudioDriverController> m_audioDriverController;
 
     bool m_audioInited = false;
+    bool m_workerInitializedInline = false;
 };
 }
 

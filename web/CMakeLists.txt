@@ -44,6 +44,7 @@ add_definitions(
     -DENGRAVING_NO_INTERACTIVE
     -DDRAW_NO_QSVGRENDER           # QSvgRenderer (QtSvg) depends on QWidget in Qt5, this changes in Qt6
     -DMUE_ENABLE_AUDIO_EXPORT
+    -DMUE_BUILD_ENGRAVING_PLAYBACK
     # -DHAW_LOGGER_QT_SUPPORT
     -DQT_SUPPORT
     # -DHAW_PROFILER_ENABLED
@@ -54,6 +55,8 @@ add_definitions(
     -DMUSICXML_NO_VALIDATION
     -DMUSICXML_NO_INTERACTIVE
 )
+
+set(MUE_ENABLE_AUDIO_EXPORT ON)
 
 set(CMAKE_EXECUTABLE_SUFFIX ".lib.js")
 

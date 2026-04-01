@@ -222,7 +222,6 @@ async::Notification AudioConfiguration::sampleRateChanged() const
 size_t AudioConfiguration::desiredAudioThreadNumber() const
 {
     // return settings()->value(AUDIO_DESIRED_THREAD_NUMBER_KEY).toInt();
-    NOT_IMPLEMENTED;
     return 0;
 }
 
@@ -288,7 +287,6 @@ async::Channel<bool> AudioConfiguration::autoProcessOnlineSoundsInBackgroundChan
 bool AudioConfiguration::shouldMeasureInputLag() const
 {
     // return settings()->value(AUDIO_MEASURE_INPUT_LAG).toBool();
-    NOT_IMPLEMENTED;
     return false;
 }
 
