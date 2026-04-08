@@ -235,6 +235,16 @@ void AudioEngine::updateBufferConstraints()
         minSamplesToReserve = std::max(m_readBufferSize, m_renderConsts.minSamplesToReserveInRealtime);
     }
 
+    // AudioBuffer requires (0, DEFAULT_SIZE_PER_CHANNEL). (DEFAULT_SIZE_PER_CHANNEL defined in audiobuffer.cpp)
+    static constexpr samples_t MaxSamplesPerChannel = (1024 * 8) - 1;
+    if (minSamplesToReserve <= 0) {
+        minSamplesToReserve = 1;
+    } else if (minSamplesToReserve > MaxSamplesPerChannel) {
+        LOGW() << "AudioEngine::updateBufferConstraints: clamping minSamplesToReserve from "
+               << minSamplesToReserve << " to " << MaxSamplesPerChannel;
+        minSamplesToReserve = MaxSamplesPerChannel;
+    }
+
     m_buffer->setMinSamplesPerChannelToReserve(minSamplesToReserve);
     m_buffer->setRenderStep(minSamplesToReserve);
 }

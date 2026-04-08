@@ -241,16 +241,22 @@ bool FluidSynth::handleEvent(const midi::Event& event)
     }
     }
 
+    auto port = midiOutPort();
+    if (!port || !port->isConnected()) {
+        return ret == FLUID_OK;
+    }
+    LOGD() << "midiOutPort connected";
+
     if (STAFF_TO_MIDIOUT_CHANNEL && event.isChannelVoice()) {
         int staff = m_sequencer.lastStaff();
         if (staff >= 0) {
             int channel = staff % 16;
             midi::Event me(event);
             me.setChannel(channel);
-            midiOutPort()->sendEvent(me);
+            port->sendEvent(me);
         }
     } else {
-        midiOutPort()->sendEvent(event);
+        port->sendEvent(event);
     }
 
     return ret == FLUID_OK;
@@ -437,11 +443,9 @@ bool FluidSynth::processSequence(const FluidSequencer::EventSequence& sequence, 
         m_tuning.reset();
     }
 
-    #if 0
     for (const FluidSequencer::EventType& event : sequence) {
         handleEvent(std::get<midi::Event>(event));
     }
-    #endif
 
     fluid_synth_tune_notes(m_fluid->synth, 0, 0, m_tuning.size(), m_tuning.keys.data(), m_tuning.pitches.data(), true);
 
