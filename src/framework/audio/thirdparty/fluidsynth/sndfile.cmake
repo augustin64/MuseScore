@@ -15,7 +15,9 @@ add_library(sndfile
     ${LIBSND_PATH}/caf.c
     ${LIBSND_PATH}/file_io.c
     ${LIBSND_PATH}/ogg.c
-    # ${LIBSND_PATH}/ogg_vorbis.c
+	${LIBSND_PATH}/ogg_vorbis.c
+	${LIBSND_PATH}/ogg_vcomment.c
+	${CMAKE_CURRENT_LIST_DIR}/sndfile_stubs.c
     # ${LIBSND_PATH}/wav.c
 
     ${LIBSND_PATH}/broadcast.c
@@ -55,7 +57,7 @@ add_library(sndfile
 	${LIBSND_PATH}/aiff.c
 	${LIBSND_PATH}/avr.c
 	${LIBSND_PATH}/dwd.c
-	${LIBSND_PATH}/flac.c
+	# ${LIBSND_PATH}/flac.c
 	${LIBSND_PATH}/g72x.c
 	${LIBSND_PATH}/htk.c
 	${LIBSND_PATH}/ircam.c
@@ -84,7 +86,6 @@ add_library(sndfile
 	# ${LIBSND_PATH}/ogg_pcm.c
 	# ${LIBSND_PATH}/ogg_opus.c
 	# ${LIBSND_PATH}/ogg_vcomment.h
-	# ${LIBSND_PATH}/ogg_vcomment.c
 	${LIBSND_PATH}/nms_adpcm.c
 	${LIBSND_PATH}/mpeg.c
 	${LIBSND_PATH}/mpeg_decode.c
@@ -176,7 +177,7 @@ target_compile_definitions(sndfile PRIVATE
     CPU_CLIPS_POSITIVE=0
     CPU_CLIPS_NEGATIVE=0
     OS_IS_WIN32=0
-    HAVE_EXTERNAL_XIPH_LIBS=0
+    HAVE_EXTERNAL_XIPH_LIBS=1
 	HAVE_MPEG=0
     HAVE_UNISTD_H=1
     HAVE_FSTAT64=1
