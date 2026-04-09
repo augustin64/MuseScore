@@ -121,7 +121,7 @@ jobs:
           submodules: false
       - uses: actions/setup-node@v6
         with:
-          node-version: 12
+          node-version: 16
 
       - name: Download webmscore package tarball
         uses: actions/download-artifact@v8
@@ -165,7 +165,7 @@ jobs:
           submodules: false
       - uses: actions/setup-node@v6
         with:
-          node-version: 12
+          node-version: 16
           # https://docs.github.com/en/actions/publishing-packages/publishing-nodejs-packages#publishing-packages-to-the-npm-registry
           registry-url: https://registry.npmjs.org/
       - name: Download webmscore package tarball

@@ -38,6 +38,9 @@
     "homepage": "https://github.com/LibreScore/webmscore#readme",
     "author": "LibreScore",
     "license": "GPL",
+    "dependencies": {
+        "fake-indexeddb": "^4.0.2"
+    },
     "devDependencies": {
         "@babel/core": "^7.20.12",
         "@babel/preset-env": "^7.20.2",
