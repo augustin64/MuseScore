@@ -1,7 +1,6 @@
 #include "global/log.h"
 #include "async/processevents.h"
 
-#include "context/iglobalcontext.h"
 #include "modularity/ioc.h"
 
 #include "audio/common/rpc/irpcchannel.h"

@@ -27,6 +27,8 @@
 // #include <QThread>
 
 #include "async/processevents.h"
+#include "audio/common/rpc/irpcchannel.h"
+#include "modularity/ioc.h"
 #include "global/containers.h"
 
 #include "log.h"
@@ -107,6 +109,7 @@ Ret AbstractAudioWriter::doWriteAndWait(INotationPtr notation,
     playbackController()->setNotation(notation);
     playbackController()->setIsExportingAudio(true);
 
+#if 0
     Progress onlineSoundsProcessing = playbackController()->onlineSoundsProcessingProgress();
 
     if (onlineSoundsProcessing.isStarted()) {
@@ -122,17 +125,20 @@ Ret AbstractAudioWriter::doWriteAndWait(INotationPtr notation,
             doWrite(path, format, false /*startProgress*/);
         });
     } else {
+#endif
         doWrite(path, format);
-    }
+    // }
 
     m_progress.finished().onReceive(this, [this](const ProgressResult&) {
         playbackController()->setIsExportingAudio(false);
         playbackController()->setNotation(globalContext()->currentNotation());
     });
 
+    auto rpcChannel = modularity::globalIoc()->resolve<audio::rpc::IRpcChannel>("");
     while (!m_isCompleted) {
         // process async events
         async::processEvents(); // XXX: !important, otherwise promises won't run
+        rpcChannel->process();
 
         // qApp->processEvents();
         // QThread::yieldCurrentThread();

@@ -2,10 +2,12 @@
 
 #include <QGuiApplication>
 #include <QFontDatabase>
+#include <QFile>
 #include <QTemporaryFile>
 #include "global/log.h"
 #include "global/defer.h"
 #include "global/io/buffer.h"
+#include "global/io/file.h"
 
 #include "modularity/ioc.h"
 #include "context/internal/globalcontext.h"
@@ -563,8 +565,37 @@ WasmRes _saveAudio(uintptr_t score_ptr, const char* format, int excerptId) {
         throw QString("Invalid output format");
     }
 
-    QByteArray data;
-    processWriter(_format, score, &data);
+    // Audio export requires a real output path via IODevice meta("file_path").
+    QTemporaryFile tempfile("XXXXXX." + _format);
+    if (!tempfile.open()) {
+        throw QString("Cannot create a temporary file");
+    }
+    QString filePath = tempfile.fileName();
+    tempfile.close();
+
+    DEFER {
+        // delete the temporary file
+        tempfile.remove();
+    };
+
+    io::File outputFile(filePath.toStdString());
+    if (!outputFile.open(io::IODevice::WriteOnly)) {
+        return WasmRes::fromRet(make_ret(Ret::Code::InternalError));
+    }
+
+    outputFile.setMeta("file_path", filePath.toStdString());
+    Ret ret = processWriter(_format, score, outputFile);
+    outputFile.close();
+    if (!ret.success()) {
+        return WasmRes::fromRet(ret);
+    }
+
+    QFile file(filePath);
+    if (!file.open(QIODevice::ReadOnly)) {
+        return WasmRes::fromRet(make_ret(Ret::Code::InternalError));
+    }
+
+    QByteArray data = file.readAll();
     LOGI() << String(u"excerpt %1, size %2 bytes").arg(excerptId, data.size());
 
     return WasmRes(data);

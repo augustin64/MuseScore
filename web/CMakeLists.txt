@@ -43,7 +43,7 @@ add_definitions(
     -DENGRAVING_NO_QTEXTDOCUMENT
     -DENGRAVING_NO_INTERACTIVE
     -DDRAW_NO_QSVGRENDER           # QSvgRenderer (QtSvg) depends on QWidget in Qt5, this changes in Qt6
-    -DMUE_ENABLE_AUDIO_EXPORT
+    -DMUSE_MODULE_AUDIO_EXPORT
     -DMUE_BUILD_ENGRAVING_PLAYBACK
     # -DHAW_LOGGER_QT_SUPPORT
     -DQT_SUPPORT
@@ -57,6 +57,14 @@ add_definitions(
 )
 
 set(MUE_BUILD_ENGRAVING_PLAYBACK ON)
+set(MUSE_MODULE_AUDIO_EXPORT ON)
+
+# Opus' x86 intrinsic sources are not needed for wasm
+set(OPUS_DISABLE_INTRINSICS ON CACHE BOOL "Disable Opus intrinsics for Emscripten" FORCE)
+# Emscripten fails to resolve stack protector runtime symbols
+set(OPUS_STACK_PROTECTOR OFF CACHE BOOL "Disable Opus stack protector for Emscripten" FORCE)
+set(OPUS_FORTIFY_SOURCE OFF CACHE BOOL "Disable Opus fortify for Emscripten" FORCE)
+
 
 set(CMAKE_EXECUTABLE_SUFFIX ".lib.js")
 
