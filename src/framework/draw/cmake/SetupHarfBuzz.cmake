@@ -56,6 +56,12 @@ set(HB_HAVE_FREETYPE ON)
 
 add_subdirectory(${local_path}/harfbuzz harfbuzz)
 
+# In incremental/cache-reuse builds, harfbuzz can be rebuilt independently
+# from draw targets, so it must carry freetype includes explicitly.
+if (FREETYPE_INCLUDE_DIRS)
+    target_include_directories(harfbuzz PRIVATE ${FREETYPE_INCLUDE_DIRS})
+endif()
+
 target_no_warning(harfbuzz -Wno-conversion)
 target_no_warning(harfbuzz -Wno-unused-parameter)
 target_no_warning(harfbuzz -Wno-unused-variable)

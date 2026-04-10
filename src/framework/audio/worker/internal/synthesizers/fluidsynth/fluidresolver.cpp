@@ -56,10 +56,10 @@ ISynthesizerPtr FluidResolver::resolveSynth(const TrackId /*trackId*/, const Aud
 #endif
 
     FluidSynthPtr synth = std::make_shared<FluidSynth>(params, iocContext());
-#if 0
-    synth->addSoundFonts({ search->second.path });
-    synth->setPreset(search->second.preset);
-#endif
+
+    muse::io::path_t path = "/MS Basic.sf3";
+    synth->addSoundFonts({ path });
+    // synth->setPreset(search->second.preset);
 
     return synth;
 }

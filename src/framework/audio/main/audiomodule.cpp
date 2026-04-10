@@ -157,11 +157,11 @@ void AudioModule::onInit(const IApplication::RunMode& mode)
         return;
     }
 
-    std::static_pointer_cast<AudioDriverController>(m_audioDriverController)->init();
+    // std::static_pointer_cast<AudioDriverController>(m_audioDriverController)->init();
 
     m_workerModule->audioBuffer()->init(m_configuration->audioChannelsCount());
 
-    m_audioOutputController->init();
+    // m_audioOutputController->init();
 
     m_soundFontController->init();
 
@@ -198,9 +198,11 @@ void AudioModule::onDeinit()
     m_mainPlayback->deinit();
     m_rpcTimer.stop();
 
+#ifndef __EMSCRIPTEN__
     if (m_audioDriverController->audioDriver()->isOpened()) {
         m_audioDriverController->audioDriver()->close();
     }
+#endif
 }
 
 void AudioModule::onDestroy()
@@ -212,6 +214,10 @@ void AudioModule::onDestroy()
             ONLY_AUDIO_WORKER_THREAD;
             m_workerModule->onDestroy();
         });
+    } else if (m_workerInitializedInline) {
+        ONLY_AUDIO_WORKER_THREAD;
+        m_workerModule->onDestroy();
+        m_workerInitializedInline = false;
     }
 }
 
@@ -240,13 +246,15 @@ void AudioModule::setupAudioDriver(const IApplication::RunMode& mode)
     }
 
     if (mode == IApplication::RunMode::GuiApp) {
-        m_audioDriverController->audioDriver()->init();
+        // m_audioDriverController->audioDriver()->init();
 
         IAudioDriver::Spec activeSpec;
+        #ifndef __EMSCRIPTEN__
         if (m_audioDriverController->audioDriver()->open(requiredSpec, &activeSpec)) {
             setupAudioWorker(activeSpec);
             return;
         }
+        #endif
 
         LOGE() << "audio output open failed";
     }
@@ -295,6 +303,14 @@ void AudioModule::setupAudioWorker(const IAudioDriver::Spec& activeSpec)
         m_rpcChannel->process();
         m_workerModule->audioBuffer()->forward();
     };
+
+#ifdef __EMSCRIPTEN__
+    // WASM web builds may not have pthreads enabled, so std::thread can throw system_error.
+    // Initialize worker layer inline on the current thread.
+    workerSetup();
+    m_workerInitializedInline = true;
+    return;
+#endif
 
     msecs_t interval = m_configuration->audioWorkerInterval(activeSpec.samples, activeSpec.sampleRate);
     m_audioThread->run(workerSetup, workerLoopBody, interval);

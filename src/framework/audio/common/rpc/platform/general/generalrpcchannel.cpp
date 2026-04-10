@@ -53,6 +53,12 @@ void GeneralRpcChannel::process()
 {
     if (isWorkerThread()) {
         receive(m_mainRpcData, m_workerRpcData);
+
+        // In single-thread mode (web inline worker), worker and main run on the same thread.
+        // Drain the reverse direction as well so responses/notifications reach main-side handlers.
+        if (AudioSanitizer::isMainThread()) {
+            receive(m_workerRpcData, m_mainRpcData);
+        }
     } else {
         receive(m_workerRpcData, m_mainRpcData);
     }
@@ -121,6 +127,30 @@ void GeneralRpcChannel::send(const Msg& msg, const Handler& onResponse)
              << ", method: " << to_string(msg.method)
              << ", type: " << to_string(msg.type)
              << ", data.size: " << msg.data.size();
+
+    const bool singleThreadMode = AudioSanitizer::isMainThread() && isWorkerThread();
+
+    if (singleThreadMode) {
+        // In inline worker mode (web), main and worker share the same thread id.
+        // Route by message direction instead of thread id.
+        if (msg.type == MsgType::Request) {
+            std::scoped_lock<std::mutex> lock(m_mainRpcData.mutex);
+            m_mainRpcData.queue.push(msg);
+
+            if (onResponse) {
+                m_mainRpcData.onResponses[msg.callId] = onResponse;
+            }
+        } else {
+            std::scoped_lock<std::mutex> lock(m_workerRpcData.mutex);
+            m_workerRpcData.queue.push(msg);
+
+            if (onResponse) {
+                m_workerRpcData.onResponses[msg.callId] = onResponse;
+            }
+        }
+
+        return;
+    }
 
     if (isWorkerThread()) {
         std::scoped_lock<std::mutex> lock(m_workerRpcData.mutex);

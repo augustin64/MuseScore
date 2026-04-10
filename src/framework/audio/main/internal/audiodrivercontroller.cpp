@@ -44,7 +44,7 @@
 #include "audio/driver/platform/osx/osxaudiodriver.h"
 #endif
 
-#ifdef Q_OS_WASM
+#if defined(Q_OS_WASM) && 0
 #include "audio/driver/platform/web/webaudiodriver.h"
 #endif
 
@@ -130,6 +130,6 @@ std::vector<std::string> AudioDriverController::availableAudioApiList() const
 
 IAudioDriverPtr AudioDriverController::audioDriver() const
 {
-    DO_ASSERT(m_audioDriver);
+    // DO_ASSERT(m_audioDriver);
     return m_audioDriver;
 }

@@ -123,6 +123,8 @@ public:
 
     void clearAllFx() override;
 
+    inline std::map<TrackSequenceId, ITrackSequencePtr> getSequences() { return m_sequences; };
+
 private:
 
     std::shared_ptr<Mixer> mixer() const;

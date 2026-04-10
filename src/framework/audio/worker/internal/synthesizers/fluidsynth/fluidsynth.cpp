@@ -165,6 +165,9 @@ void FluidSynth::doFlushSound()
     }
 
     auto port = midiOutPort();
+    if (!port || !port->isConnected()) {
+        return;
+    }
     if (port->isConnected()) {
         // Send all notes off to connected midi ports.
         // Room for improvement:
@@ -237,16 +240,22 @@ bool FluidSynth::handleEvent(const midi::Event& event)
     }
     }
 
+    auto port = midiOutPort();
+    if (!port || !port->isConnected()) {
+        return ret == FLUID_OK;
+    }
+    LOGD() << "midiOutPort connected";
+
     if (STAFF_TO_MIDIOUT_CHANNEL && event.isChannelVoice()) {
         int staff = m_sequencer.lastStaff();
         if (staff >= 0) {
             int channel = staff % 16;
             midi::Event me(event);
             me.setChannel(channel);
-            midiOutPort()->sendEvent(me);
+            port->sendEvent(me);
         }
     } else {
-        midiOutPort()->sendEvent(event);
+        port->sendEvent(event);
     }
 
     return ret == FLUID_OK;

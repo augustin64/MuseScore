@@ -241,6 +241,7 @@ SizeF EngravingConfiguration::defaultPageSize() const
 
 muse::String EngravingConfiguration::iconsFontFamily() const
 {
+    return String::fromStdString("");
     // return String::fromStdString(uiConfiguration()->iconsFontFamily());
 }
 
@@ -292,6 +293,8 @@ Color EngravingConfiguration::noteBackgroundColor() const
 
 Color EngravingConfiguration::fontPrimaryColor() const
 {
+    NOT_IMPLEMENTED;
+    return Color::BLACK;
     // return Color(uiConfiguration()->currentTheme().values[muse::ui::ThemeStyleKey::FONT_PRIMARY_COLOR].toString());
 }
 
@@ -302,6 +305,8 @@ Color EngravingConfiguration::voiceColor(voice_idx_t voiceIdx) const
 
 double EngravingConfiguration::guiScaling() const
 {
+    NOT_IMPLEMENTED;
+    return 1.;
     // return uiConfiguration()->guiScaling();
 }
 
@@ -427,16 +432,20 @@ muse::async::Channel<Color> EngravingConfiguration::unlinkedColorChanged() const
 
 const IEngravingConfiguration::DebuggingOptions& EngravingConfiguration::debuggingOptions() const
 {
+    NOT_IMPLEMENTED;
     // return m_debuggingOptions.val;
 }
 
 void EngravingConfiguration::setDebuggingOptions(const DebuggingOptions& options)
 {
+    (void)options;
+    NOT_IMPLEMENTED;
     // m_debuggingOptions.set(options);
 }
 
 muse::async::Notification EngravingConfiguration::debuggingOptionsChanged() const
 {
+    NOT_IMPLEMENTED;
     // return m_debuggingOptions.notification;
 }
 

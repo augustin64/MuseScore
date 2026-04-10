@@ -18,11 +18,11 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-if (NOT FREETYPE_INCLUDED)
-declare_thirdparty_module(freetype)
-
 set(FREETYPE_DIR ${CMAKE_CURRENT_LIST_DIR}/freetype-2.13.1)
 set(FREETYPE_BINARY_DIR ${CMAKE_CURRENT_BINARY_DIR}/freetype-2.13.1)
+
+if (NOT TARGET freetype)
+declare_thirdparty_module(freetype)
 
 # Based on the info from ${FREETYPE_DIR}/docs/INSTALL.ANY and ${FREETYPE_DIR}/CMakeLists.txt
 
@@ -187,10 +187,6 @@ set(MODULE_USE_COVERAGE OFF)
 
 setup_module()
 
-# Export variables
-set(FREETYPE_LIBRARIES freetype PARENT_SCOPE)
-set(FREETYPE_INCLUDE_DIRS ${FREETYPE_DIR}/include PARENT_SCOPE)
-
 target_no_warning(${MODULE} -WMSVC-no-signed-unsigned-mismatch)
 target_no_warning(${MODULE} -Wno-float-conversion)
 target_no_warning(${MODULE} -Wno-conversion)
@@ -198,5 +194,9 @@ target_no_warning(${MODULE} -WMSVC-no-assignment-within-conditional-expression)
 
 set(FREETYPE_INCLUDED TRUE CACHE INTERNAL "FreeType has been built")
 else()
-message(STATUS "FreeType has already been built, skipping.")
+message(STATUS "FreeType target already exists, skipping.")
 endif()
+
+# Export variables for both fresh and cache-reuse configurations.
+set(FREETYPE_LIBRARIES freetype PARENT_SCOPE)
+set(FREETYPE_INCLUDE_DIRS ${FREETYPE_DIR}/include PARENT_SCOPE)

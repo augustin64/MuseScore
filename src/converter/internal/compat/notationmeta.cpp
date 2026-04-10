@@ -27,6 +27,7 @@
 #include <QJsonObject>
 #include <QJsonDocument>
 
+#include "engraving/dom/tempotext.h"
 
 #include "project/inotationproject.h"
 
@@ -130,7 +131,17 @@ RetVal<std::string> NotationMeta::metaJson(INotationProjectPtr project)
     }
 
     mu::engraving::Score* score = project->masterNotation()->notation()->elements()->msScore();
-    return metaJson(score);
+    RetVal<std::string> result = metaJson(score);
+    if (!result.ret) {
+        return result;
+    }
+
+    QJsonDocument doc = QJsonDocument::fromJson(QByteArray::fromStdString(result.val));
+    QJsonObject json = doc.object();
+    json["tracks"] = tracksJsonArray(project);
+    result.val = QJsonDocument(json).toJson().toStdString();
+
+    return result;
 }
 
 RetVal<std::string> NotationMeta::metaJson(mu::engraving::Score* score)
@@ -164,7 +175,7 @@ RetVal<std::string> NotationMeta::metaJson(mu::engraving::Score* score)
     json["parts"] =  partsJsonArray(score);
     json["pageFormat"] = pageFormatJson(score->style());
     json["textFramesData"] =  typeDataJson(score);
-    json["tracks"] = tracksJsonArray(project);
+    json["tracks"] = QJsonArray(); // loaded in metaJson(project)
     json["excerpts"] = excerptsJsonArray(score);
 
     RetVal<std::string> result;

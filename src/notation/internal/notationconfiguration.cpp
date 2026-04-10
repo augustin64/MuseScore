@@ -21,6 +21,8 @@
  */
 #include "notationconfiguration.h"
 
+#include <QFontDatabase>
+
 #include "engraving/dom/mscore.h"
 
 #include "log.h"
@@ -34,7 +36,6 @@ using namespace mu::notation;
 using namespace muse;
 using namespace muse::async;
 using namespace muse::draw;
-using namespace muse::ui;
 
 static const std::string module_name("notation");
 
@@ -424,7 +425,7 @@ QColor NotationConfiguration::notationColor() const
 
 QColor NotationConfiguration::backgroundColor() const
 {
-    NOT_IMPLEMENTED;
+    return Color::WHITE.toQColor();
 #if 0
     if (uiConfiguration()->currentTheme().codeKey == LIGHT_THEME_CODE) {
         return settings()->value(LIGHT_SCORE_BACKGROUND_COLOR).toQColor();
@@ -440,6 +441,7 @@ QColor NotationConfiguration::backgroundColor() const
 
 void NotationConfiguration::setBackgroundColor(const QColor& color)
 {
+    (void)color;
     NOT_IMPLEMENTED;
 #if 0
     if (uiConfiguration()->currentTheme().codeKey == LIGHT_THEME_CODE) {
@@ -739,14 +741,13 @@ Notification NotationConfiguration::mouseZoomPrecisionChanged() const
 
 std::string NotationConfiguration::fontFamily() const
 {
-    NOT_IMPLEMENTED;
-    // return uiConfiguration()->fontFamily();
+    return QFontDatabase::systemFont(QFontDatabase::GeneralFont).family().toStdString();
 }
 
 int NotationConfiguration::fontSize() const
 {
-    NOT_IMPLEMENTED;
-    // return uiConfiguration()->fontSize(FontSizeType::BODY);
+    const int size = QFontDatabase::systemFont(QFontDatabase::GeneralFont).pointSize();
+    return size > 0 ? size : 12;
 }
 
 muse::io::path_t NotationConfiguration::userStylesPath() const
