@@ -47,7 +47,7 @@ set(MODULE_LINK
     )
 
 if (QT_SUPPORT)
-    list(APPEND MODULE_LINK Qt::Core Qt::Core5Compat)
+    list(APPEND MODULE_LINK Qt::Core5Compat)
 endif()
 
 setup_module()

@@ -441,6 +441,7 @@ QColor NotationConfiguration::backgroundColor() const
 
 void NotationConfiguration::setBackgroundColor(const QColor& color)
 {
+    (void)color;
     NOT_IMPLEMENTED;
 #if 0
     if (uiConfiguration()->currentTheme().codeKey == LIGHT_THEME_CODE) {

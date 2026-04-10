@@ -37,8 +37,6 @@ set(MODULE_SRC
     ${MU_ROOT}/src/notation/internal/excerptnotation.h
     ${MU_ROOT}/src/notation/internal/notationplayback.cpp
     ${MU_ROOT}/src/notation/internal/notationplayback.h
-    ${MU_ROOT}/src/notation/internal/notationplaybackstub.cpp
-    ${MU_ROOT}/src/notation/internal/notationplaybackstub.h
     ${MU_ROOT}/src/notation/internal/masternotationparts.cpp
     ${MU_ROOT}/src/notation/internal/masternotationparts.h
     ${MU_ROOT}/src/notation/internal/notationparts.cpp

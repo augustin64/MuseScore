@@ -44,7 +44,7 @@
 #include "audio/driver/platform/osx/osxaudiodriver.h"
 #endif
 
-#ifdef Q_OS_WASM
+#if defined(Q_OS_WASM) && 0
 #include "audio/driver/platform/web/webaudiodriver.h"
 #endif
 

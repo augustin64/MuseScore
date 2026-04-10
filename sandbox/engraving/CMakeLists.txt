@@ -19,7 +19,7 @@ set(CMAKE_MODULE_PATH
 include(SetupBuildEnvironment)
 include(GetPlatformInfo)
 
-find_package(Qt6 6.3 REQUIRED COMPONENTS Core)
+find_package(Qt6 6.3 REQUIRED COMPONENTS Core Gui)
 
 qt_standard_project_setup()
 
@@ -68,4 +68,5 @@ target_link_libraries(engraving_app
     global
     engraving
     Qt6::Core
+    Qt6::Gui
 )
