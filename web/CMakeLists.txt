@@ -26,7 +26,7 @@ set(QT_SUPPORT ON)
 # include(SetupBuildEnvironment)
 include(GetPlatformInfo)
 include(SetupCompileWarnings)
-include(TryUseCcache)
+include(SetupCompilerCache)
 
 include_directories(
     ${CMAKE_CURRENT_LIST_DIR}
@@ -46,6 +46,9 @@ add_definitions(
     -DNDEBUG
     -DQT_NO_DEBUG
     -DCUSTOM_ALLOCATOR_DISABLED    # the custom memory allocator malfunctions ('memory access out of bounds') when destroying and re-creating a new `WebMscore` instance, so disable it
+
+    -DMUSICXML_NO_VALIDATION
+    -DMUSICXML_NO_INTERACTIVE
 )
 
 set(CMAKE_EXECUTABLE_SUFFIX ".lib.js")

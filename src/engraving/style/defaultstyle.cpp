@@ -1,11 +1,11 @@
 /*
  * SPDX-License-Identifier: GPL-3.0-only
- * MuseScore-CLA-applies
+ * MuseScore-Studio-CLA-applies
  *
- * MuseScore
+ * MuseScore Studio
  * Music Composition & Notation
  *
- * Copyright (C) 2021 MuseScore BVBA and others
+ * Copyright (C) 2021 MuseScore Limited
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 3 as
@@ -26,9 +26,10 @@
 #include "log.h"
 
 using namespace mu;
-using namespace mu::io;
+using namespace muse::io;
 using namespace mu::engraving;
 
+static const int LEGACY_MSC_VERSION_V450 = 450;
 static const int LEGACY_MSC_VERSION_V302 = 302;
 static const int LEGACY_MSC_VERSION_V3 = 301;
 static const int LEGACY_MSC_VERSION_V2 = 206;
@@ -55,14 +56,12 @@ static void applyPageSizeToStyle(MStyle* style, const SizeF& pageSize)
     style->set(Sid::pagePrintableWidth, newPrintableWidth);
 }
 
-void DefaultStyle::init(const path_t& defaultStyleFilePath, const path_t& partStyleFilePath)
+void DefaultStyle::init(const path_t& defaultStyleFilePath, const path_t& partStyleFilePath, const SizeF& defaultPageSize)
 {
     m_baseStyle.precomputeValues();
 
-    SizeF pageSize = engravingConfiguration()->defaultPageSize();
-
     {
-        applyPageSizeToStyle(&m_defaultStyle, pageSize);
+        applyPageSizeToStyle(&m_defaultStyle, defaultPageSize);
 
         if (!defaultStyleFilePath.empty()) {
             bool ok = doLoadStyle(&m_defaultStyle, defaultStyleFilePath);
@@ -77,7 +76,7 @@ void DefaultStyle::init(const path_t& defaultStyleFilePath, const path_t& partSt
     if (!partStyleFilePath.empty()) {
         m_defaultStyleForParts = new MStyle();
 
-        applyPageSizeToStyle(m_defaultStyleForParts, pageSize);
+        applyPageSizeToStyle(m_defaultStyleForParts, defaultPageSize);
 
         bool ok = doLoadStyle(m_defaultStyleForParts, partStyleFilePath);
         if (!ok) {
@@ -130,6 +129,11 @@ const MStyle& DefaultStyle::resolveStyleDefaults(const int defaultsVersion)
     };
 
     switch (defaultsVersion) {
+    case LEGACY_MSC_VERSION_V450: {
+        static MStyle style_v450;
+        static bool loaded_v450 = false;
+        return loadedStyle(style_v450, LEGACY_MSS_V450_PATH, loaded_v450);
+    } break;
     case LEGACY_MSC_VERSION_V302: {
         static MStyle style_v302;
         static bool loaded_v302 = false;

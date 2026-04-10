@@ -9,6 +9,7 @@ MU_ROOT	  := $(dir ${CURDIR})
 export CMAKE_PREFIX_PATH	=	../../build.qt5/5.15.2/wasm_32
 
 # setup ccache
+export CCACHE_CPP2          =   true
 export CCACHE_BASEDIR		=	${MU_ROOT}
 export CCACHE_DIR			=	${MU_ROOT}/.ccache
 export CCACHE_COMPRESS		=	true
