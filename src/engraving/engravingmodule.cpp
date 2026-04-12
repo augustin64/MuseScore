@@ -80,7 +80,8 @@ using namespace muse::draw;
 static void engraving_init_qrc()
 {
 #ifndef NO_QT_SUPPORT
-    // Q_INIT_RESOURCE(engraving);
+#ifndef __EMSCRIPTEN__
+    Q_INIT_RESOURCE(engraving);
 
     Q_INIT_RESOURCE(fonts_Leland);
     Q_INIT_RESOURCE(fonts_Bravura);
@@ -96,6 +97,7 @@ static void engraving_init_qrc()
     Q_INIT_RESOURCE(fonts_FinaleMaestro);
     Q_INIT_RESOURCE(fonts_FinaleBroadway);
     Q_INIT_RESOURCE(fonts_Tabulature);
+#endif
 #endif
 }
 
