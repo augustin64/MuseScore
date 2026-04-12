@@ -19,6 +19,7 @@
 # along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
 declare_module(engraving)
+if (NOT EMSCRIPTEN)
 set(MODULE_QRC
     engraving.qrc
     ${CMAKE_CURRENT_LIST_DIR}/data/fonts/fonts_Smufl.qrc
@@ -39,6 +40,7 @@ set(MODULE_BIG_QRC
     ${CMAKE_CURRENT_LIST_DIR}/data/fonts/fonts_FinaleBroadway.qrc
     ${CMAKE_CURRENT_LIST_DIR}/data/fonts/fonts_Tabulature.qrc
     )
+endif()
 
 include(${CMAKE_CURRENT_LIST_DIR}/dom/dom.cmake)
 include(${CMAKE_CURRENT_LIST_DIR}/compat/midi/compatmidi.cmake)
