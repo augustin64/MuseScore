@@ -72,7 +72,7 @@ Synth Synth::start(MainScore score, float starttime) {
     // Seek
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/worker/audiooutputhandler.cpp#L200-L201
     sequence->player()->stop();
-    sequence->player()->seek(starttime * 1000); // get ms
+    sequence->player()->seek_ms(starttime * 1000 * 1000); // get microsecs
 
     // Setup audio source
     // https://github.com/LibreScore/webmscore/blob/v4.0/src/framework/audio/internal/soundtracks/soundtrackwriter.cpp#L73-L76
