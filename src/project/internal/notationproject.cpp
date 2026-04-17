@@ -440,7 +440,8 @@ muse::async::Notification NotationProject::displayNameChanged() const
 
 bool NotationProject::isCloudProject() const
 {
-    return configuration()->isCloudProject(m_path);
+    return false;
+    // return configuration()->isCloudProject(m_path);
 }
 
 const CloudProjectInfo& NotationProject::cloudInfo() const
