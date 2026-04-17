@@ -58,7 +58,7 @@ bool Writer::writeScore(Score* score, io::IODevice* device, rw::WriteInOutData* 
 
     xml.startElement("museScore", { { "version", Constants::MSC_VERSION_STR } });
 
-    if (!MScore::testMode) {
+    if (!MScore::testMode && false) {
         xml.tag("programVersion", application()->version().toString());
         xml.tag("programRevision", application()->revision());
     }
@@ -70,8 +70,8 @@ bool Writer::writeScore(Score* score, io::IODevice* device, rw::WriteInOutData* 
 
     if (!inout || !inout->ctx.shouldWriteRange()) {
         //update version values for i.e. plugin access
-        score->m_mscoreVersion = application()->version().toString();
-        score->m_mscoreRevision = application()->revision().toInt(nullptr, 16);
+        // score->m_mscoreVersion = application()->version().toString();
+        // score->m_mscoreRevision = application()->revision().toInt(nullptr, 16);
         score->m_mscVersion = Constants::MSC_VERSION;
     }
 
