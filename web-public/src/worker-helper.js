@@ -292,6 +292,23 @@ class WebMscoreW {
     }
 
     /**
+     * Read synthesis output params (master + tracks) for the current sequence.
+     * @returns {Promise<import('../schemas').AudioOutputParamsSnapshot>}
+     */
+    getAudioOutputParams() {
+        return this.rpc('getAudioOutputParams')
+    }
+
+    /**
+     * Patch synthesis output params.
+     * @param {import('../schemas').AudioOutputParamsPatchRequest} patch
+     * @returns {Promise<void>}
+     */
+    setAudioOutputParams(patch) {
+        return this.rpc('setAudioOutputParams', [patch])
+    }
+
+    /**
      * Export positions of measures or segments (if `ofSegments` == true) as JSON string
      * @param {boolean} ofSegments
      * @also `score.measurePositions()` and `score.segmentPositions()`

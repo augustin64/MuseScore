@@ -168,10 +168,10 @@ public:
 
     std::string toString() const;
 
+    std::map<std::string, std::any> m_data;
 private:
     int m_code = int(Code::Undefined);
     std::string m_text;
-    std::map<std::string, std::any> m_data;
 };
 
 inline muse::Ret make_ok()

@@ -38,6 +38,11 @@ public:
     const char* processBatch(int batchSize, bool cancel);
 
     /**
+     * Ensures sequenceId is defined, and returns it
+     */
+    static muse::audio::TrackSequenceId getSequenceId();
+
+    /**
      * synthesize audio frames
      * @param starttime The start time offset in seconds
      */

@@ -35,11 +35,7 @@ public:
         return (WasmResBytes)reallocData(m_buffer.data());
     }
 
-    static WasmRes fromRet(Ret ret) {
-        // set data to the error message
-        ByteArray data = String::fromStdString(ret.toString()).toUtf8();
-        return WasmRes(data, ret);
-    }
+    static WasmRes fromRet(const Ret& ret);
 
 private:
     io::Buffer m_buffer;

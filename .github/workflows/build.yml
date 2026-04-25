@@ -135,6 +135,7 @@ jobs:
           npm i
           npm i ./webmscore4-*.tgz
           npm start || echo "failed=1" >> "$GITHUB_OUTPUT"
+          npm run test-synth || echo "failed=1" >> "$GITHUB_OUTPUT"
 
       - uses: actions/upload-artifact@v7
         with:

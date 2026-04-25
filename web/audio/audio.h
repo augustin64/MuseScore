@@ -3,6 +3,7 @@
 #define MAINAUDIO_H
 
 #include "./audiosynth.h"
+#include "./audioparams.h"
 
 namespace MainAudio {
 

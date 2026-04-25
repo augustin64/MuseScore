@@ -246,6 +246,32 @@ export interface SynthRes {
     chunk: Uint8Array;
 }
 
+export interface AudioOutputParams {
+    volume: number;
+    balance: number;
+    solo: boolean;
+    muted: boolean;
+    forceMute: boolean;
+}
+
+export interface TrackAudioOutputParams extends AudioOutputParams {
+    trackId: number;
+}
+
+export interface AudioOutputParamsSnapshot {
+    master: AudioOutputParams;
+    tracks: TrackAudioOutputParams[];
+}
+
+export interface AudioOutputParamsPatch extends Partial<AudioOutputParams> {
+    trackId?: number;
+}
+
+export interface AudioOutputParamsPatchRequest {
+    master?: AudioOutputParamsPatch;
+    tracks?: AudioOutputParamsPatch[];
+}
+
 export type InputFileFormat =
     | 'mscz'             // compressed MuseScore native format
     | 'mscx'             // uncompressed MuseScore native format

@@ -39,16 +39,13 @@ const char* Synth::processBatch(int batchSize, bool cancel) {
     return reinterpret_cast<const char*>(resArr);
 }
 
-Synth Synth::start(MainScore score, float starttime) {
-    LOGI() << String(u"starttime %1").arg(starttime);
-
-    // use buffer size of 512 frames
-    static const size_t renderStep = 512;
-    static const size_t channels = 2;
-    static const size_t sampleRate = 44100;
-
+audio::TrackSequenceId Synth::getSequenceId() {
+    auto playbackController = modularity::globalIoc()->resolve<playback::IPlaybackController>("");
+    
+    auto sequenceId = playbackController->currentTrackSequenceId();
+    if (sequenceId != -1) return sequenceId;
+    
     auto rpcChannel = modularity::globalIoc()->resolve<audio::rpc::IRpcChannel>("");
-
     // Wait async ticks, otherwise `sequenceIdList` is empty
     //  previous `Playback::addSequence()` is a `Promise`
     for (int i=0; i < 3; i++) {
@@ -58,15 +55,27 @@ Synth Synth::start(MainScore score, float starttime) {
     //  resolve `totalDuration`
     async::processEvents();
 
-    auto playbackController = modularity::globalIoc()->resolve<playback::IPlaybackController>("");
+
+    sequenceId = playbackController->currentTrackSequenceId();
+    IF_ASSERT_FAILED(sequenceId != -1) {
+        LOGE() << "No playback sequence found";
+        return make_ret(Ret::Code::InternalError, std::string("No playback sequence found"));
+    }
+    return sequenceId;
+}
+
+Synth Synth::start(MainScore score, float starttime) {
+    LOGI() << String(u"starttime %1").arg(starttime);
+
+    // use buffer size of 512 frames
+    static const size_t renderStep = 512;
+    static const size_t channels = 2;
+    static const size_t sampleRate = 44100;
+
     auto worker_playback = modularity::globalIoc()->resolve<audio::worker::WorkerPlayback>("");
     auto audio_engine = modularity::globalIoc()->resolve<audio::worker::IAudioEngine>("");
 
-    const auto sequenceId = playbackController->currentTrackSequenceId();
-    IF_ASSERT_FAILED(sequenceId != -1) {
-        LOGE() << "no playback sequence found!";
-        return nullptr;
-    }
+    const auto sequenceId = getSequenceId();
     auto sequence = worker_playback->sequence(sequenceId);
 
     // Seek

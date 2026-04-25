@@ -729,6 +729,18 @@ extern "C" {
     };
 
     EMSCRIPTEN_KEEPALIVE
+    WasmResBytes getAudioOutputParams(uintptr_t score_ptr, int excerptId = -1) {
+        MainScore score(score_ptr, excerptId);
+        return WasmRes::fromRet(MainAudio::getOutputParams(score));
+    }
+
+    EMSCRIPTEN_KEEPALIVE
+    WasmResBytes setAudioOutputParams(uintptr_t score_ptr, const char* json, int excerptId = -1) {
+        MainScore score(score_ptr, excerptId);
+        return WasmRes::fromRet(MainAudio::setOutputParams(score, json));
+    }
+
+    EMSCRIPTEN_KEEPALIVE
     uintptr_t synthAudio(uintptr_t score_ptr, float starttime, int excerptId = -1) {
         MainScore score(score_ptr, excerptId);
         return MainAudio::Synth::start(score, starttime);

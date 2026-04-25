@@ -18,6 +18,8 @@ set(MUE_BUILD_IMPEXP_TABLEDIT_MODULE ON)
 set(MODULE_SRC
     audio.cpp
     audio.h
+    audioparams.cpp
+    audioparams.h
     audiosynth.cpp
     audiosynth.h
 

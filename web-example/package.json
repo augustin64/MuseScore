@@ -9,6 +9,7 @@
     },
     "scripts": {
         "start": "node --experimental-modules --unhandled-rejections=strict example.js",
+        "test-synth": "node --experimental-modules --unhandled-rejections=strict test_synth.js",
         "start:browser": "npx http-server . -o -c-1",
         "benchmark": "node --experimental-modules benchmark.js"
     }

@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 
 ### Unreleased
 
+* Modify synthesis per-track audio params with `score.get/setAudioOutputParams(...)`
+
 ### To be added
 
 * Stream audio file exporting

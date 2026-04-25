@@ -1,6 +1,20 @@
 
 #include "./wasmres.h"
 
+WasmRes WasmRes::fromRet(const Ret& ret) {
+    if (!ret.success()) {
+        // set data to the error message
+        ByteArray data = String::fromStdString(ret.toString()).toUtf8();
+        return WasmRes(data, ret);
+    }
+
+    if (ret.m_data.find("wasm_payload") == ret.m_data.end()) {
+        return WasmRes();
+    }
+
+    return WasmRes(ret.data<ByteArray>("wasm_payload", ByteArray()), ret);
+}
+
 WasmRes::WasmRes(ByteArray data, Ret ret)  {
     m_buffer.open(io::Buffer::ReadWrite);
 
